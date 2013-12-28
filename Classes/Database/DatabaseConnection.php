@@ -184,9 +184,10 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * Creates and executes an INSERT SQL-statement for $table from the array with field/value pairs $fields_values.
 	 * Using this function specifically allows us to handle BLOB and CLOB fields depending on DB
 	 *
-	 * @param string $table Table name
-	 * @param array $fields_values Field values as key=>value pairs. Values will be escaped internally. Typically you would fill an array like "$insertFields" with 'fieldname'=>'value' and pass it to this function as argument.
+	 * @param string  $table           Table name
+	 * @param array   $fields_values   Field values as key=>value pairs. Values will be escaped internally. Typically you would fill an array like "$insertFields" with 'fieldname'=>'value' and pass it to this function as argument.
 	 * @param boolean $no_quote_fields See fullQuoteArray()
+	 *
 	 * @return boolean|\mysqli_result|object MySQLi result object / DBAL object
 	 */
 	public function exec_INSERTquery($table, $fields_values, $no_quote_fields = FALSE) {
@@ -207,10 +208,11 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	/**
 	 * Creates and executes an INSERT SQL-statement for $table with multiple rows.
 	 *
-	 * @param string $table Table name
-	 * @param array $fields Field names
-	 * @param array $rows Table rows. Each row should be an array with field values mapping to $fields
+	 * @param string  $table           Table name
+	 * @param array   $fields          Field names
+	 * @param array   $rows            Table rows. Each row should be an array with field values mapping to $fields
 	 * @param boolean $no_quote_fields See fullQuoteArray()
+	 *
 	 * @return boolean|\mysqli_result|object MySQLi result object / DBAL object
 	 */
 	public function exec_INSERTmultipleRows($table, array $fields, array $rows, $no_quote_fields = FALSE) {
@@ -232,10 +234,11 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * Creates and executes an UPDATE SQL-statement for $table where $where-clause (typ. 'uid=...') from the array with field/value pairs $fields_values.
 	 * Using this function specifically allow us to handle BLOB and CLOB fields depending on DB
 	 *
-	 * @param string $table Database tablename
-	 * @param string $where WHERE clause, eg. "uid=1". NOTICE: You must escape values in this argument with $this->fullQuoteStr() yourself!
-	 * @param array $fields_values Field values as key=>value pairs. Values will be escaped internally. Typically you would fill an array like "$updateFields" with 'fieldname'=>'value' and pass it to this function as argument.
+	 * @param string  $table           Database tablename
+	 * @param string  $where           WHERE clause, eg. "uid=1". NOTICE: You must escape values in this argument with $this->fullQuoteStr() yourself!
+	 * @param array   $fields_values   Field values as key=>value pairs. Values will be escaped internally. Typically you would fill an array like "$updateFields" with 'fieldname'=>'value' and pass it to this function as argument.
 	 * @param boolean $no_quote_fields See fullQuoteArray()
+	 *
 	 * @return boolean|\mysqli_result|object MySQLi result object / DBAL object
 	 */
 	public function exec_UPDATEquery($table, $where, $fields_values, $no_quote_fields = FALSE) {
@@ -258,6 +261,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 *
 	 * @param string $table Database tablename
 	 * @param string $where WHERE clause, eg. "uid=1". NOTICE: You must escape values in this argument with $this->fullQuoteStr() yourself!
+	 *
 	 * @return boolean|\mysqli_result|object MySQLi result object / DBAL object
 	 */
 	public function exec_DELETEquery($table, $where) {
@@ -280,11 +284,12 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * Using this function specifically allow us to handle the LIMIT feature independently of DB.
 	 *
 	 * @param string $select_fields List of fields to select from the table. This is what comes right after "SELECT ...". Required value.
-	 * @param string $from_table Table(s) from which to select. This is what comes right after "FROM ...". Required value.
-	 * @param string $where_clause Additional WHERE clauses put in the end of the query. NOTICE: You must escape values in this argument with $this->fullQuoteStr() yourself! DO NOT PUT IN GROUP BY, ORDER BY or LIMIT!
-	 * @param string $groupBy Optional GROUP BY field(s), if none, supply blank string.
-	 * @param string $orderBy Optional ORDER BY field(s), if none, supply blank string.
-	 * @param string $limit Optional LIMIT value ([begin,]max), if none, supply blank string.
+	 * @param string $from_table    Table(s) from which to select. This is what comes right after "FROM ...". Required value.
+	 * @param string $where_clause  Additional WHERE clauses put in the end of the query. NOTICE: You must escape values in this argument with $this->fullQuoteStr() yourself! DO NOT PUT IN GROUP BY, ORDER BY or LIMIT!
+	 * @param string $groupBy       Optional GROUP BY field(s), if none, supply blank string.
+	 * @param string $orderBy       Optional ORDER BY field(s), if none, supply blank string.
+	 * @param string $limit         Optional LIMIT value ([begin,]max), if none, supply blank string.
+	 *
 	 * @return boolean|\mysqli_result|object MySQLi result object / DBAL object
 	 */
 	public function exec_SELECTquery($select_fields, $from_table, $where_clause, $groupBy = '', $orderBy = '', $limit = '') {
@@ -312,14 +317,15 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * The JOIN is done with [$local_table].uid <--> [$mm_table].uid_local  / [$mm_table].uid_foreign <--> [$foreign_table].uid
 	 * The function is very useful for selecting MM-relations between tables adhering to the MM-format used by TCE (TYPO3 Core Engine). See the section on $GLOBALS['TCA'] in Inside TYPO3 for more details.
 	 *
-	 * @param string $select Field list for SELECT
-	 * @param string $local_table Tablename, local table
-	 * @param string $mm_table Tablename, relation table
+	 * @param string $select        Field list for SELECT
+	 * @param string $local_table   Tablename, local table
+	 * @param string $mm_table      Tablename, relation table
 	 * @param string $foreign_table Tablename, foreign table
-	 * @param string $whereClause Optional additional WHERE clauses put in the end of the query. NOTICE: You must escape values in this argument with $this->fullQuoteStr() yourself! DO NOT PUT IN GROUP BY, ORDER BY or LIMIT! You have to prepend 'AND ' to this parameter yourself!
-	 * @param string $groupBy Optional GROUP BY field(s), if none, supply blank string.
-	 * @param string $orderBy Optional ORDER BY field(s), if none, supply blank string.
-	 * @param string $limit Optional LIMIT value ([begin,]max), if none, supply blank string.
+	 * @param string $whereClause   Optional additional WHERE clauses put in the end of the query. NOTICE: You must escape values in this argument with $this->fullQuoteStr() yourself! DO NOT PUT IN GROUP BY, ORDER BY or LIMIT! You have to prepend 'AND ' to this parameter yourself!
+	 * @param string $groupBy       Optional GROUP BY field(s), if none, supply blank string.
+	 * @param string $orderBy       Optional ORDER BY field(s), if none, supply blank string.
+	 * @param string $limit         Optional LIMIT value ([begin,]max), if none, supply blank string.
+	 *
 	 * @return boolean|\mysqli_result|object MySQLi result object / DBAL object
 	 * @see exec_SELECTquery()
 	 */
@@ -341,6 +347,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * Executes a select based on input query parts array
 	 *
 	 * @param array $queryParts Query parts array
+	 *
 	 * @return boolean|\mysqli_result|object MySQLi result object / DBAL object
 	 * @see exec_SELECTquery()
 	 */
@@ -352,12 +359,13 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * Creates and executes a SELECT SQL-statement AND traverse result set and returns array with records in.
 	 *
 	 * @param string $select_fields See exec_SELECTquery()
-	 * @param string $from_table See exec_SELECTquery()
-	 * @param string $where_clause See exec_SELECTquery()
-	 * @param string $groupBy See exec_SELECTquery()
-	 * @param string $orderBy See exec_SELECTquery()
-	 * @param string $limit See exec_SELECTquery()
+	 * @param string $from_table    See exec_SELECTquery()
+	 * @param string $where_clause  See exec_SELECTquery()
+	 * @param string $groupBy       See exec_SELECTquery()
+	 * @param string $orderBy       See exec_SELECTquery()
+	 * @param string $limit         See exec_SELECTquery()
 	 * @param string $uidIndexField If set, the result array will carry this field names value as index. Requires that field to be selected of course!
+	 *
 	 * @return array|NULL Array of rows, or NULL in case of SQL error
 	 */
 	public function exec_SELECTgetRows($select_fields, $from_table, $where_clause, $groupBy = '', $orderBy = '', $limit = '', $uidIndexField = '') {
@@ -388,12 +396,13 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * Creates and executes a SELECT SQL-statement AND gets a result set and returns an array with a single record in.
 	 * LIMIT is automatically set to 1 and can not be overridden.
 	 *
-	 * @param string $select_fields List of fields to select from the table.
-	 * @param string $from_table Table(s) from which to select.
-	 * @param string $where_clause Optional additional WHERE clauses put in the end of the query. NOTICE: You must escape values in this argument with $this->fullQuoteStr() yourself!
-	 * @param string $groupBy Optional GROUP BY field(s), if none, supply blank string.
-	 * @param string $orderBy Optional ORDER BY field(s), if none, supply blank string.
-	 * @param boolean $numIndex If set, the result will be fetched with sql_fetch_row, otherwise sql_fetch_assoc will be used.
+	 * @param string  $select_fields List of fields to select from the table.
+	 * @param string  $from_table    Table(s) from which to select.
+	 * @param string  $where_clause  Optional additional WHERE clauses put in the end of the query. NOTICE: You must escape values in this argument with $this->fullQuoteStr() yourself!
+	 * @param string  $groupBy       Optional GROUP BY field(s), if none, supply blank string.
+	 * @param string  $orderBy       Optional ORDER BY field(s), if none, supply blank string.
+	 * @param boolean $numIndex      If set, the result will be fetched with sql_fetch_row, otherwise sql_fetch_assoc will be used.
+	 *
 	 * @return array Single row or NULL if it fails.
 	 */
 	public function exec_SELECTgetSingleRow($select_fields, $from_table, $where_clause, $groupBy = '', $orderBy = '', $numIndex = FALSE) {
@@ -419,6 +428,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * @param string $field Name of the field to use in the COUNT() expression (e.g. '*')
 	 * @param string $table Name of the table to count rows for
 	 * @param string $where (optional) WHERE statement of the query
+	 *
 	 * @return mixed Number of rows counter (integer) or FALSE if something went wrong (boolean)
 	 */
 	public function exec_SELECTcountRows($field, $table, $where = '') {
@@ -436,6 +446,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * Truncates a table.
 	 *
 	 * @param string $table Database tablename
+	 *
 	 * @return mixed Result from handler
 	 */
 	public function exec_TRUNCATEquery($table) {
@@ -461,9 +472,10 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	/**
 	 * Creates an INSERT SQL-statement for $table from the array with field/value pairs $fields_values.
 	 *
-	 * @param string $table See exec_INSERTquery()
-	 * @param array $fields_values See exec_INSERTquery()
+	 * @param string  $table           See exec_INSERTquery()
+	 * @param array   $fields_values   See exec_INSERTquery()
 	 * @param boolean $no_quote_fields See fullQuoteArray()
+	 *
 	 * @return string Full SQL query for INSERT (unless $fields_values does not contain any elements in which case it will be FALSE)
 	 */
 	public function INSERTquery($table, $fields_values, $no_quote_fields = FALSE) {
@@ -488,10 +500,11 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	/**
 	 * Creates an INSERT SQL-statement for $table with multiple rows.
 	 *
-	 * @param string $table Table name
-	 * @param array $fields Field names
-	 * @param array $rows Table rows. Each row should be an array with field values mapping to $fields
+	 * @param string  $table           Table name
+	 * @param array   $fields          Field names
+	 * @param array   $rows            Table rows. Each row should be an array with field values mapping to $fields
 	 * @param boolean $no_quote_fields See fullQuoteArray()
+	 *
 	 * @return string Full SQL query for INSERT (unless $rows does not contain any elements in which case it will be FALSE)
 	 */
 	public function INSERTmultipleRows($table, array $fields, array $rows, $no_quote_fields = FALSE) {
@@ -523,12 +536,13 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * Creates an UPDATE SQL-statement for $table where $where-clause (typ. 'uid=...') from the array with field/value pairs $fields_values.
 	 *
 	 *
-	 * @param string $table See exec_UPDATEquery()
-	 * @param string $where See exec_UPDATEquery()
-	 * @param array $fields_values See exec_UPDATEquery()
+	 * @param string  $table         See exec_UPDATEquery()
+	 * @param string  $where         See exec_UPDATEquery()
+	 * @param array   $fields_values See exec_UPDATEquery()
 	 * @param boolean $no_quote_fields
+	 *
+	 * @return string Full SQL query for UPDATE*
 	 * @throws \InvalidArgumentException
-	 * @return string Full SQL query for UPDATE
 	 */
 	public function UPDATEquery($table, $where, $fields_values, $no_quote_fields = FALSE) {
 		// Table and fieldnames should be "SQL-injection-safe" when supplied to this
@@ -562,6 +576,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 *
 	 * @param string $table See exec_DELETEquery()
 	 * @param string $where See exec_DELETEquery()
+	 *
 	 * @return string Full SQL query for DELETE
 	 * @throws \InvalidArgumentException
 	 */
@@ -586,11 +601,12 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * Creates a SELECT SQL-statement
 	 *
 	 * @param string $select_fields See exec_SELECTquery()
-	 * @param string $from_table See exec_SELECTquery()
-	 * @param string $where_clause See exec_SELECTquery()
-	 * @param string $groupBy See exec_SELECTquery()
-	 * @param string $orderBy See exec_SELECTquery()
-	 * @param string $limit See exec_SELECTquery()
+	 * @param string $from_table    See exec_SELECTquery()
+	 * @param string $where_clause  See exec_SELECTquery()
+	 * @param string $groupBy       See exec_SELECTquery()
+	 * @param string $orderBy       See exec_SELECTquery()
+	 * @param string $limit         See exec_SELECTquery()
+	 *
 	 * @return string Full SQL query for SELECT
 	 */
 	public function SELECTquery($select_fields, $from_table, $where_clause, $groupBy = '', $orderBy = '', $limit = '') {
@@ -619,8 +635,9 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * BEWARE: This method should not be overriden within DBAL to prevent quoting from happening.
 	 *
 	 * @param string $select_fields List of fields to select from the table.
-	 * @param string $from_table Table from which to select.
-	 * @param string $where_clause Conditional WHERE statement
+	 * @param string $from_table    Table from which to select.
+	 * @param string $where_clause  Conditional WHERE statement
+	 *
 	 * @return string Full SQL query for SELECT
 	 */
 	public function SELECTsubquery($select_fields, $from_table, $where_clause) {
@@ -638,6 +655,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * Creates a TRUNCATE TABLE SQL-statement
 	 *
 	 * @param string $table See exec_TRUNCATEquery()
+	 *
 	 * @return string Full SQL query for TRUNCATE TABLE
 	 */
 	public function TRUNCATEquery($table) {
@@ -667,8 +685,9 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * @param string $field Field name
 	 * @param string $value Value to find in list
 	 * @param string $table Table in which we are searching (for DBAL detection of quoteStr() method)
-	 * @throws \InvalidArgumentException
+	 *
 	 * @return string WHERE clause for a query
+	 * @throws \InvalidArgumentException
 	 */
 	public function listQuery($field, $value, $table) {
 		$value = (string) $value;
@@ -683,10 +702,11 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	/**
 	 * Returns a WHERE clause which will make an AND or OR search for the words in the $searchWords array in any of the fields in array $fields.
 	 *
-	 * @param array $searchWords Array of search words
-	 * @param array $fields Array of fields
-	 * @param string $table Table in which we are searching (for DBAL detection of quoteStr() method)
-	 * @param string $constraint How multiple search words have to match ('AND' or 'OR')
+	 * @param array  $searchWords Array of search words
+	 * @param array  $fields      Array of fields
+	 * @param string $table       Table in which we are searching (for DBAL detection of quoteStr() method)
+	 * @param string $constraint  How multiple search words have to match ('AND' or 'OR')
+	 *
 	 * @return string WHERE clause for search
 	 */
 	public function searchQuery($searchWords, $fields, $table, $constraint = self::AND_Constraint) {
@@ -716,13 +736,14 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	/**
 	 * Creates a SELECT prepared SQL statement.
 	 *
-	 * @param string $select_fields See exec_SELECTquery()
-	 * @param string $from_table See exec_SELECTquery()
-	 * @param string $where_clause See exec_SELECTquery()
-	 * @param string $groupBy See exec_SELECTquery()
-	 * @param string $orderBy See exec_SELECTquery()
-	 * @param string $limit See exec_SELECTquery()
-	 * @param array $input_parameters An array of values with as many elements as there are bound parameters in the SQL statement being executed. All values are treated as \TYPO3\CMS\Core\Database\PreparedStatement::PARAM_AUTOTYPE.
+	 * @param string $select_fields    See exec_SELECTquery()
+	 * @param string $from_table       See exec_SELECTquery()
+	 * @param string $where_clause     See exec_SELECTquery()
+	 * @param string $groupBy          See exec_SELECTquery()
+	 * @param string $orderBy          See exec_SELECTquery()
+	 * @param string $limit            See exec_SELECTquery()
+	 * @param array  $input_parameters An array of values with as many elements as there are bound parameters in the SQL statement being executed. All values are treated as \TYPO3\CMS\Core\Database\PreparedStatement::PARAM_AUTOTYPE.
+	 *
 	 * @return \TYPO3\CMS\Core\Database\PreparedStatement Prepared statement
 	 */
 	public function prepare_SELECTquery($select_fields, $from_table, $where_clause, $groupBy = '', $orderBy = '', $limit = '', array $input_parameters = array()) {
@@ -740,8 +761,9 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	/**
 	 * Creates a SELECT prepared SQL statement based on input query parts array
 	 *
-	 * @param array $queryParts Query parts array
+	 * @param array $queryParts       Query parts array
 	 * @param array $input_parameters An array of values with as many elements as there are bound parameters in the SQL statement being executed. All values are treated as \TYPO3\CMS\Core\Database\PreparedStatement::PARAM_AUTOTYPE.
+	 *
 	 * @return \TYPO3\CMS\Core\Database\PreparedStatement Prepared statement
 	 */
 	public function prepare_SELECTqueryArray(array $queryParts, array $input_parameters = array()) {
@@ -752,8 +774,9 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * Executes a prepared query.
 	 * This method may only be called by \TYPO3\CMS\Core\Database\PreparedStatement
 	 *
-	 * @param string $query The query to execute
-	 * @param array $queryComponents The components of the query to execute
+	 * @param string $query           The query to execute
+	 * @param array  $queryComponents The components of the query to execute
+	 *
 	 * @return boolean|\mysqli_result|object MySQLi result object / DBAL object
 	 */
 	public function exec_PREPAREDquery($query, array $queryComponents) {
@@ -780,11 +803,12 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	/**
 	 * Escaping and quoting values for SQL statements.
 	 *
-	 * @param string $str Input string
-	 * @param string $table Table name for which to quote string. Just enter the table that the field-value is selected from (and any DBAL will look up which handler to use and then how to quote the string!).
+	 * @param string  $str       Input string
+	 * @param string  $table     Table name for which to quote string. Just enter the table that the field-value is selected from (and any DBAL will look up which handler to use and then how to quote the string!).
 	 * @param boolean $allowNull Whether to allow NULL values
+	 *
 	 * @return string Output string; Wrapped in single quotes and quotes in the string (" / ') and \ will be backslashed (or otherwise based on DBAL handler)
-	 * @see quoteStr()
+	 * @see  quoteStr()
 	 * @todo The $table parameter seems unused
 	 */
 	public function fullQuoteStr($str, $table, $allowNull = FALSE) {
@@ -801,10 +825,11 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	/**
 	 * Will fullquote all values in the one-dimensional array so they are ready to "implode" for an sql query.
 	 *
-	 * @param array $arr Array with values (either associative or non-associative array)
-	 * @param string $table Table name for which to quote
-	 * @param boolean|array $noQuote List/array of keys NOT to quote (eg. SQL functions) - ONLY for associative arrays
-	 * @param boolean $allowNull Whether to allow NULL values
+	 * @param array         $arr       Array with values (either associative or non-associative array)
+	 * @param string        $table     Table name for which to quote
+	 * @param boolean|array $noQuote   List/array of keys NOT to quote (eg. SQL functions) - ONLY for associative arrays
+	 * @param boolean       $allowNull Whether to allow NULL values
+	 *
 	 * @return array The input array with the values quoted
 	 * @see cleanIntArray()
 	 */
@@ -827,8 +852,9 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * Use this function instead of the PHP addslashes() function when you build queries - this will prepare your code for DBAL.
 	 * NOTICE: You must wrap the output of this function in SINGLE QUOTES to be DBAL compatible. Unless you have to apply the single quotes yourself you should rather use ->fullQuoteStr()!
 	 *
-	 * @param string $str Input string
+	 * @param string $str   Input string
 	 * @param string $table Table name for which to quote string. Just enter the table that the field-value is selected from (and any DBAL will look up which handler to use and then how to quote the string!).
+	 *
 	 * @return string Output string; Quotes (" / ') and \ will be backslashed (or otherwise based on DBAL handler)
 	 * @see quoteStr()
 	 */
@@ -842,8 +868,9 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	/**
 	 * Escaping values for SQL LIKE statements.
 	 *
-	 * @param string $str Input string
+	 * @param string $str   Input string
 	 * @param string $table Table name for which to escape string. Just enter the table that the field-value is selected from (and any DBAL will look up which handler to use and then how to quote the string!).
+	 *
 	 * @return string Output string; % and _ will be escaped with \ (or otherwise based on DBAL handler)
 	 * @see quoteStr()
 	 */
@@ -856,6 +883,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * Useful when you want to make sure an array contains only integers before imploding them in a select-list.
 	 *
 	 * @param array $arr Array with values
+	 *
 	 * @return array The input array with all values passed through intval()
 	 * @see cleanIntList()
 	 */
@@ -871,6 +899,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * Useful when you want to make sure a commalist of supposed integers really contain only integers; You want to know that when you don't trust content that could go into an SQL statement.
 	 *
 	 * @param string $list List of comma-separated values which should be integers
+	 *
 	 * @return string The input list but with every value passed through intval()
 	 * @see cleanIntArray()
 	 */
@@ -884,6 +913,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * Generally; This function provides a work-around to the situation where you cannot pass only the fields by which to order the result.
 	 *
 	 * @param string $str eg. "ORDER BY title, uid
+	 *
 	 * @return string eg. "title, uid
 	 * @see exec_SELECTquery(), stripGroupBy()
 	 */
@@ -897,6 +927,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * Generally; This function provides a work-around to the situation where you cannot pass only the fields by which to order the result.
 	 *
 	 * @param string $str eg. "GROUP BY title, uid
+	 *
 	 * @return string eg. "title, uid
 	 * @see exec_SELECTquery(), stripOrderBy()
 	 */
@@ -909,6 +940,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * Work-around function for use where you know some userdefined end to an SQL clause is supplied and you need to separate these factors.
 	 *
 	 * @param string $str Input string
+	 *
 	 * @return array
 	 */
 	public function splitGroupOrderLimit($str) {
@@ -949,6 +981,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * Returns the date and time formats compatible with the given database table.
 	 *
 	 * @param string $table Table name for which to return an empty date. Just enter the table that the field-value is selected from (and any DBAL will look up which handler to use and then how date and time should be formatted).
+	 *
 	 * @return array
 	 */
 	public function getDateTimeFormats($table) {
@@ -1012,6 +1045,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * Returns the number of selected rows.
 	 *
 	 * @param boolean|\mysqli_result|object $res MySQLi result object / DBAL object
+	 *
 	 * @return integer Number of resulting rows
 	 */
 	public function sql_num_rows($res) {
@@ -1027,6 +1061,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * MySQLi fetch_assoc() wrapper function
 	 *
 	 * @param boolean|\mysqli_result|object $res MySQLi result object / DBAL object
+	 *
 	 * @return array|boolean Associative array of result row.
 	 */
 	public function sql_fetch_assoc($res) {
@@ -1048,6 +1083,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * MySQLi fetch_row() wrapper function
 	 *
 	 * @param boolean|\mysqli_result|object $res MySQLi result object / DBAL object
+	 *
 	 * @return array|boolean Array with result rows.
 	 */
 	public function sql_fetch_row($res) {
@@ -1068,6 +1104,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * free_result() wrapper function
 	 *
 	 * @param boolean|\mysqli_result|object $res MySQLi result object / DBAL object
+	 *
 	 * @return boolean Returns TRUE on success or FALSE on failure.
 	 */
 	public function sql_free_result($res) {
@@ -1099,8 +1136,9 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	/**
 	 * Move internal result pointer
 	 *
-	 * @param boolean|\mysqli_result|object $res MySQLi result object / DBAL object
-	 * @param integer $seek Seek result number.
+	 * @param boolean|\mysqli_result|object $res  MySQLi result object / DBAL object
+	 * @param integer                       $seek Seek result number.
+	 *
 	 * @return boolean Returns TRUE on success or FALSE on failure.
 	 */
 	public function sql_data_seek($res, $seek) {
@@ -1115,8 +1153,9 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * Get the type of the specified field in a result
 	 * mysql_field_type() wrapper function
 	 *
-	 * @param boolean|\mysqli_result|object $res MySQLi result object / DBAL object
-	 * @param integer $pointer Field index.
+	 * @param boolean|\mysqli_result|object $res     MySQLi result object / DBAL object
+	 * @param integer                       $pointer Field index.
+	 *
 	 * @return string Returns the name of the specified field index, or FALSE on error
 	 */
 	public function sql_field_type($res, $pointer) {
@@ -1156,9 +1195,10 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	/**
 	 * Open a (persistent) connection to a MySQL server
 	 *
-	 * @param string $host Deprecated since 6.1, will be removed in two versions. Database host IP/domain[:port]
+	 * @param string $host     Deprecated since 6.1, will be removed in two versions. Database host IP/domain[:port]
 	 * @param string $username Deprecated since 6.1, will be removed in two versions. Username to connect with.
 	 * @param string $password Deprecated since 6.1, will be removed in two versions. Password to connect with.
+	 *
 	 * @return boolean|void
 	 * @throws \RuntimeException
 	 */
@@ -1244,6 +1284,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * Select a SQL database
 	 *
 	 * @param string $TYPO3_db Deprecated since 6.1, will be removed in two versions. Database to connect to.
+	 *
 	 * @return boolean Returns TRUE on success or FALSE on failure.
 	 */
 	public function sql_select_db($TYPO3_db = NULL) {
@@ -1284,6 +1325,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * Use in Install Tool only!
 	 *
 	 * @return array Each entry represents a database name
+	 * @throws \RuntimeException
 	 */
 	public function admin_get_dbs() {
 		if (!$this->isConnected) {
@@ -1344,6 +1386,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * probably be cached for quick delivery.
 	 *
 	 * @param string $tableName Table name
+	 *
 	 * @return array Field information in an associative array with fieldname => field row
 	 */
 	public function admin_get_fields($tableName) {
@@ -1366,6 +1409,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * In a DBAL this should look up the right handler for the table and return compatible information
 	 *
 	 * @param string $tableName Table name
+	 *
 	 * @return array Key information in a numeric array
 	 */
 	public function admin_get_keys($tableName) {
@@ -1414,6 +1458,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * mysqli() wrapper function, used by the Install Tool and EM for all queries regarding management of the database!
 	 *
 	 * @param string $query Query to execute
+	 *
 	 * @return boolean|\mysqli_result|object MySQLi result object / DBAL object
 	 */
 	public function admin_query($query) {
@@ -1516,6 +1561,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * Set persistent database connection
 	 *
 	 * @param boolean $persistentDatabaseConnection
+	 *
 	 * @see http://php.net/manual/de/mysqli.persistconns.php
 	 */
 	public function setPersistentDatabaseConnection($persistentDatabaseConnection) {
@@ -1546,14 +1592,14 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	/**
 	 * Connects to database for TYPO3 sites:
 	 *
-	 * @param string $host Deprecated since 6.1, will be removed in two versions Database. host IP/domain[:port]
+	 * @param string $host     Deprecated since 6.1, will be removed in two versions Database. host IP/domain[:port]
 	 * @param string $username Deprecated since 6.1, will be removed in two versions. Username to connect with
 	 * @param string $password Deprecated since 6.1, will be removed in two versions. Password to connect with
-	 * @param string $db Deprecated since 6.1, will be removed in two versions. Database name to connect to
+	 * @param string $db       Deprecated since 6.1, will be removed in two versions. Database name to connect to
+	 *
+	 * @return void
 	 * @throws \RuntimeException
 	 * @throws \UnexpectedValueException
-	 * @internal param string $user Username to connect with.
-	 * @return void
 	 */
 	public function connectDB($host = NULL, $username = NULL, $password = NULL, $db = NULL) {
 		// Early return if connected already
@@ -1653,10 +1699,10 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	/**
 	 * Handle deprecated arguments for sql_pconnect() and connectDB()
 	 *
-	 * @param string|null $host Database host[:port]
+	 * @param string|null $host     Database host[:port]
 	 * @param string|null $username Database user name
 	 * @param string|null $password User password
-	 * @param string|null $db Database
+	 * @param string|null $db       Database
 	 */
 	protected function handleDeprecatedConnectArguments($host = NULL, $username = NULL, $password = NULL, $db = NULL) {
 		\TYPO3\CMS\Core\Utility\GeneralUtility::deprecationLog(
@@ -1691,8 +1737,9 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	/**
 	 * Debug function: Outputs error if any
 	 *
-	 * @param string $func Function calling debug()
+	 * @param string $func  Function calling debug()
 	 * @param string $query Last query if not last built query
+	 *
 	 * @return void
 	 * @todo Define visibility
 	 */
@@ -1718,6 +1765,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * Checks if record set is valid and writes debugging information into devLog if not.
 	 *
 	 * @param boolean|\mysqli_result|object MySQLi result object / DBAL object
+	 *
 	 * @return boolean TRUE if the  record set is valid, FALSE otherwise
 	 * @todo Define visibility
 	 */
@@ -1762,9 +1810,10 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 *
 	 * TODO: Feature is not DBAL-compliant
 	 *
-	 * @param string $query SQL query
-	 * @param string $from_table Table(s) from which to select. This is what comes right after "FROM ...". Required value.
-	 * @param integer $row_count Number of resulting rows
+	 * @param string  $query      SQL query
+	 * @param string  $from_table Table(s) from which to select. This is what comes right after "FROM ...". Required value.
+	 * @param integer $row_count  Number of resulting rows
+	 *
 	 * @return boolean TRUE if explain was run, FALSE otherwise
 	 */
 	protected function explain($query, $from_table, $row_count) {
