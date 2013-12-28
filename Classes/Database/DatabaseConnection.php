@@ -183,26 +183,26 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 **************************************/
 
 	/**
-	 * Creates and executes an INSERT SQL-statement for $table from the array with field/value pairs $fields_values.
+	 * Creates and executes an INSERT SQL-statement for $table from the array with field/value pairs $fieldsValues.
 	 * Using this function specifically allows us to handle BLOB and CLOB fields depending on DB
 	 *
-	 * @param string  $table           Table name
-	 * @param array   $fields_values   Field values as key=>value pairs. Values will be escaped internally. Typically you would fill an array like "$insertFields" with 'fieldname'=>'value' and pass it to this function as argument.
-	 * @param boolean $no_quote_fields See fullQuoteArray()
+	 * @param string  $table         Table name
+	 * @param array   $fieldsValues  Field values as key=>value pairs. Values will be escaped internally. Typically you would fill an array like "$insertFields" with 'fieldname'=>'value' and pass it to this function as argument.
+	 * @param boolean $noQuoteFields See fullQuoteArray()
 	 *
 	 * @return boolean|\mysqli_result|object MySQLi result object / DBAL object
 	 */
-	public function exec_INSERTquery($table, $fields_values, $no_quote_fields = FALSE) {
+	public function exec_INSERTquery($table, $fieldsValues, $noQuoteFields = FALSE) {
 		if (!$this->isConnected) {
 			$this->connectDB();
 		}
-		$res = $this->link->query($this->INSERTquery($table, $fields_values, $no_quote_fields));
+		$res = $this->link->query($this->INSERTquery($table, $fieldsValues, $noQuoteFields));
 		if ($this->debugOutput) {
 			$this->debug('exec_INSERTquery');
 		}
 		foreach ($this->postProcessHookObjects as $hookObject) {
 			/** @var $hookObject PostProcessQueryHookInterface */
-			$hookObject->exec_INSERTquery_postProcessAction($table, $fields_values, $no_quote_fields, $this);
+			$hookObject->exec_INSERTquery_postProcessAction($table, $fieldsValues, $noQuoteFields, $this);
 		}
 		return $res;
 	}
@@ -210,50 +210,50 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	/**
 	 * Creates and executes an INSERT SQL-statement for $table with multiple rows.
 	 *
-	 * @param string  $table           Table name
-	 * @param array   $fields          Field names
-	 * @param array   $rows            Table rows. Each row should be an array with field values mapping to $fields
-	 * @param boolean $no_quote_fields See fullQuoteArray()
+	 * @param string  $table         Table name
+	 * @param array   $fields        Field names
+	 * @param array   $rows          Table rows. Each row should be an array with field values mapping to $fields
+	 * @param boolean $noQuoteFields See fullQuoteArray()
 	 *
 	 * @return boolean|\mysqli_result|object MySQLi result object / DBAL object
 	 */
-	public function exec_INSERTmultipleRows($table, array $fields, array $rows, $no_quote_fields = FALSE) {
+	public function exec_INSERTmultipleRows($table, array $fields, array $rows, $noQuoteFields = FALSE) {
 		if (!$this->isConnected) {
 			$this->connectDB();
 		}
-		$res = $this->link->query($this->INSERTmultipleRows($table, $fields, $rows, $no_quote_fields));
+		$res = $this->link->query($this->INSERTmultipleRows($table, $fields, $rows, $noQuoteFields));
 		if ($this->debugOutput) {
 			$this->debug('exec_INSERTmultipleRows');
 		}
 		foreach ($this->postProcessHookObjects as $hookObject) {
 			/** @var $hookObject PostProcessQueryHookInterface */
-			$hookObject->exec_INSERTmultipleRows_postProcessAction($table, $fields, $rows, $no_quote_fields, $this);
+			$hookObject->exec_INSERTmultipleRows_postProcessAction($table, $fields, $rows, $noQuoteFields, $this);
 		}
 		return $res;
 	}
 
 	/**
-	 * Creates and executes an UPDATE SQL-statement for $table where $where-clause (typ. 'uid=...') from the array with field/value pairs $fields_values.
+	 * Creates and executes an UPDATE SQL-statement for $table where $where-clause (typ. 'uid=...') from the array with field/value pairs $fieldsValues.
 	 * Using this function specifically allow us to handle BLOB and CLOB fields depending on DB
 	 *
-	 * @param string  $table           Database tablename
-	 * @param string  $where           WHERE clause, eg. "uid=1". NOTICE: You must escape values in this argument with $this->fullQuoteStr() yourself!
-	 * @param array   $fields_values   Field values as key=>value pairs. Values will be escaped internally. Typically you would fill an array like "$updateFields" with 'fieldname'=>'value' and pass it to this function as argument.
-	 * @param boolean $no_quote_fields See fullQuoteArray()
+	 * @param string  $table         Database tablename
+	 * @param string  $where         WHERE clause, eg. "uid=1". NOTICE: You must escape values in this argument with $this->fullQuoteStr() yourself!
+	 * @param array   $fieldsValues  Field values as key=>value pairs. Values will be escaped internally. Typically you would fill an array like "$updateFields" with 'fieldname'=>'value' and pass it to this function as argument.
+	 * @param boolean $noQuoteFields See fullQuoteArray()
 	 *
 	 * @return boolean|\mysqli_result|object MySQLi result object / DBAL object
 	 */
-	public function exec_UPDATEquery($table, $where, $fields_values, $no_quote_fields = FALSE) {
+	public function exec_UPDATEquery($table, $where, $fieldsValues, $noQuoteFields = FALSE) {
 		if (!$this->isConnected) {
 			$this->connectDB();
 		}
-		$res = $this->link->query($this->UPDATEquery($table, $where, $fields_values, $no_quote_fields));
+		$res = $this->link->query($this->UPDATEquery($table, $where, $fieldsValues, $noQuoteFields));
 		if ($this->debugOutput) {
 			$this->debug('exec_UPDATEquery');
 		}
 		foreach ($this->postProcessHookObjects as $hookObject) {
 			/** @var $hookObject PostProcessQueryHookInterface */
-			$hookObject->exec_UPDATEquery_postProcessAction($table, $where, $fields_values, $no_quote_fields, $this);
+			$hookObject->exec_UPDATEquery_postProcessAction($table, $where, $fieldsValues, $noQuoteFields, $this);
 		}
 		return $res;
 	}
@@ -285,62 +285,62 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * Creates and executes a SELECT SQL-statement
 	 * Using this function specifically allow us to handle the LIMIT feature independently of DB.
 	 *
-	 * @param string $select_fields List of fields to select from the table. This is what comes right after "SELECT ...". Required value.
-	 * @param string $from_table    Table(s) from which to select. This is what comes right after "FROM ...". Required value.
-	 * @param string $where_clause  Additional WHERE clauses put in the end of the query. NOTICE: You must escape values in this argument with $this->fullQuoteStr() yourself! DO NOT PUT IN GROUP BY, ORDER BY or LIMIT!
-	 * @param string $groupBy       Optional GROUP BY field(s), if none, supply blank string.
-	 * @param string $orderBy       Optional ORDER BY field(s), if none, supply blank string.
-	 * @param string $limit         Optional LIMIT value ([begin,]max), if none, supply blank string.
+	 * @param string $selectFields List of fields to select from the table. This is what comes right after "SELECT ...". Required value.
+	 * @param string $fromTable    Table(s) from which to select. This is what comes right after "FROM ...". Required value.
+	 * @param string $whereClause  Additional WHERE clauses put in the end of the query. NOTICE: You must escape values in this argument with $this->fullQuoteStr() yourself! DO NOT PUT IN GROUP BY, ORDER BY or LIMIT!
+	 * @param string $groupBy      Optional GROUP BY field(s), if none, supply blank string.
+	 * @param string $orderBy      Optional ORDER BY field(s), if none, supply blank string.
+	 * @param string $limit        Optional LIMIT value ([begin,]max), if none, supply blank string.
 	 *
 	 * @return boolean|\mysqli_result|object MySQLi result object / DBAL object
 	 */
-	public function exec_SELECTquery($select_fields, $from_table, $where_clause, $groupBy = '', $orderBy = '', $limit = '') {
+	public function exec_SELECTquery($selectFields, $fromTable, $whereClause, $groupBy = '', $orderBy = '', $limit = '') {
 		if (!$this->isConnected) {
 			$this->connectDB();
 		}
-		$query = $this->SELECTquery($select_fields, $from_table, $where_clause, $groupBy, $orderBy, $limit);
+		$query = $this->SELECTquery($selectFields, $fromTable, $whereClause, $groupBy, $orderBy, $limit);
 		$res = $this->link->query($query);
 		if ($this->debugOutput) {
 			$this->debug('exec_SELECTquery');
 		}
 		if ($this->explainOutput) {
-			$this->explain($query, $from_table, $res->num_rows);
+			$this->explain($query, $fromTable, $res->num_rows);
 		}
 		foreach ($this->postProcessHookObjects as $hookObject) {
 			/** @var $hookObject PostProcessQueryHookInterface */
-			$hookObject->exec_SELECTquery_postProcessAction($select_fields, $from_table, $where_clause, $groupBy = '', $orderBy = '', $limit = '', $this);
+			$hookObject->exec_SELECTquery_postProcessAction($selectFields, $fromTable, $whereClause, $groupBy = '', $orderBy = '', $limit = '', $this);
 		}
 		return $res;
 	}
 
 	/**
 	 * Creates and executes a SELECT query, selecting fields ($select) from two/three tables joined
-	 * Use $mm_table together with $local_table or $foreign_table to select over two tables. Or use all three tables to select the full MM-relation.
-	 * The JOIN is done with [$local_table].uid <--> [$mm_table].uid_local  / [$mm_table].uid_foreign <--> [$foreign_table].uid
+	 * Use $mmTable together with $localTable or $foreignTable to select over two tables. Or use all three tables to select the full MM-relation.
+	 * The JOIN is done with [$localTable].uid <--> [$mmTable].uid_local  / [$mmTable].uid_foreign <--> [$foreignTable].uid
 	 * The function is very useful for selecting MM-relations between tables adhering to the MM-format used by TCE (TYPO3 Core Engine). See the section on $GLOBALS['TCA'] in Inside TYPO3 for more details.
 	 *
-	 * @param string $select        Field list for SELECT
-	 * @param string $local_table   Tablename, local table
-	 * @param string $mm_table      Tablename, relation table
-	 * @param string $foreign_table Tablename, foreign table
-	 * @param string $whereClause   Optional additional WHERE clauses put in the end of the query. NOTICE: You must escape values in this argument with $this->fullQuoteStr() yourself! DO NOT PUT IN GROUP BY, ORDER BY or LIMIT! You have to prepend 'AND ' to this parameter yourself!
-	 * @param string $groupBy       Optional GROUP BY field(s), if none, supply blank string.
-	 * @param string $orderBy       Optional ORDER BY field(s), if none, supply blank string.
-	 * @param string $limit         Optional LIMIT value ([begin,]max), if none, supply blank string.
+	 * @param string $select       Field list for SELECT
+	 * @param string $localTable   Tablename, local table
+	 * @param string $mmTable      Tablename, relation table
+	 * @param string $foreignTable Tablename, foreign table
+	 * @param string $whereClause  Optional additional WHERE clauses put in the end of the query. NOTICE: You must escape values in this argument with $this->fullQuoteStr() yourself! DO NOT PUT IN GROUP BY, ORDER BY or LIMIT! You have to prepend 'AND ' to this parameter yourself!
+	 * @param string $groupBy      Optional GROUP BY field(s), if none, supply blank string.
+	 * @param string $orderBy      Optional ORDER BY field(s), if none, supply blank string.
+	 * @param string $limit        Optional LIMIT value ([begin,]max), if none, supply blank string.
 	 *
 	 * @return boolean|\mysqli_result|object MySQLi result object / DBAL object
 	 * @see exec_SELECTquery()
 	 */
-	public function exec_SELECT_mm_query($select, $local_table, $mm_table, $foreign_table, $whereClause = '', $groupBy = '', $orderBy = '', $limit = '') {
-		if ($foreign_table == $local_table) {
-			$foreign_table_as = $foreign_table . uniqid('_join');
+	public function exec_SELECT_mm_query($select, $localTable, $mmTable, $foreignTable, $whereClause = '', $groupBy = '', $orderBy = '', $limit = '') {
+		if ($foreignTable == $localTable) {
+			$foreignTableAs = $foreignTable . uniqid('_join');
 		}
-		$mmWhere = $local_table ? $local_table . '.uid=' . $mm_table . '.uid_local' : '';
-		$mmWhere .= ($local_table and $foreign_table) ? ' AND ' : '';
-		$tables = ($local_table ? $local_table . ',' : '') . $mm_table;
-		if ($foreign_table) {
-			$mmWhere .= ($foreign_table_as ? $foreign_table_as : $foreign_table) . '.uid=' . $mm_table . '.uid_foreign';
-			$tables .= ',' . $foreign_table . ($foreign_table_as ? ' AS ' . $foreign_table_as : '');
+		$mmWhere = $localTable ? $localTable . '.uid=' . $mmTable . '.uid_local' : '';
+		$mmWhere .= ($localTable and $foreignTable) ? ' AND ' : '';
+		$tables = ($localTable ? $localTable . ',' : '') . $mmTable;
+		if ($foreignTable) {
+			$mmWhere .= ($foreignTableAs ? $foreignTableAs : $foreignTable) . '.uid=' . $mmTable . '.uid_foreign';
+			$tables .= ',' . $foreignTable . ($foreignTableAs ? ' AS ' . $foreignTableAs : '');
 		}
 		return $this->exec_SELECTquery($select, $tables, $mmWhere . ' ' . $whereClause, $groupBy, $orderBy, $limit);
 	}
@@ -360,9 +360,9 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	/**
 	 * Creates and executes a SELECT SQL-statement AND traverse result set and returns array with records in.
 	 *
-	 * @param string $select_fields See exec_SELECTquery()
-	 * @param string $from_table    See exec_SELECTquery()
-	 * @param string $where_clause  See exec_SELECTquery()
+	 * @param string $selectFields  See exec_SELECTquery()
+	 * @param string $fromTable     See exec_SELECTquery()
+	 * @param string $whereClause   See exec_SELECTquery()
 	 * @param string $groupBy       See exec_SELECTquery()
 	 * @param string $orderBy       See exec_SELECTquery()
 	 * @param string $limit         See exec_SELECTquery()
@@ -370,8 +370,8 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 *
 	 * @return array|NULL Array of rows, or NULL in case of SQL error
 	 */
-	public function exec_SELECTgetRows($select_fields, $from_table, $where_clause, $groupBy = '', $orderBy = '', $limit = '', $uidIndexField = '') {
-		$res = $this->exec_SELECTquery($select_fields, $from_table, $where_clause, $groupBy, $orderBy, $limit);
+	public function exec_SELECTgetRows($selectFields, $fromTable, $whereClause, $groupBy = '', $orderBy = '', $limit = '', $uidIndexField = '') {
+		$res = $this->exec_SELECTquery($selectFields, $fromTable, $whereClause, $groupBy, $orderBy, $limit);
 		if ($this->debugOutput) {
 			$this->debug('exec_SELECTquery');
 		}
@@ -398,17 +398,17 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * Creates and executes a SELECT SQL-statement AND gets a result set and returns an array with a single record in.
 	 * LIMIT is automatically set to 1 and can not be overridden.
 	 *
-	 * @param string  $select_fields List of fields to select from the table.
-	 * @param string  $from_table    Table(s) from which to select.
-	 * @param string  $where_clause  Optional additional WHERE clauses put in the end of the query. NOTICE: You must escape values in this argument with $this->fullQuoteStr() yourself!
-	 * @param string  $groupBy       Optional GROUP BY field(s), if none, supply blank string.
-	 * @param string  $orderBy       Optional ORDER BY field(s), if none, supply blank string.
-	 * @param boolean $numIndex      If set, the result will be fetched with sql_fetch_row, otherwise sql_fetch_assoc will be used.
+	 * @param string  $selectFields List of fields to select from the table.
+	 * @param string  $fromTable    Table(s) from which to select.
+	 * @param string  $whereClause  Optional additional WHERE clauses put in the end of the query. NOTICE: You must escape values in this argument with $this->fullQuoteStr() yourself!
+	 * @param string  $groupBy      Optional GROUP BY field(s), if none, supply blank string.
+	 * @param string  $orderBy      Optional ORDER BY field(s), if none, supply blank string.
+	 * @param boolean $numIndex     If set, the result will be fetched with sql_fetch_row, otherwise sql_fetch_assoc will be used.
 	 *
 	 * @return array Single row or NULL if it fails.
 	 */
-	public function exec_SELECTgetSingleRow($select_fields, $from_table, $where_clause, $groupBy = '', $orderBy = '', $numIndex = FALSE) {
-		$res = $this->exec_SELECTquery($select_fields, $from_table, $where_clause, $groupBy, $orderBy, '1');
+	public function exec_SELECTgetSingleRow($selectFields, $fromTable, $whereClause, $groupBy = '', $orderBy = '', $numIndex = FALSE) {
+		$res = $this->exec_SELECTquery($selectFields, $fromTable, $whereClause, $groupBy, $orderBy, '1');
 		if ($this->debugOutput) {
 			$this->debug('exec_SELECTquery');
 		}
@@ -429,7 +429,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 *
 	 * @param string $field Name of the field to use in the COUNT() expression (e.g. '*')
 	 * @param string $table Name of the table to count rows for
-	 * @param string $where (optional) WHERE statement of the query
+	 * @param string $where Optional WHERE statement of the query
 	 *
 	 * @return mixed Number of rows counter (integer) or FALSE if something went wrong (boolean)
 	 */
@@ -472,25 +472,25 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 *
 	 **************************************/
 	/**
-	 * Creates an INSERT SQL-statement for $table from the array with field/value pairs $fields_values.
+	 * Creates an INSERT SQL-statement for $table from the array with field/value pairs $fieldsValues.
 	 *
-	 * @param string  $table           See exec_INSERTquery()
-	 * @param array   $fields_values   See exec_INSERTquery()
-	 * @param boolean $no_quote_fields See fullQuoteArray()
+	 * @param string  $table         See exec_INSERTquery()
+	 * @param array   $fieldsValues  See exec_INSERTquery()
+	 * @param boolean $noQuoteFields See fullQuoteArray()
 	 *
-	 * @return string Full SQL query for INSERT (unless $fields_values does not contain any elements in which case it will be FALSE)
+	 * @return string Full SQL query for INSERT (unless $fieldsValues does not contain any elements in which case it will be FALSE)
 	 */
-	public function INSERTquery($table, $fields_values, $no_quote_fields = FALSE) {
+	public function INSERTquery($table, $fieldsValues, $noQuoteFields = FALSE) {
 		// Table and fieldnames should be "SQL-injection-safe" when supplied to this
 		// function (contrary to values in the arrays which may be insecure).
-		if (is_array($fields_values) && count($fields_values)) {
+		if (is_array($fieldsValues) && count($fieldsValues)) {
 			foreach ($this->preProcessHookObjects as $hookObject) {
-				$hookObject->INSERTquery_preProcessAction($table, $fields_values, $no_quote_fields, $this);
+				$hookObject->INSERTquery_preProcessAction($table, $fieldsValues, $noQuoteFields, $this);
 			}
 			// Quote and escape values
-			$fields_values = $this->fullQuoteArray($fields_values, $table, $no_quote_fields);
+			$fieldsValues = $this->fullQuoteArray($fieldsValues, $table, $noQuoteFields);
 			// Build query
-			$query = 'INSERT INTO ' . $table . ' (' . implode(',', array_keys($fields_values)) . ') VALUES ' . '(' . implode(',', $fields_values) . ')';
+			$query = 'INSERT INTO ' . $table . ' (' . implode(',', array_keys($fieldsValues)) . ') VALUES ' . '(' . implode(',', $fieldsValues) . ')';
 			// Return query
 			if ($this->debugOutput || $this->store_lastBuiltQuery) {
 				$this->debug_lastBuiltQuery = $query;
@@ -502,27 +502,27 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	/**
 	 * Creates an INSERT SQL-statement for $table with multiple rows.
 	 *
-	 * @param string  $table           Table name
-	 * @param array   $fields          Field names
-	 * @param array   $rows            Table rows. Each row should be an array with field values mapping to $fields
-	 * @param boolean $no_quote_fields See fullQuoteArray()
+	 * @param string  $table         Table name
+	 * @param array   $fields        Field names
+	 * @param array   $rows          Table rows. Each row should be an array with field values mapping to $fields
+	 * @param boolean $noQuoteFields See fullQuoteArray()
 	 *
 	 * @return string Full SQL query for INSERT (unless $rows does not contain any elements in which case it will be FALSE)
 	 */
-	public function INSERTmultipleRows($table, array $fields, array $rows, $no_quote_fields = FALSE) {
+	public function INSERTmultipleRows($table, array $fields, array $rows, $noQuoteFields = FALSE) {
 		// Table and fieldnames should be "SQL-injection-safe" when supplied to this
 		// function (contrary to values in the arrays which may be insecure).
 		if (count($rows)) {
 			foreach ($this->preProcessHookObjects as $hookObject) {
 				/** @var $hookObject PreProcessQueryHookInterface */
-				$hookObject->INSERTmultipleRows_preProcessAction($table, $fields, $rows, $no_quote_fields, $this);
+				$hookObject->INSERTmultipleRows_preProcessAction($table, $fields, $rows, $noQuoteFields, $this);
 			}
 			// Build query
 			$query = 'INSERT INTO ' . $table . ' (' . implode(', ', $fields) . ') VALUES ';
 			$rowSQL = array();
 			foreach ($rows as $row) {
 				// Quote and escape values
-				$row = $this->fullQuoteArray($row, $table, $no_quote_fields);
+				$row = $this->fullQuoteArray($row, $table, $noQuoteFields);
 				$rowSQL[] = '(' . implode(', ', $row) . ')';
 			}
 			$query .= implode(', ', $rowSQL);
@@ -535,29 +535,29 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	}
 
 	/**
-	 * Creates an UPDATE SQL-statement for $table where $where-clause (typ. 'uid=...') from the array with field/value pairs $fields_values.
+	 * Creates an UPDATE SQL-statement for $table where $where-clause (typ. 'uid=...') from the array with field/value pairs $fieldsValues.
 	 *
 	 *
 	 * @param string  $table         See exec_UPDATEquery()
 	 * @param string  $where         See exec_UPDATEquery()
-	 * @param array   $fields_values See exec_UPDATEquery()
-	 * @param boolean $no_quote_fields
+	 * @param array   $fieldsValues  See exec_UPDATEquery()
+	 * @param boolean $noQuoteFields See fullQuoteArray()
 	 *
 	 * @return string Full SQL query for UPDATE*
 	 * @throws \InvalidArgumentException
 	 */
-	public function UPDATEquery($table, $where, $fields_values, $no_quote_fields = FALSE) {
+	public function UPDATEquery($table, $where, $fieldsValues, $noQuoteFields = FALSE) {
 		// Table and fieldnames should be "SQL-injection-safe" when supplied to this
 		// function (contrary to values in the arrays which may be insecure).
 		if (is_string($where)) {
 			foreach ($this->preProcessHookObjects as $hookObject) {
 				/** @var $hookObject PreProcessQueryHookInterface */
-				$hookObject->UPDATEquery_preProcessAction($table, $where, $fields_values, $no_quote_fields, $this);
+				$hookObject->UPDATEquery_preProcessAction($table, $where, $fieldsValues, $noQuoteFields, $this);
 			}
 			$fields = array();
-			if (is_array($fields_values) && count($fields_values)) {
+			if (is_array($fieldsValues) && count($fieldsValues)) {
 				// Quote and escape values
-				$nArr = $this->fullQuoteArray($fields_values, $table, $no_quote_fields, TRUE);
+				$nArr = $this->fullQuoteArray($fieldsValues, $table, $noQuoteFields, TRUE);
 				foreach ($nArr as $k => $v) {
 					$fields[] = $k . '=' . $v;
 				}
@@ -602,23 +602,23 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	/**
 	 * Creates a SELECT SQL-statement
 	 *
-	 * @param string $select_fields See exec_SELECTquery()
-	 * @param string $from_table    See exec_SELECTquery()
-	 * @param string $where_clause  See exec_SELECTquery()
-	 * @param string $groupBy       See exec_SELECTquery()
-	 * @param string $orderBy       See exec_SELECTquery()
-	 * @param string $limit         See exec_SELECTquery()
+	 * @param string $selectFields See exec_SELECTquery()
+	 * @param string $fromTable    See exec_SELECTquery()
+	 * @param string $whereClause  See exec_SELECTquery()
+	 * @param string $groupBy      See exec_SELECTquery()
+	 * @param string $orderBy      See exec_SELECTquery()
+	 * @param string $limit        See exec_SELECTquery()
 	 *
 	 * @return string Full SQL query for SELECT
 	 */
-	public function SELECTquery($select_fields, $from_table, $where_clause, $groupBy = '', $orderBy = '', $limit = '') {
+	public function SELECTquery($selectFields, $fromTable, $whereClause, $groupBy = '', $orderBy = '', $limit = '') {
 		foreach ($this->preProcessHookObjects as $hookObject) {
 			/** @var $hookObject PreProcessQueryHookInterface */
-			$hookObject->SELECTquery_preProcessAction($select_fields, $from_table, $where_clause, $groupBy, $orderBy, $limit, $this);
+			$hookObject->SELECTquery_preProcessAction($selectFields, $fromTable, $whereClause, $groupBy, $orderBy, $limit, $this);
 		}
 		// Table and fieldnames should be "SQL-injection-safe" when supplied to this function
 		// Build basic query
-		$query = 'SELECT ' . $select_fields . ' FROM ' . $from_table . (strlen($where_clause) > 0 ? ' WHERE ' . $where_clause : '');
+		$query = 'SELECT ' . $selectFields . ' FROM ' . $fromTable . (strlen($whereClause) > 0 ? ' WHERE ' . $whereClause : '');
 		// Group by
 		$query .= strlen($groupBy) > 0 ? ' GROUP BY ' . $groupBy : '';
 		// Order by
@@ -636,16 +636,16 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * Creates a SELECT SQL-statement to be used as subquery within another query.
 	 * BEWARE: This method should not be overriden within DBAL to prevent quoting from happening.
 	 *
-	 * @param string $select_fields List of fields to select from the table.
-	 * @param string $from_table    Table from which to select.
-	 * @param string $where_clause  Conditional WHERE statement
+	 * @param string $selectFields List of fields to select from the table.
+	 * @param string $fromTable    Table from which to select.
+	 * @param string $whereClause  Conditional WHERE statement
 	 *
 	 * @return string Full SQL query for SELECT
 	 */
-	public function SELECTsubquery($select_fields, $from_table, $where_clause) {
+	public function SELECTsubquery($selectFields, $fromTable, $whereClause) {
 		// Table and fieldnames should be "SQL-injection-safe" when supplied to this function
 		// Build basic query:
-		$query = 'SELECT ' . $select_fields . ' FROM ' . $from_table . (strlen($where_clause) > 0 ? ' WHERE ' . $where_clause : '');
+		$query = 'SELECT ' . $selectFields . ' FROM ' . $fromTable . (strlen($whereClause) > 0 ? ' WHERE ' . $whereClause : '');
 		// Return query
 		if ($this->debugOutput || $this->store_lastBuiltQuery) {
 			$this->debug_lastBuiltQuery = $query;
@@ -738,22 +738,22 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	/**
 	 * Creates a SELECT prepared SQL statement.
 	 *
-	 * @param string $select_fields    See exec_SELECTquery()
-	 * @param string $from_table       See exec_SELECTquery()
-	 * @param string $where_clause     See exec_SELECTquery()
-	 * @param string $groupBy          See exec_SELECTquery()
-	 * @param string $orderBy          See exec_SELECTquery()
-	 * @param string $limit            See exec_SELECTquery()
-	 * @param array  $input_parameters An array of values with as many elements as there are bound parameters in the SQL statement being executed. All values are treated as \TYPO3\CMS\Core\Database\PreparedStatement::PARAM_AUTOTYPE.
+	 * @param string $selectFields    See exec_SELECTquery()
+	 * @param string $fromTable       See exec_SELECTquery()
+	 * @param string $whereClause     See exec_SELECTquery()
+	 * @param string $groupBy         See exec_SELECTquery()
+	 * @param string $orderBy         See exec_SELECTquery()
+	 * @param string $limit           See exec_SELECTquery()
+	 * @param array  $inputParameters An array of values with as many elements as there are bound parameters in the SQL statement being executed. All values are treated as \TYPO3\CMS\Core\Database\PreparedStatement::PARAM_AUTOTYPE.
 	 *
 	 * @return \TYPO3\CMS\Core\Database\PreparedStatement Prepared statement
 	 */
-	public function prepare_SELECTquery($select_fields, $from_table, $where_clause, $groupBy = '', $orderBy = '', $limit = '', array $input_parameters = array()) {
-		$query = $this->SELECTquery($select_fields, $from_table, $where_clause, $groupBy, $orderBy, $limit);
+	public function prepare_SELECTquery($selectFields, $fromTable, $whereClause, $groupBy = '', $orderBy = '', $limit = '', array $inputParameters = array()) {
+		$query = $this->SELECTquery($selectFields, $fromTable, $whereClause, $groupBy, $orderBy, $limit);
 		/** @var $preparedStatement \TYPO3\CMS\Core\Database\PreparedStatement */
-		$preparedStatement = GeneralUtility::makeInstance('TYPO3\\CMS\\Core\\Database\\PreparedStatement', $query, $from_table, array());
+		$preparedStatement = GeneralUtility::makeInstance('TYPO3\\CMS\\Core\\Database\\PreparedStatement', $query, $fromTable, array());
 		// Bind values to parameters
-		foreach ($input_parameters as $key => $value) {
+		foreach ($inputParameters as $key => $value) {
 			$preparedStatement->bindValue($key, $value, \TYPO3\CMS\Core\Database\PreparedStatement::PARAM_AUTOTYPE);
 		}
 		// Return prepared statement
@@ -763,13 +763,13 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	/**
 	 * Creates a SELECT prepared SQL statement based on input query parts array
 	 *
-	 * @param array $queryParts       Query parts array
-	 * @param array $input_parameters An array of values with as many elements as there are bound parameters in the SQL statement being executed. All values are treated as \TYPO3\CMS\Core\Database\PreparedStatement::PARAM_AUTOTYPE.
+	 * @param array $queryParts      Query parts array
+	 * @param array $inputParameters An array of values with as many elements as there are bound parameters in the SQL statement being executed. All values are treated as \TYPO3\CMS\Core\Database\PreparedStatement::PARAM_AUTOTYPE.
 	 *
 	 * @return \TYPO3\CMS\Core\Database\PreparedStatement Prepared statement
 	 */
-	public function prepare_SELECTqueryArray(array $queryParts, array $input_parameters = array()) {
-		return $this->prepare_SELECTquery($queryParts['SELECT'], $queryParts['FROM'], $queryParts['WHERE'], $queryParts['GROUPBY'], $queryParts['ORDERBY'], $queryParts['LIMIT'], $input_parameters);
+	public function prepare_SELECTqueryArray(array $queryParts, array $inputParameters = array()) {
+		return $this->prepare_SELECTquery($queryParts['SELECT'], $queryParts['FROM'], $queryParts['WHERE'], $queryParts['GROUPBY'], $queryParts['ORDERBY'], $queryParts['LIMIT'], $inputParameters);
 	}
 
 	/**
@@ -1012,6 +1012,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * using exec_SELECTquery() and similar methods instead.
 	 *
 	 * @param string $query Query to execute
+	 *
 	 * @return boolean|\mysqli_result|object MySQLi result object / DBAL object
 	 */
 	public function sql_query($query) {
@@ -1164,7 +1165,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 		// mysql_field_type compatibility map
 		// taken from: http://www.php.net/manual/en/mysqli-result.fetch-field-direct.php#89117
 		// Constant numbers see http://php.net/manual/en/mysqli.constants.php
-		$mysql_data_type_hash = array(
+		$mysqlDataTypeHash = array(
 			1=>'tinyint',
 			2=>'smallint',
 			3=>'int',
@@ -1188,7 +1189,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			if ($metaInfo === FALSE) {
 				return FALSE;
 			}
-			return $mysql_data_type_hash[$metaInfo->type];
+			return $mysqlDataTypeHash[$metaInfo->type];
 		} else {
 			return FALSE;
 		}
@@ -1249,10 +1250,10 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			$this->setSqlMode();
 		} else {
 			// @TODO: This should raise an exception. Would be useful especially to work during installation.
-			$error_msg = $this->link->connect_error;
+			$errorMsg = $this->link->connect_error;
 			$this->link = NULL;
 			GeneralUtility::sysLog(
-				'Could not connect to MySQL server ' . $host . ' with user ' . $username . ': ' . $error_msg,
+				'Could not connect to MySQL server ' . $host . ' with user ' . $username . ': ' . $errorMsg,
 				'Core',
 				GeneralUtility::SYSLOG_SEVERITY_FATAL
 			);
@@ -1334,14 +1335,14 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			$this->connectDB();
 		}
 		$dbArr = array();
-		$db_list = $this->link->query("SELECT SCHEMA_NAME FROM information_schema.SCHEMATA");
-		if ($db_list === FALSE) {
+		$dbList = $this->link->query("SELECT SCHEMA_NAME FROM information_schema.SCHEMATA");
+		if ($dbList === FALSE) {
 			throw new \RuntimeException(
 				'MySQL Error: Cannot get tablenames: "' . $this->sql_error() . '"!',
 				1378457171
 			);
 		} else {
-			while ($row = $db_list->fetch_object()) {
+			while ($row = $dbList->fetch_object()) {
 				try {
 					$this->setDatabaseName($row->SCHEMA_NAME);
 					if ($this->sql_select_db()) {
@@ -1369,12 +1370,12 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			$this->connectDB();
 		}
 		$whichTables = array();
-		$tables_result = $this->link->query('SHOW TABLE STATUS FROM `' . $this->databaseName . '`');
-		if ($tables_result !== FALSE) {
-			while ($theTable = $tables_result->fetch_assoc()) {
+		$tablesResult = $this->link->query('SHOW TABLE STATUS FROM `' . $this->databaseName . '`');
+		if ($tablesResult !== FALSE) {
+			while ($theTable = $tablesResult->fetch_assoc()) {
 				$whichTables[$theTable['Name']] = $theTable;
 			}
-			$tables_result->free();
+			$tablesResult->free();
 		}
 		return $whichTables;
 	}
@@ -1396,12 +1397,12 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			$this->connectDB();
 		}
 		$output = array();
-		$columns_res = $this->link->query('SHOW COLUMNS FROM `' . $tableName . '`');
-		if ($columns_res !== FALSE) {
-			while ($fieldRow = $columns_res->fetch_assoc()) {
+		$columnsRes = $this->link->query('SHOW COLUMNS FROM `' . $tableName . '`');
+		if ($columnsRes !== FALSE) {
+			while ($fieldRow = $columnsRes->fetch_assoc()) {
 				$output[$fieldRow['Field']] = $fieldRow;
 			}
-			$columns_res->free();
+			$columnsRes->free();
 		}
 		return $output;
 	}
@@ -1446,12 +1447,12 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			$this->connectDB();
 		}
 		$output = array();
-		$columns_res = $this->link->query('SHOW CHARACTER SET');
-		if ($columns_res !== FALSE) {
-			while ($row = $columns_res->fetch_assoc()) {
+		$columnsRes = $this->link->query('SHOW CHARACTER SET');
+		if ($columnsRes !== FALSE) {
+			while ($row = $columnsRes->fetch_assoc()) {
 				$output[$row['Charset']] = $row;
 			}
-			$columns_res->free();
+			$columnsRes->free();
 		}
 		return $output;
 	}
@@ -1768,7 +1769,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 *
 	 * @param boolean|\mysqli_result|object MySQLi result object / DBAL object
 	 *
-	 * @return boolean TRUE if the  record set is valid, FALSE otherwise
+	 * @return boolean TRUE if the record set is valid, FALSE otherwise
 	 * @todo Define visibility
 	 */
 	public function debug_check_recordset($res) {
@@ -1812,13 +1813,13 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 *
 	 * TODO: Feature is not DBAL-compliant
 	 *
-	 * @param string  $query      SQL query
-	 * @param string  $from_table Table(s) from which to select. This is what comes right after "FROM ...". Required value.
-	 * @param integer $row_count  Number of resulting rows
+	 * @param string  $query     SQL query
+	 * @param string  $fromTable Table(s) from which to select. This is what comes right after "FROM ...". Required value.
+	 * @param integer $rowCount  Number of resulting rows
 	 *
 	 * @return boolean TRUE if explain was run, FALSE otherwise
 	 */
-	protected function explain($query, $from_table, $row_count) {
+	protected function explain($query, $fromTable, $rowCount) {
 		$debugAllowedForIp = GeneralUtility::cmpIP(
 			GeneralUtility::getIndpEnv('REMOTE_ADDR'),
 			$GLOBALS['TYPO3_CONF_VARS']['SYS']['devIPmask']
@@ -1837,32 +1838,32 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 		}
 		$error = $this->sql_error();
 		$trail = DebugUtility::debugTrail();
-		$explain_tables = array();
-		$explain_output = array();
+		$explainTables = array();
+		$explainOutput = array();
 		$res = $this->sql_query('EXPLAIN ' . $query, $this->link);
 		if (is_a($res, '\\mysqli_result')) {
 			while ($tempRow = $this->sql_fetch_assoc($res)) {
-				$explain_output[] = $tempRow;
-				$explain_tables[] = $tempRow['table'];
+				$explainOutput[] = $tempRow;
+				$explainTables[] = $tempRow['table'];
 			}
 			$this->sql_free_result($res);
 		}
-		$indices_output = array();
+		$indicesOutput = array();
 		// Notice: Rows are skipped if there is only one result, or if no conditions are set
 		if (
-			$explain_output[0]['rows'] > 1
-			|| GeneralUtility::inList('ALL', $explain_output[0]['type'])
+			$explainOutput[0]['rows'] > 1
+			|| GeneralUtility::inList('ALL', $explainOutput[0]['type'])
 		) {
 			// Only enable output if it's really useful
 			$debug = TRUE;
-			foreach ($explain_tables as $table) {
+			foreach ($explainTables as $table) {
 				$tableRes = $this->sql_query('SHOW TABLE STATUS LIKE \'' . $table . '\'');
 				$isTable = $this->sql_num_rows($tableRes);
 				if ($isTable) {
 					$res = $this->sql_query('SHOW INDEX FROM ' . $table, $this->link);
 					if (is_a($res, '\\mysqli_result')) {
 						while ($tempRow = $this->sql_fetch_assoc($res)) {
-							$indices_output[] = $tempRow;
+							$indicesOutput[] = $tempRow;
 						}
 						$this->sql_free_result($res);
 					}
@@ -1877,18 +1878,18 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 				$data = array();
 				$data['query'] = $query;
 				$data['trail'] = $trail;
-				$data['row_count'] = $row_count;
+				$data['row_count'] = $rowCount;
 				if ($error) {
 					$data['error'] = $error;
 				}
-				if (count($explain_output)) {
-					$data['explain'] = $explain_output;
+				if (count($explainOutput)) {
+					$data['explain'] = $explainOutput;
 				}
-				if (count($indices_output)) {
-					$data['indices'] = $indices_output;
+				if (count($indicesOutput)) {
+					$data['indices'] = $indicesOutput;
 				}
 				if ($explainMode == 1) {
-					DebugUtility::debug($data, 'Tables: ' . $from_table, 'DB SQL EXPLAIN');
+					DebugUtility::debug($data, 'Tables: ' . $fromTable, 'DB SQL EXPLAIN');
 				} elseif ($explainMode == 2) {
 					$GLOBALS['TT']->setTSselectQuery($data);
 				}
