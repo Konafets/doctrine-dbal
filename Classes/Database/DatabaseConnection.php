@@ -26,6 +26,8 @@ namespace TYPO3\DoctrineDbal\Database;
  *
  *  This copyright notice MUST APPEAR in all copies of the script!
  ***************************************************************/
+use TYPO3\CMS\Core\Utility\DebugUtility;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
  * Contains the class "DatabaseConnection" containing functions for building SQL queries
@@ -749,7 +751,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	public function prepare_SELECTquery($select_fields, $from_table, $where_clause, $groupBy = '', $orderBy = '', $limit = '', array $input_parameters = array()) {
 		$query = $this->SELECTquery($select_fields, $from_table, $where_clause, $groupBy, $orderBy, $limit);
 		/** @var $preparedStatement \TYPO3\CMS\Core\Database\PreparedStatement */
-		$preparedStatement = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('TYPO3\\CMS\\Core\\Database\\PreparedStatement', $query, $from_table, array());
+		$preparedStatement = GeneralUtility::makeInstance('TYPO3\\CMS\\Core\\Database\\PreparedStatement', $query, $from_table, array());
 		// Bind values to parameters
 		foreach ($input_parameters as $key => $value) {
 			$preparedStatement->bindValue($key, $value, \TYPO3\CMS\Core\Database\PreparedStatement::PARAM_AUTOTYPE);
@@ -904,7 +906,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * @see cleanIntArray()
 	 */
 	public function cleanIntList($list) {
-		return implode(',', \TYPO3\CMS\Core\Utility\GeneralUtility::intExplode(',', $list));
+		return implode(',', GeneralUtility::intExplode(',', $list));
 	}
 
 	/**
@@ -1249,10 +1251,10 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			// @TODO: This should raise an exception. Would be useful especially to work during installation.
 			$error_msg = $this->link->connect_error;
 			$this->link = NULL;
-			\TYPO3\CMS\Core\Utility\GeneralUtility::sysLog(
+			GeneralUtility::sysLog(
 				'Could not connect to MySQL server ' . $host . ' with user ' . $username . ': ' . $error_msg,
 				'Core',
-				\TYPO3\CMS\Core\Utility\GeneralUtility::SYSLOG_SEVERITY_FATAL
+				GeneralUtility::SYSLOG_SEVERITY_FATAL
 			);
 		}
 		return $this->link;
@@ -1268,13 +1270,13 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 		if ($resource) {
 			$result = $this->sql_fetch_row($resource);
 			if (isset($result[0]) && $result[0] && strpos($result[0], 'NO_BACKSLASH_ESCAPES') !== FALSE) {
-				$modes = array_diff(\TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $result[0]), array('NO_BACKSLASH_ESCAPES'));
+				$modes = array_diff(GeneralUtility::trimExplode(',', $result[0]), array('NO_BACKSLASH_ESCAPES'));
 				$query = 'SET sql_mode=\'' . $this->link->real_escape_string(implode(',', $modes)) . '\';';
 				$this->sql_query($query);
-				\TYPO3\CMS\Core\Utility\GeneralUtility::sysLog(
+				GeneralUtility::sysLog(
 					'NO_BACKSLASH_ESCAPES could not be removed from SQL mode: ' . $this->sql_error(),
 					'Core',
-					\TYPO3\CMS\Core\Utility\GeneralUtility::SYSLOG_SEVERITY_ERROR
+					GeneralUtility::SYSLOG_SEVERITY_ERROR
 				);
 			}
 		}
@@ -1293,7 +1295,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 		}
 
 		if ($TYPO3_db) {
-			\TYPO3\CMS\Core\Utility\GeneralUtility::deprecationLog(
+			GeneralUtility::deprecationLog(
 				'DatabaseConnection->sql_select_db() should be called without arguments.' .
 					' Use the setDatabaseName() before. Will be removed two versions after 6.1.'
 			);
@@ -1303,10 +1305,10 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 
 		$ret = $this->link->select_db($TYPO3_db);
 		if (!$ret) {
-			\TYPO3\CMS\Core\Utility\GeneralUtility::sysLog(
+			GeneralUtility::sysLog(
 				'Could not select MySQL database ' . $TYPO3_db . ': ' . $this->sql_error(),
 				'Core',
-				\TYPO3\CMS\Core\Utility\GeneralUtility::SYSLOG_SEVERITY_FATAL
+				GeneralUtility::SYSLOG_SEVERITY_FATAL
 			);
 		}
 		return $ret;
@@ -1637,7 +1639,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 		$this->postProcessHookObjects = array();
 		if (is_array($GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['t3lib/class.t3lib_db.php']['queryProcessors'])) {
 			foreach ($GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['t3lib/class.t3lib_db.php']['queryProcessors'] as $classRef) {
-				$hookObject = \TYPO3\CMS\Core\Utility\GeneralUtility::getUserObj($classRef);
+				$hookObject = GeneralUtility::getUserObj($classRef);
 				if (!(
 					$hookObject instanceof \TYPO3\CMS\Core\Database\PreProcessQueryHookInterface
 					|| $hookObject instanceof \TYPO3\CMS\Core\Database\PostProcessQueryHookInterface
@@ -1705,7 +1707,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * @param string|null $db       Database
 	 */
 	protected function handleDeprecatedConnectArguments($host = NULL, $username = NULL, $password = NULL, $db = NULL) {
-		\TYPO3\CMS\Core\Utility\GeneralUtility::deprecationLog(
+		GeneralUtility::deprecationLog(
 			'DatabaseConnection->sql_pconnect() and DatabaseConnection->connectDB() should be ' .
 			'called without arguments. Use the setters instead.'
 		);
@@ -1746,12 +1748,12 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	public function debug($func, $query = '') {
 		$error = $this->sql_error();
 		if ($error || (int) $this->debugOutput === 2) {
-			\TYPO3\CMS\Core\Utility\DebugUtility::debug(
+			DebugUtility::debug(
 				array(
 					'caller' => 'TYPO3\\CMS\\Core\\Database\\DatabaseConnection::' . $func,
 					'ERROR' => $error,
 					'lastBuiltQuery' => $query ? $query : $this->debug_lastBuiltQuery,
-					'debug_backtrace' => \TYPO3\CMS\Core\Utility\DebugUtility::debugTrail()
+					'debug_backtrace' => DebugUtility::debugTrail()
 				),
 				$func,
 				is_object($GLOBALS['error']) && @is_callable(array($GLOBALS['error'], 'debug'))
@@ -1784,10 +1786,10 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			}
 		}
 		$msg .= ': function TYPO3\\CMS\\Core\\Database\\DatabaseConnection->' . $trace[0]['function'] . ' called from file ' . substr($trace[0]['file'], (strlen(PATH_site) + 2)) . ' in line ' . $trace[0]['line'];
-		\TYPO3\CMS\Core\Utility\GeneralUtility::sysLog(
+		GeneralUtility::sysLog(
 			$msg . '. Use a devLog extension to get more details.',
 			'Core/t3lib_db',
-			\TYPO3\CMS\Core\Utility\GeneralUtility::SYSLOG_SEVERITY_ERROR
+			GeneralUtility::SYSLOG_SEVERITY_ERROR
 		);
 		// Send to devLog if enabled
 		if (TYPO3_DLOG) {
@@ -1798,7 +1800,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			if ($this->debug_lastBuiltQuery) {
 				$debugLogData = array('SQL Query' => $this->debug_lastBuiltQuery) + $debugLogData;
 			}
-			\TYPO3\CMS\Core\Utility\GeneralUtility::devLog($msg . '.', 'Core/t3lib_db', 3, $debugLogData);
+			GeneralUtility::devLog($msg . '.', 'Core/t3lib_db', 3, $debugLogData);
 		}
 		return FALSE;
 	}
@@ -1817,8 +1819,8 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * @return boolean TRUE if explain was run, FALSE otherwise
 	 */
 	protected function explain($query, $from_table, $row_count) {
-		$debugAllowedForIp = \TYPO3\CMS\Core\Utility\GeneralUtility::cmpIP(
-			\TYPO3\CMS\Core\Utility\GeneralUtility::getIndpEnv('REMOTE_ADDR'),
+		$debugAllowedForIp = GeneralUtility::cmpIP(
+			GeneralUtility::getIndpEnv('REMOTE_ADDR'),
 			$GLOBALS['TYPO3_CONF_VARS']['SYS']['devIPmask']
 		);
 		if (
@@ -1834,7 +1836,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			return FALSE;
 		}
 		$error = $this->sql_error();
-		$trail = \TYPO3\CMS\Core\Utility\DebugUtility::debugTrail();
+		$trail = DebugUtility::debugTrail();
 		$explain_tables = array();
 		$explain_output = array();
 		$res = $this->sql_query('EXPLAIN ' . $query, $this->link);
@@ -1849,7 +1851,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 		// Notice: Rows are skipped if there is only one result, or if no conditions are set
 		if (
 			$explain_output[0]['rows'] > 1
-			|| \TYPO3\CMS\Core\Utility\GeneralUtility::inList('ALL', $explain_output[0]['type'])
+			|| GeneralUtility::inList('ALL', $explain_output[0]['type'])
 		) {
 			// Only enable output if it's really useful
 			$debug = TRUE;
@@ -1886,7 +1888,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 					$data['indices'] = $indices_output;
 				}
 				if ($explainMode == 1) {
-					\TYPO3\CMS\Core\Utility\DebugUtility::debug($data, 'Tables: ' . $from_table, 'DB SQL EXPLAIN');
+					DebugUtility::debug($data, 'Tables: ' . $from_table, 'DB SQL EXPLAIN');
 				} elseif ($explainMode == 2) {
 					$GLOBALS['TT']->setTSselectQuery($data);
 				}
