@@ -1253,7 +1253,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			$errorMsg = $this->link->connect_error;
 			$this->link = NULL;
 			GeneralUtility::sysLog(
-				'Could not connect to MySQL server ' . $host . ' with user ' . $username . ': ' . $errorMsg,
+				'Could not connect to MySQL server ' . $host . ' with user ' . $this->databaseUsername . ': ' . $errorMsg,
 				'Core',
 				GeneralUtility::SYSLOG_SEVERITY_FATAL
 			);
