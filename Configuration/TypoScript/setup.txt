@@ -1,0 +1,11 @@
+# Module configuration
+module.tx_doctrinedbal {
+	persistence {
+		storagePid = {$module.tx_doctrinedbal.persistence.storagePid}
+	}
+	view {
+		templateRootPath = {$module.tx_doctrinedbal.view.templateRootPath}
+		partialRootPath = {$module.tx_doctrinedbal.view.partialRootPath}
+		layoutRootPath = {$module.tx_doctrinedbal.view.layoutRootPath}
+	}
+}
