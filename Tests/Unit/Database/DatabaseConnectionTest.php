@@ -180,165 +180,208 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	}
 
 	/**
-	 * @test
+	 * Data Provider for fullQuoteStrReturnsQuotedString()
 	 *
-	 * @return void
-	 */
-	public function fullQuoteStrReturnsNull() {
-		$this->assertEquals('NULL', $this->subject->fullQuoteStr(NULL, $this->testTable, TRUE));
-	}
-
-	/**
-	 * @test
+	 * @see fullQuoteStrReturnsQuotedString()
 	 *
-	 * @return void
+	 * @return array
 	 */
-	public function fullQuoteStrReturnsEmptyQuotesWhenStringIsNullAndAllowNullIsFalse() {
-		$this->assertEquals('\'\'', $this->subject->fullQuoteStr(NULL, $this->testTable));
-	}
-
-	/**
-	 * @test
-	 *
-	 * @return void
-	 */
-	public function fullQuoteStrReturnsQuotesString() {
-		$this->assertEquals('\'Foo\'', $this->subject->fullQuoteStr('Foo', $this->testTable));
-	}
-
-	/**
-	 * @test
-	 *
-	 * @return void
-	 */
-	public function fullQuoteStrReturnsQuotesStringWithInternalQuote() {
-		$this->assertEquals('\'It\\\'s me\'', $this->subject->fullQuoteStr('It\'s me', $this->testTable));
-	}
-
-	/**
-	 * @test
-	 *
-	 * @return void
-	 */
-	public function fullQuoteStrQuotesDoubleQuotesCorrectly() {
-		$string = '"Hello"';
-		$this->assertSame('\'\\"Hello\\"\'', $this->subject->fullQuoteStr($string, $this->testTable));
-	}
-
-	/**
-	 * @test
-	 *
-	 * @return void
-	 */
-	public function fullQuoteStrQuotesSingleQuotesCorrectly() {
-		$string = "'Hello'";
-		$this->assertSame("'\\'Hello\\''", $this->subject->fullQuoteStr($string, $this->testTable));
-	}
-
-	/**
-	 * @test
-	 *
-	 * @return void
-	 */
-	public function fullQuoteStrQuotesSlashesCorrectly() {
-		$string = '/var/log/syslog.log';
-		$this->assertSame('\'/var/log/syslog.log\'', $this->subject->fullQuoteStr($string, $this->testTable));
-	}
-
-	/**
-	 * @test
-	 *
-	 * @return void
-	 */
-	public function fullQuoteStrQuotesBackSlashesCorrectly() {
-		$string = '\var\log\syslog.log';
-		$this->assertSame('\'\\\var\\\log\\\syslog.log\'', $this->subject->fullQuoteStr($string, $this->testTable));
-	}
-
-	/**
-	 * @test
-	 *
-	 * @return void
-	 */
-	public function fullQuoteArrayReturnsNull() {
-		$array = array(NULL, NULL);
-		$result = $this->subject->fullQuoteArray($array, $this->testTable, FALSE, TRUE);
-		for ($i = 0; $i < count($result); $i++) {
-			$this->assertSame('NULL', $result[$i]);
-		}
-	}
-
-	/**
-	 * @test
-	 *
-	 * @return void
-	 */
-	public function fullQuoteArrayReturnsEmptyQuotesWhenStringIsNullAndAllowNullIsFalse() {
-		$array = array(NULL, NULL);
-		$result = $this->subject->fullQuoteArray($array, $this->testTable);
-		for ($i = 0; $i < count($result); $i++) {
-			$this->assertSame('\'\'', $result[$i]);
-		}
-	}
-
-	/**
-	 * @test
-	 *
-	 * @return void
-	 */
-	public function fullQuoteArrayReturnsQuotesString() {
-		$array = array('Foo', 'Bar');
-		$result = $this->subject->fullQuoteArray($array, $this->testTable);
-		$this->assertSame('\'Foo\'', $result[0]);
-		$this->assertSame('\'Bar\'', $result[1]);
-	}
-
-	/**
-	 * @test
-	 *
-	 * @return void
-	 */
-	public function fullQuoteArrayReturnsQuotesStringWithInternalQuote() {
-		$array = array('Hey!', 'It\'s me');
-		$result = $this->subject->fullQuoteArray($array, $this->testTable);
-		$this->assertSame('\'Hey!\'', $result[0]);
-		$this->assertSame('\'It\\\'s me\'', $result[1]);
-	}
-
-	/**
-	 * @test
-	 *
-	 * @return void
-	 */
-	public function fullQuoteArrayReturnsNonQuotesStringFromArray() {
-		$array = array(
-				'First' => 'Hey!',
-				'Second' => 'It\'s me',
-				'Third' => 'O\' Reily'
+	public function fullQuoteStrReturnsQuotedStringDataProvider() {
+		return array(
+			'NULL string with ReturnNull is allowed' => array(array(NULL,TRUE), 'NULL'),
+			'NULL string with ReturnNull is false' => array(array(NULL,FALSE), '\'\''),
+			'Normal string' => array(array('Foo',FALSE), '\'Foo\''),
+			'Single quoted string' => array(array("'Hello'",FALSE), "'\\'Hello\\''"),
+			'Double quoted string' => array(array('"Hello"',FALSE), '\'\\"Hello\\"\''),
+			'String with internal single tick' => array(array('It\'s me',FALSE), '\'It\\\'s me\''),
+			'Slashes' => array(array('/var/log/syslog.log',FALSE), '\'/var/log/syslog.log\''),
+			'Backslashes' => array(array('\var\log\syslog.log',FALSE), '\'\\\var\\\log\\\syslog.log\''),
 		);
-		$noQuote = array('First', 'Third');
-		$result = $this->subject->fullQuoteArray($array, $this->testTable, $noQuote);
-		$this->assertSame('Hey!', $result['First']);
-		$this->assertSame('\'It\\\'s me\'', $result['Second']);
-		$this->assertSame('O\' Reily', $result['Third']);
 	}
 
 	/**
 	 * @test
+	 * @dataProvider fullQuoteStrReturnsQuotedStringDataProvider
+	 *
+	 * @param string $values
+	 * @param string $expectedResult
 	 *
 	 * @return void
 	 */
-	public function fullQuoteArrayReturnsNonQuotesStringFromString() {
-		$array = array(
-				'First' => 'Hey!',
-				'Second' => 'It\'s me',
-				'Third' => 'O\' Reily'
+	public function fullQuoteStrReturnsQuotedString($values, $expectedResult) {
+		$quotedStr = $this->subject->fullQuoteStr($values[0], $this->testTable, $values[1]);
+		$this->assertEquals($expectedResult, $quotedStr);
+	}
+
+	/**
+	 * Data Provider for fullQuoteArrayQuotesArray()
+	 *
+	 * @see fullQuoteArrayQuotesArray()
+	 *
+	 * @return array
+	 */
+	public function fullQuoteArrayQuotesArrayDataProvider() {
+		return array(
+			'NULL array with ReturnNull is allowed' => array(
+															array(
+																array(NULL,NULL),
+																FALSE,
+																TRUE
+															),
+															array('NULL', 'NULL')
+														),
+			'NULL array with ReturnNull is false' => array(
+															array(
+																array(NULL,NULL),
+																FALSE,
+																FALSE
+															),
+															array('\'\'', '\'\'')
+														),
+			'Strings in array' => array(
+									array(
+										array('Foo', 'Bar'),
+										FALSE,
+										FALSE
+									),
+									array('\'Foo\'', '\'Bar\'')
+								),
+			'Single quotes in array' => array(
+											array(
+												array("'Hello'"),
+												FALSE,
+												FALSE
+											),
+											array("'\\'Hello\\''")
+										),
+			'Double quotes in array' => array(
+											array(
+												array('"Hello"'),
+												FALSE,
+												FALSE
+											),
+											array('\'\\"Hello\\"\'')
+										),
+			'Slashes in array' => array(
+											array(
+												array('/var/log/syslog.log'),
+												FALSE,
+												FALSE
+											),
+											array('\'/var/log/syslog.log\'')
+										),
+			'Backslashes in array' => array(
+											array(
+												array('\var\log\syslog.log'),
+												FALSE,
+												FALSE
+											),
+											array('\'\\\var\\\log\\\syslog.log\'')
+										),
+			'Strings with internal single tick' => array(
+														array(
+															array('Hey!', 'It\'s me'),
+															FALSE,
+															FALSE
+														),
+														array('\'Hey!\'', '\'It\\\'s me\'')
+													),
+			'no quotes strings from array' => array(
+														array(
+																array(
+																	'First' => 'Hey!',
+																	'Second' => 'It\'s me',
+																	'Third' => 'O\' Reily'
+																),
+																array('First', 'Third'),
+																FALSE
+														),
+														array('First' =>'Hey!', 'Second' => '\'It\\\'s me\'', 'Third' => 'O\' Reily')
+													),
+			'no quotes strings from string' => array(
+														array(
+																array(
+																	'First' => 'Hey!',
+																	'Second' => 'It\'s me',
+																	'Third' => 'O\' Reily'
+																),
+																'First,Third',
+																FALSE
+														),
+														array('First' =>'Hey!', 'Second' => '\'It\\\'s me\'', 'Third' => 'O\' Reily')
+													),
 		);
-		$noQuote = 'First,Third';
-		$result = $this->subject->fullQuoteArray($array, $this->testTable, $noQuote);
-		$this->assertSame('Hey!', $result['First']);
-		$this->assertSame('\'It\\\'s me\'', $result['Second']);
-		$this->assertSame('O\' Reily', $result['Third']);
+	}
+
+	/**
+	 * @test
+	 * @dataProvider fullQuoteArrayQuotesArrayDataProvider
+	 *
+	 * @param string $values
+	 * @param string $expectedResult
+	 *
+	 * @return void
+	 */
+	public function fullQuoteArrayQuotesArray($values, $expectedResult) {
+		$quotedResult = $this->subject->fullQuoteArray($values[0], $this->testTable, $values[1], $values[2]);
+		$this->assertSame($expectedResult, $quotedResult);
+	}
+
+	/**
+	 * Data Provider for quoteStrQuotesDoubleQuotesCorrectly()
+	 *
+	 * @see quoteStrQuotesDoubleQuotesCorrectly()
+	 *
+	 * @return array
+	 */
+	public function quoteStrQuotesCorrectlyDataProvider() {
+		return array(
+			'Double Quotes' => array('"Hello"', '\\"Hello\\"'),
+			'single Quotes' => array('\'Hello\'', '\\\'Hello\\\''),
+			'Slashes' => array('/var/log/syslog.log', '/var/log/syslog.log'),
+			'BackSlashes' => array('\var\log\syslog.log', '\\\var\\\log\\\syslog.log')
+		);
+	}
+
+	/**
+	 * @test
+	 * @dataProvider quoteStrQuotesCorrectlyDataProvider
+	 *
+	 * @param string $string String to quote
+	 * @param string $expectedResult Quoted string we expect
+	 *
+	 * @return void
+	 */
+	public function quoteStrQuotesDoubleQuotesCorrectly($string, $expectedResult) {
+		$quotedString = $this->subject->quoteStr($string, $this->testTable);
+		$this->assertSame($expectedResult, $quotedString);
+	}
+
+	/**
+	 * Data Provider for cleanIntArrayReturnsCleanedArray()
+	 *
+	 * @see cleanIntArrayReturnsCleanedArray()
+	 *
+	 * @return array
+	 */
+	public function cleanIntArrayReturnsCleanedArrayDataProvider() {
+		return array(
+			'Simple numbers' => array(array('234', '-434', 4.3, '4.3'), array(234, -434, 4, 4)),
+		);
+	}
+
+	/**
+	 * @test
+	 * @dataProvider cleanIntArrayReturnsCleanedArrayDataProvider
+	 *
+	 * @param string $values
+	 * @param string $exptectedResult
+	 *
+	 * @return void
+	 */
+	public function cleanIntArrayReturnsCleanedArray($values, $exptectedResult) {
+		$cleanedResult = $this->subject->cleanIntArray($values);
+		$this->assertSame($exptectedResult, $cleanedResult);
 	}
 
 	/**
@@ -346,181 +389,10 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 *
 	 * @return void
 	 */
-	public function fullQuoteArrayQuotesDoubleQuotesCorrectly() {
-		$array = array('"Hello"');
-		$result = $this->subject->fullQuoteArray($array, $this->testTable);
-		$this->assertSame('\'\\"Hello\\"\'', $result[0]);
-	}
-
-	/**
-	 * @test
-	 *
-	 * @return void
-	 */
-	public function fullQuoteArrayQuotesSingleQuotesCorrectly() {
-		$array = array("'Hello'");
-		$result = $this->subject->fullQuoteArray($array, $this->testTable);
-		$this->assertSame("'\\'Hello\\''", $result[0]);
-	}
-
-	/**
-	 * @test
-	 *
-	 * @return void
-	 */
-	public function fullQuoteArrayQuotesSlashesCorrectly() {
-		$array = array('/var/log/syslog.log');
-		$result = $this->subject->fullQuoteArray($array, $this->testTable);
-		$this->assertSame('\'/var/log/syslog.log\'', $result[0]);
-	}
-
-	/**
-	 * @test
-	 *
-	 * @return void
-	 */
-	public function fullQuoteArrayQuotesBackSlashesCorrectly() {
-		$array = array('\var\log\syslog.log');
-		$result = $this->subject->fullQuoteArray($array, $this->testTable);
-		$this->assertSame('\'\\\var\\\log\\\syslog.log\'', $result[0]);
-	}
-
-	/**
-	 * @test
-	 *
-	 * @return void
-	 */
-	public function quoteStrQuotesDoubleQuotesCorrectly() {
-		$string = '"Hello"';
-		$this->assertSame('\\"Hello\\"', $this->subject->quoteStr($string, $this->testTable));
-	}
-
-	/**
-	 * @test
-	 *
-	 * @return void
-	 */
-	public function quoteStrQuotesSingleQuotesCorrectly() {
-		$string = '\'Hello\'';
-		$this->assertSame('\\\'Hello\\\'', $this->subject->quoteStr($string, $this->testTable));
-	}
-
-	/**
-	 * @test
-	 *
-	 * @return void
-	 */
-	public function quoteStrQuotesSlashesCorrectly() {
-		$string = '/var/log/syslog.log';
-		$this->assertSame('/var/log/syslog.log', $this->subject->quoteStr($string, $this->testTable));
-	}
-
-	/**
-	 * @test
-	 *
-	 * @return void
-	 */
-	public function quoteStrQuotesBackSlashesCorrectly() {
-		$string = '\var\log\syslog.log';
-		$this->assertSame('\\\var\\\log\\\syslog.log', $this->subject->quoteStr($string, $this->testTable));
-	}
-
-	/**
-	 * @test
-	 *
-	 * @return void
-	 */
-	public function escapeStringForLikeReturnsEscapedString() {
-		$resultWithPercent = $this->subject->escapeStrForLike('SELECT * FROM Customers WHERE City LIKE \'%s\';', $this->testTable);
-		$resultWithUnderscore = $this->subject->escapeStrForLike('SELECT * FROM Customers WHERE City LIKE \'_s\';', $this->testTable);
-		$this->assertSame('SELECT * FROM Customers WHERE City LIKE \'\\%s\';', $resultWithPercent);
-		$this->assertSame('SELECT * FROM Customers WHERE City LIKE \'\\_s\';', $resultWithUnderscore);
-	}
-
-	/**
-	 * @test
-	 *
-	 * @return void
-	 */
-	public function cleanIntArrayReturnsCleanedArray() {
-		$array = array('234', '-434', 4.3, '4.3');
-		$result = $this->subject->cleanIntArray($array);
-		$this->assertSame(234, $result[0]);
-		$this->assertSame(-434, $result[1]);
-		$this->assertSame(4, $result[2]);
-		$this->assertSame(4, $result[3]);
-	}
-
-	/**
-	 * @test
-	 *
-	 * @return void
-	 */
-	public function cleanIntListReturnsCleanedArray() {
+	public function cleanIntListReturnsCleanedString() {
 		$str = '234,-434,4.3,0, 1';
 		$result = $this->subject->cleanIntList($str);
 		$this->assertSame('234,-434,4,0,1', $result);
-	}
-
-	/**
-	 * @test
-	 *
-	 * @return void
-	 */
-	public function stripOrderByStripsOrderByPart() {
-		$str = 'ORDER BY title, uid';
-		$expected = 'title, uid';
-		$this->assertSame($expected, $this->subject->stripOrderBy($str));
-	}
-
-	/**
-	 * @test
-	 *
-	 * @return void
-	 */
-	public function stripGroupByStripsGroupByPart() {
-		$str = 'GROUP BY title, uid';
-		$expected = 'title, uid';
-		$this->assertSame($expected, $this->subject->stripGroupBy($str));
-	}
-
-	/**
-	 * @test
-	 *
-	 * @return void
-	 */
-	public function stripOrderByStripsOrderByPartWithLowerCase() {
-		$str = 'order by title, uid';
-		$expected = 'title, uid';
-		$this->assertSame($expected, $this->subject->stripOrderBy($str));
-	}
-
-	/**
-	 * @test
-	 *
-	 * @return void
-	 */
-	public function stripGroupByStripsGroupByPartWithLowerCase() {
-		$str = 'group by title, uid';
-		$expected = 'title, uid';
-		$this->assertSame($expected, $this->subject->stripGroupBy($str));
-	}
-
-	/**
-	 * @test
-	 *
-	 * @return void
-	 */
-	public function splitGroupOrderLimitStripsLastPartOfQueryIntoArray() {
-		$str = 'uid=123 GROUP BY title ORDER BY title LIMIT 5,2';
-		$expected = array(
-			'WHERE'   => ' uid=123',
-			'GROUPBY' => 'title',
-			'ORDERBY' => 'title',
-			'LIMIT'   => '5,2'
-		);
-
-		$this->assertSame($expected, $this->subject->splitGroupOrderLimit($str));
 	}
 
 	/**
@@ -850,24 +722,6 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 *
 	 * @return void
 	 */
-	public function listQueryCreateValidQuery() {
-		$this->markTestIncomplete('Needs implemented');
-	}
-
-	/**
-	 * @test
-	 *
-	 * @return void
-	 */
-	public function searchQueryCreateValidQuery() {
-		$this->markTestIncomplete('Needs implemented');
-	}
-
-	/**
-	 * @test
-	 *
-	 * @return void
-	 */
 	public function prepareSelectQueryCreateValidQuery() {
 		$this->markTestIncomplete('Needs implemented');
 	}
@@ -1141,5 +995,62 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	public function stripGroupByForGroupByKeyword($groupByClause, $expectedResult) {
 		$strippedQuery = $this->subject->stripGroupBy($groupByClause);
 		$this->assertEquals($expectedResult, $strippedQuery);
+	}
+
+
+	/**
+	 * Data Provider for splitGroupOrderLimitStripsLastPartOfQueryIntoArray()
+	 *
+	 * @see splitGroupOrderLimitStripsLastPartOfQueryIntoArray()
+	 *
+	 * @return array
+	 */
+	public function splitGroupOrderLimitDataProvider() {
+		return array(
+			'normal WEHRE clause' => array('uid=123 GROUP BY title ORDER BY title LIMIT 5,2', array(
+																								'WHERE'   => ' uid=123',
+																								'GROUPBY' => 'title',
+																								'ORDERBY' => 'title',
+																								'LIMIT'   => '5,2'
+																							)),
+			'no WHERE in clause' => array('GROUP BY title ORDER BY title LIMIT 5,2', array(
+																								'WHERE'   => '',
+																								'GROUPBY' => 'title',
+																								'ORDERBY' => 'title',
+																								'LIMIT'   => '5,2'
+																							)),
+			'no GROUP BY in clause' => array('uid=123 ORDER BY title LIMIT 5,2', array(
+																								'WHERE'   => ' uid=123',
+																								'GROUPBY' => '',
+																								'ORDERBY' => 'title',
+																								'LIMIT'   => '5,2'
+																							)),
+			'no ORDER BY clause' => array('uid=123 GROUP BY title LIMIT 5,2', array(
+																								'WHERE'   => ' uid=123',
+																								'GROUPBY' => 'title',
+																								'ORDERBY' => '',
+																								'LIMIT'   => '5,2'
+																							)),
+			'no LIMIT clause' => array('uid=123 GROUP BY title ORDER BY title', array(
+																								'WHERE'   => ' uid=123',
+																								'GROUPBY' => 'title',
+																								'ORDERBY' => 'title',
+																								'LIMIT'   => ''
+																							)),
+		);
+	}
+
+	/**
+	 * @test
+	 * @dataProvider splitGroupOrderLimitDataProvider
+	 *
+	 * @param string $whereClause  The clause to test
+	 * @param string $expectedResult The expected result
+	 *
+	 * @return void
+	 */
+	public function splitGroupOrderLimitStripsLastPartOfQueryIntoArray($whereClause, $expectedResult) {
+		$generatedResult = $this->subject->splitGroupOrderLimit($whereClause);
+		$this->assertSame($expectedResult, $generatedResult);
 	}
 }
