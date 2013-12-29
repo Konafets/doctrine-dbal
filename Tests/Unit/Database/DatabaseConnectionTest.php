@@ -223,93 +223,102 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	public function fullQuoteArrayQuotesArrayDataProvider() {
 		return array(
 			'NULL array with ReturnNull is allowed' => array(
-															array(
-																array(NULL,NULL),
-																FALSE,
-																TRUE
-															),
-															array('NULL', 'NULL')
-														),
+				array(
+					array(NULL,NULL),
+					FALSE,
+					TRUE
+				),
+				array('NULL', 'NULL')
+			),
+
 			'NULL array with ReturnNull is false' => array(
-															array(
-																array(NULL,NULL),
-																FALSE,
-																FALSE
-															),
-															array('\'\'', '\'\'')
-														),
+				array(
+					array(NULL,NULL),
+					FALSE,
+					FALSE
+				),
+				array('\'\'', '\'\'')
+			),
+
 			'Strings in array' => array(
-									array(
-										array('Foo', 'Bar'),
-										FALSE,
-										FALSE
-									),
-									array('\'Foo\'', '\'Bar\'')
-								),
+				array(
+					array('Foo', 'Bar'),
+					FALSE,
+					FALSE
+				),
+				array('\'Foo\'', '\'Bar\'')
+			),
+
 			'Single quotes in array' => array(
-											array(
-												array("'Hello'"),
-												FALSE,
-												FALSE
-											),
-											array("'\\'Hello\\''")
-										),
+				array(
+					array("'Hello'"),
+					FALSE,
+					FALSE
+				),
+				array("'\\'Hello\\''")
+			),
+
 			'Double quotes in array' => array(
-											array(
-												array('"Hello"'),
-												FALSE,
-												FALSE
-											),
-											array('\'\\"Hello\\"\'')
-										),
+				array(
+					array('"Hello"'),
+					FALSE,
+					FALSE
+				),
+				array('\'\\"Hello\\"\'')
+			),
+
 			'Slashes in array' => array(
-											array(
-												array('/var/log/syslog.log'),
-												FALSE,
-												FALSE
-											),
-											array('\'/var/log/syslog.log\'')
-										),
+				array(
+					array('/var/log/syslog.log'),
+					FALSE,
+					FALSE
+				),
+				array('\'/var/log/syslog.log\'')
+			),
+
 			'Backslashes in array' => array(
-											array(
-												array('\var\log\syslog.log'),
-												FALSE,
-												FALSE
-											),
-											array('\'\\\var\\\log\\\syslog.log\'')
-										),
+				array(
+					array('\var\log\syslog.log'),
+					FALSE,
+					FALSE
+				),
+				array('\'\\\var\\\log\\\syslog.log\'')
+			),
+
 			'Strings with internal single tick' => array(
-														array(
-															array('Hey!', 'It\'s me'),
-															FALSE,
-															FALSE
-														),
-														array('\'Hey!\'', '\'It\\\'s me\'')
-													),
+				array(
+					array('Hey!', 'It\'s me'),
+					FALSE,
+					FALSE
+				),
+				array('\'Hey!\'', '\'It\\\'s me\'')
+			),
+
 			'no quotes strings from array' => array(
-														array(
-																array(
-																	'First' => 'Hey!',
-																	'Second' => 'It\'s me',
-																	'Third' => 'O\' Reily'
-																),
-																array('First', 'Third'),
-																FALSE
-														),
-														array('First' =>'Hey!', 'Second' => '\'It\\\'s me\'', 'Third' => 'O\' Reily')
-													),
+				array(
+						array(
+							'First' => 'Hey!',
+							'Second' => 'It\'s me',
+							'Third' => 'O\' Reily'
+						),
+						array('First', 'Third'),
+						FALSE
+				),
+				array('First' =>'Hey!', 'Second' => '\'It\\\'s me\'', 'Third' => 'O\' Reily')
+			),
+
 			'no quotes strings from string' => array(
-														array(
-																array(
-																	'First' => 'Hey!',
-																	'Second' => 'It\'s me',
-																	'Third' => 'O\' Reily'
-																),
-																'First,Third',
-																FALSE
-														),
-														array('First' =>'Hey!', 'Second' => '\'It\\\'s me\'', 'Third' => 'O\' Reily')
-													),
+				array(
+						array(
+							'First' => 'Hey!',
+							'Second' => 'It\'s me',
+							'Third' => 'O\' Reily'
+						),
+						'First,Third',
+						FALSE
+				),
+				array('First' =>'Hey!', 'Second' => '\'It\\\'s me\'', 'Third' => 'O\' Reily')
+			),
 		);
 	}
 
@@ -1007,36 +1016,55 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 */
 	public function splitGroupOrderLimitDataProvider() {
 		return array(
-			'normal WEHRE clause' => array('uid=123 GROUP BY title ORDER BY title LIMIT 5,2', array(
-																								'WHERE'   => ' uid=123',
-																								'GROUPBY' => 'title',
-																								'ORDERBY' => 'title',
-																								'LIMIT'   => '5,2'
-																							)),
-			'no WHERE in clause' => array('GROUP BY title ORDER BY title LIMIT 5,2', array(
-																								'WHERE'   => '',
-																								'GROUPBY' => 'title',
-																								'ORDERBY' => 'title',
-																								'LIMIT'   => '5,2'
-																							)),
-			'no GROUP BY in clause' => array('uid=123 ORDER BY title LIMIT 5,2', array(
-																								'WHERE'   => ' uid=123',
-																								'GROUPBY' => '',
-																								'ORDERBY' => 'title',
-																								'LIMIT'   => '5,2'
-																							)),
-			'no ORDER BY clause' => array('uid=123 GROUP BY title LIMIT 5,2', array(
-																								'WHERE'   => ' uid=123',
-																								'GROUPBY' => 'title',
-																								'ORDERBY' => '',
-																								'LIMIT'   => '5,2'
-																							)),
-			'no LIMIT clause' => array('uid=123 GROUP BY title ORDER BY title', array(
-																								'WHERE'   => ' uid=123',
-																								'GROUPBY' => 'title',
-																								'ORDERBY' => 'title',
-																								'LIMIT'   => ''
-																							)),
+			'normal WEHRE clause' => array(
+				'uid=123 GROUP BY title ORDER BY title LIMIT 5,2',
+				array(
+					'WHERE'   => ' uid=123',
+					'GROUPBY' => 'title',
+					'ORDERBY' => 'title',
+					'LIMIT'   => '5,2'
+				)
+			),
+
+			'no WHERE in clause' => array(
+				'GROUP BY title ORDER BY title LIMIT 5,2',
+				array(
+					'WHERE'   => '',
+					'GROUPBY' => 'title',
+					'ORDERBY' => 'title',
+					'LIMIT'   => '5,2'
+				)
+			),
+
+			'no GROUP BY in clause' => array(
+				'uid=123 ORDER BY title LIMIT 5,2',
+				array(
+					'WHERE'   => ' uid=123',
+					'GROUPBY' => '',
+					'ORDERBY' => 'title',
+					'LIMIT'   => '5,2'
+				)
+			),
+
+			'no ORDER BY clause' => array(
+				'uid=123 GROUP BY title LIMIT 5,2',
+				array(
+					'WHERE'   => ' uid=123',
+					'GROUPBY' => 'title',
+					'ORDERBY' => '',
+					'LIMIT'   => '5,2'
+				)
+			),
+
+			'no LIMIT clause' => array(
+				'uid=123 GROUP BY title ORDER BY title',
+				array(
+					'WHERE'   => ' uid=123',
+					'GROUPBY' => 'title',
+					'ORDERBY' => 'title',
+					'LIMIT'   => ''
+				)
+			),
 		);
 	}
 
