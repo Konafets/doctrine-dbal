@@ -1202,7 +1202,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * @param string $username Deprecated since 6.1, will be removed in two versions. Username to connect with.
 	 * @param string $password Deprecated since 6.1, will be removed in two versions. Password to connect with.
 	 *
-	 * @return boolean|void
+	 * @return mysqli
 	 * @throws \RuntimeException
 	 */
 	public function sql_pconnect($host = NULL, $username = NULL, $password = NULL) {
