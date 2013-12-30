@@ -685,11 +685,9 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 			$this->subject->admin_query('INSERT INTO ' . $this->testTable . ' (' . $this->testField . ') VALUES (\'foo\')')
 		);
 		$id = $this->subject->sql_insert_id();
-		$where = 'id=' . $id;
-		$limit = '1,2';
+		$queryGenerated = $this->subject->SELECTquery($this->testField, $this->testTable, 'id=' . $id, '', '', '1,2');
 		$queryExpected =
-			'SELECT ' . $this->testField . ' FROM ' . $this->testTable . ' WHERE id=' . $id . ' LIMIT 1,2';
-		$queryGenerated = $this->subject->SELECTquery($this->testField, $this->testTable, $where, '', '', $limit);
+					'SELECT ' . $this->testField . ' FROM ' . $this->testTable . ' WHERE id=' . $id . ' LIMIT 1,2';
 		$this->assertSame($queryExpected, $queryGenerated);
 	}
 
@@ -732,7 +730,62 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @return void
 	 */
 	public function prepareSelectQueryCreateValidQuery() {
-		$this->markTestIncomplete('Needs implemented');
+		$this->assertTrue(
+			$this->subject->admin_query('INSERT INTO ' . $this->testTable . ' (' . $this->testField . ') VALUES (\'foo\')')
+		);
+		$preparedQuery = $this->subject->prepare_SELECTquery('fieldblob,fieldblub', $this->testTable, 'id=:id', '', '', '', array(':id' => 1));
+		$preparedQuery->execute();
+		$result = $preparedQuery->fetch();
+		$expectedResult = array(
+			'fieldblob' => 'foo',
+			'fieldblub' => null
+		);
+		$this->assertSame($expectedResult['fieldblob'], $result['fieldblob']);
+		$this->assertSame($expectedResult['fieldblub'], $result['fieldblub']);
+	}
+
+	/**
+	 * Data Provider for sqlNumRowsReturnsCorrectAmountOfRows()
+	 *
+	 * @see sqlNumRowsReturnsCorrectAmountOfRows()
+	 *
+	 * @return array
+	 */
+	public function sqlNumRowsReturnsCorrectAmountOfRowsProvider() {
+		$sql1 = 'SELECT * FROM test_t3lib_dbtest WHERE fieldblob=\'baz\'';
+		$sql2 = 'SELECT * FROM test_t3lib_dbtest WHERE fieldblob=\'baz\' OR fieldblob=\'bar\'';
+		$sql3 = 'SELECT * FROM test_t3lib_dbtest WHERE fieldblob=\'baz\' OR fieldblob=\'bar\' OR fieldblob=\'foo\'';
+
+		return array(
+			'One result' => array($sql1, 1),
+			'Two results' => array($sql2, 2),
+			'Three results' => array($sql3, 3),
+		);
+	}
+
+	/**
+	 * @test
+	 * @dataProvider sqlNumRowsReturnsCorrectAmountOfRowsProvider
+	 *
+	 * @param string $sql
+	 * @param string $expectedResult
+	 *
+	 * @return void
+	 */
+	public function sqlNumRowsReturnsCorrectAmountOfRows($sql, $expectedResult) {
+		$this->assertTrue(
+			$this->subject->admin_query('INSERT INTO ' . $this->testTable . ' (' . $this->testField . ') VALUES (\'foo\')')
+		);
+		$this->assertTrue(
+			$this->subject->admin_query('INSERT INTO ' . $this->testTable . ' (' . $this->testField . ') VALUES (\'bar\')')
+		);
+		$this->assertTrue(
+			$this->subject->admin_query('INSERT INTO ' . $this->testTable . ' (' . $this->testField . ') VALUES (\'baz\')')
+		);
+
+		$res = $this->subject->admin_query($sql);
+		$numRows = $this->subject->sql_num_rows($res);
+		$this->assertSame($expectedResult, $numRows);
 	}
 
 	/**
@@ -740,17 +793,59 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 *
 	 * @return void
 	 */
-	public function prepareSelectQueryArrayCreateValidQuery() {
-		$this->markTestIncomplete('Needs implemented');
+	public function sqlNumRowsReturnsFalse() {
+		$res = $this->subject->admin_query('SELECT * FROM ' . $this->testTable . ' WHERE test=\'baz\'');
+		$numRows = $this->subject->sql_num_rows($res);
+		$this->assertFalse($numRows);
 	}
 
 	/**
-	 * @test
+	 * Prepares the test table for the fetch* Tests
 	 *
 	 * @return void
 	 */
-	public function sqlNumRowsReturnsCorrectAmountOfRows() {
-		$this->markTestIncomplete('Needs implemented');
+	protected function prepareTableForFetchTests() {
+		$this->assertTrue(
+			$this->subject->sql_query('ALTER TABLE ' . $this->testTable . '
+				ADD name mediumblob;
+			')
+		);
+		$this->assertTrue(
+			$this->subject->sql_query('ALTER TABLE ' . $this->testTable . '
+				ADD deleted int;
+			')
+		);
+
+		$this->assertTrue(
+			$this->subject->sql_query('ALTER TABLE ' . $this->testTable . '
+				ADD street varchar(100);
+			')
+		);
+
+		$this->assertTrue(
+			$this->subject->sql_query('ALTER TABLE ' . $this->testTable . '
+				ADD city varchar(50);
+			')
+		);
+
+		$this->assertTrue(
+			$this->subject->sql_query('ALTER TABLE ' . $this->testTable . '
+				ADD country varchar(100);
+			')
+		);
+
+		$this->assertTrue(
+			$this->subject->admin_query('INSERT INTO ' . $this->testTable . ' (name,street,city,country,deleted) VALUES (\'Mr. Smith\',\'Oakland Road\',\'Los Angeles\',\'USA\',0)')
+		);
+		$this->assertTrue(
+			$this->subject->admin_query('INSERT INTO ' . $this->testTable . ' (name,street,city,country,deleted) VALUES (\'Ms. Smith\',\'Oakland Road\',\'Los Angeles\',\'USA\',0)')
+		);
+		$this->assertTrue(
+			$this->subject->admin_query('INSERT INTO ' . $this->testTable . ' (name,street,city,country,deleted) VALUES (\'Alice im Wunderland\',\'Große Straße\',\'Königreich der Herzen\',\'Wunderland\',0)')
+		);
+		$this->assertTrue(
+			$this->subject->admin_query('INSERT INTO ' . $this->testTable . ' (name,street,city,country,deleted) VALUES (\'Agent Smith\',\'Unbekannt\',\'Unbekannt\',\'Matrix\',1)')
+		);
 	}
 
 	/**
@@ -759,7 +854,63 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @return void
 	 */
 	public function sqlFetchAssocReturnsAssocArray() {
-		$this->markTestIncomplete('Needs implemented');
+		$this->prepareTableForFetchTests();
+
+		$res = $this->subject->admin_query('SELECT * FROM ' . $this->testTable);
+		$expectedResult = array(
+			array(
+				'id' => '1',
+				'fieldblob' => null,
+				'fieldblub' => null,
+				'name'      => 'Mr. Smith',
+				'deleted'   => '0',
+				'street'    => 'Oakland Road',
+				'city'      => 'Los Angeles',
+				'country'   => 'USA'
+			),
+			array(
+				'id' => '2',
+				'fieldblob' => null,
+				'fieldblub' => null,
+				'name'      => 'Ms. Smith',
+				'deleted'   => '0',
+				'street'    => 'Oakland Road',
+				'city'      => 'Los Angeles',
+				'country'   => 'USA'
+			),
+			array(
+				'id' => '3',
+				'fieldblob' => null,
+				'fieldblub' => null,
+				'name'      => 'Alice im Wunderland',
+				'deleted'   => '0',
+				'street'    => 'Große Straße',
+				'city'      => 'Königreich der Herzen',
+				'country'   => 'Wunderland'
+			),
+			array(
+				'id' => '4',
+				'fieldblob' => null,
+				'fieldblub' => null,
+				'name'      => 'Agent Smith',
+				'deleted'   => '1',
+				'street'    => 'Unbekannt',
+				'city'      => 'Unbekannt',
+				'country'   => 'Matrix'
+			)
+		);
+		$i = 0;
+		while ($row = $this->subject->sql_fetch_assoc($res)) {
+			$this->assertSame($expectedResult[$i]['id'], $row['id']);
+			$this->assertSame($expectedResult[$i]['fieldblob'], $row['fieldblob']);
+			$this->assertSame($expectedResult[$i]['fieldblub'], $row['fieldblub']);
+			$this->assertSame($expectedResult[$i]['name'], $row['name']);
+			$this->assertSame($expectedResult[$i]['deleted'], $row['deleted']);
+			$this->assertSame($expectedResult[$i]['street'], $row['street']);
+			$this->assertSame($expectedResult[$i]['city'], $row['city']);
+			$this->assertSame($expectedResult[$i]['country'], $row['country']);
+			$i++;
+		}
 	}
 
 	/**
@@ -768,16 +919,19 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @return void
 	 */
 	public function sqlFetchRowReturnsNumericArray() {
-		$this->markTestIncomplete('Needs implemented');
-	}
-
-	/**
-	 * @test
-	 *
-	 * @return void
-	 */
-	public function sqlFreeResultReturnsTrue() {
-		$this->markTestIncomplete('Needs implemented');
+		$this->prepareTableForFetchTests();
+		$res = $this->subject->admin_query('SELECT * FROM ' . $this->testTable);
+		$expectedResult = array(
+					array('1', null, null, 'Mr. Smith', '0', 'Oakland Road', 'Los Angeles', 'USA'),
+					array('2', null, null, 'Ms. Smith', '0', 'Oakland Road', 'Los Angeles', 'USA'),
+					array('3', null, null, 'Alice im Wunderland', '0', 'Große Straße', 'Königreich der Herzen', 'Wunderland'),
+					array('4', null, null, 'Agent Smith', '1', 'Unbekannt', 'Unbekannt', 'Matrix')
+				);
+		$i = 0;
+		while ($row = $this->subject->sql_fetch_row($res)) {
+			$this->assertSame($expectedResult[$i], $row);
+			$i++;
+		}
 	}
 
 	/**
@@ -786,7 +940,24 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @return void
 	 */
 	public function sqlFreeResultReturnsFalse() {
-		$this->markTestIncomplete('Needs implemented');
+		$this->assertTrue(
+			$this->subject->admin_query('INSERT INTO ' . $this->testTable . ' (' . $this->testField . ') VALUES (\'baz\')')
+		);
+		$res = $this->subject->admin_query('SELECT * FROM test_t3lib_dbtest WHERE fieldblob=baz');
+		$this->assertFalse($this->subject->sql_free_result($res));
+	}
+
+	/**
+	 * @test
+	 *
+	 * @return void
+	 */
+	public function sqlFreeResultReturnsNull() {
+		$this->assertTrue(
+			$this->subject->admin_query('INSERT INTO ' . $this->testTable . ' (' . $this->testField . ') VALUES (\'baz\')')
+		);
+		$res = $this->subject->admin_query('SELECT * FROM test_t3lib_dbtest WHERE fieldblob=\'baz\'');
+		$this->assertNULL($this->subject->sql_free_result($res));
 	}
 
 	//////////////////////////////////////////////////
