@@ -1108,7 +1108,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 *
 	 * @param boolean|\mysqli_result|object $res MySQLi result object / DBAL object
 	 *
-	 * @return boolean Returns TRUE on success or FALSE on failure.
+	 * @return boolean Returns NULL on success or FALSE on failure.
 	 */
 	public function sql_free_result($res) {
 		if ($this->debug_check_recordset($res)) {
