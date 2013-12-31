@@ -72,27 +72,31 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 */
 	const OR_Constraint = 'OR';
 
-	// Set "TRUE" or "1" if you want database errors outputted. Set to "2" if you also want successful database actions outputted.
 	/**
+	 * Set "TRUE" or "1" if you want database errors outputted. Set to "2" if you also want successful database actions outputted.
+	 *
 	 * @todo Define visibility
 	 */
 	public $debugOutput = FALSE;
 
-	// Internally: Set to last built query (not necessarily executed...)
 	/**
+	 * Internally: Set to last built query (not necessarily executed...)
+	 *
 	 * @todo Define visibility
 	 */
 	public $debug_lastBuiltQuery = '';
 
-	// Set "TRUE" if you want the last built query to be stored in $debug_lastBuiltQuery independent of $this->debugOutput
 	/**
+	 * Set "TRUE" if you want the last built query to be stored in $debug_lastBuiltQuery independent of $this->debugOutput
+	 *
 	 * @todo Define visibility
 	 */
 	public $store_lastBuiltQuery = FALSE;
 
-	// Set this to 1 to get queries explained (devIPmask must match). Set the value to 2 to the same but disregarding the devIPmask.
-	// There is an alternative option to enable explain output in the admin panel under "TypoScript", which will produce much nicer output, but only works in FE.
 	/**
+	 * Set this to 1 to get queries explained (devIPmask must match). Set the value to 2 to the same but disregarding the devIPmask.
+	 * There is an alternative option to enable explain output in the admin panel under "TypoScript", which will produce much nicer output, but only works in FE.
+	 *
 	 * @todo Define visibility
 	 */
 	public $explainOutput = 0;
@@ -149,12 +153,13 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	protected $isConnected = FALSE;
 
 	/**
-	 * @var \mysqli $link Default database link object
+	 * @var \Doctrine\DBAL\Connection $link Database connection object
 	 */
 	protected $link = NULL;
 
-	// Default character set, applies unless character set or collation are explicitly set
 	/**
+	 * Default character set, applies unless character set or collation are explicitly set
+	 *
 	 * @todo Define visibility
 	 */
 	public $defaultCharset = 'utf8';
@@ -204,6 +209,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			/** @var $hookObject PostProcessQueryHookInterface */
 			$hookObject->exec_INSERTquery_postProcessAction($table, $fieldsValues, $noQuoteFields, $this);
 		}
+
 		return $res;
 	}
 
@@ -229,6 +235,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			/** @var $hookObject PostProcessQueryHookInterface */
 			$hookObject->exec_INSERTmultipleRows_postProcessAction($table, $fields, $rows, $noQuoteFields, $this);
 		}
+
 		return $res;
 	}
 
@@ -255,6 +262,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			/** @var $hookObject PostProcessQueryHookInterface */
 			$hookObject->exec_UPDATEquery_postProcessAction($table, $where, $fieldsValues, $noQuoteFields, $this);
 		}
+
 		return $res;
 	}
 
@@ -278,6 +286,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			/** @var $hookObject PostProcessQueryHookInterface */
 			$hookObject->exec_DELETEquery_postProcessAction($table, $where, $this);
 		}
+
 		return $res;
 	}
 
@@ -310,6 +319,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			/** @var $hookObject PostProcessQueryHookInterface */
 			$hookObject->exec_SELECTquery_postProcessAction($selectFields, $fromTable, $whereClause, $groupBy = '', $orderBy = '', $limit = '', $this);
 		}
+
 		return $res;
 	}
 
@@ -342,6 +352,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			$mmWhere .= ($foreignTableAs ? $foreignTableAs : $foreignTable) . '.uid=' . $mmTable . '.uid_foreign';
 			$tables .= ',' . $foreignTable . ($foreignTableAs ? ' AS ' . $foreignTableAs : '');
 		}
+
 		return $this->exec_SELECTquery($select, $tables, $mmWhere . ' ' . $whereClause, $groupBy, $orderBy, $limit);
 	}
 
@@ -391,6 +402,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 		} else {
 			$output = NULL;
 		}
+
 		return $output;
 	}
 
@@ -421,6 +433,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			}
 			$this->sql_free_result($res);
 		}
+
 		return $output;
 	}
 
@@ -441,6 +454,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			$count = intval($count);
 			$this->sql_free_result($resultSet);
 		}
+
 		return $count;
 	}
 
@@ -463,6 +477,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			/** @var $hookObject PostProcessQueryHookInterface */
 			$hookObject->exec_TRUNCATEquery_postProcessAction($table, $this);
 		}
+
 		return $res;
 	}
 
@@ -495,6 +510,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			if ($this->debugOutput || $this->store_lastBuiltQuery) {
 				$this->debug_lastBuiltQuery = $query;
 			}
+
 			return $query;
 		}
 	}
@@ -530,6 +546,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			if ($this->debugOutput || $this->store_lastBuiltQuery) {
 				$this->debug_lastBuiltQuery = $query;
 			}
+
 			return $query;
 		}
 	}
@@ -629,6 +646,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 		if ($this->debugOutput || $this->store_lastBuiltQuery) {
 			$this->debug_lastBuiltQuery = $query;
 		}
+
 		return $query;
 	}
 
@@ -650,6 +668,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 		if ($this->debugOutput || $this->store_lastBuiltQuery) {
 			$this->debug_lastBuiltQuery = $query;
 		}
+
 		return $query;
 	}
 
@@ -672,6 +691,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 		if ($this->debugOutput || $this->store_lastBuiltQuery) {
 			$this->debug_lastBuiltQuery = $query;
 		}
+
 		return $query;
 	}
 
@@ -698,6 +718,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 		}
 		$pattern = $this->quoteStr($value, $table);
 		$where = 'FIND_IN_SET(\'' . $pattern . '\',' . $field . ')';
+
 		return $where;
 	}
 
@@ -756,6 +777,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 		foreach ($inputParameters as $key => $value) {
 			$preparedStatement->bindValue($key, $value, \TYPO3\CMS\Core\Database\PreparedStatement::PARAM_AUTOTYPE);
 		}
+
 		// Return prepared statement
 		return $preparedStatement;
 	}
@@ -789,6 +811,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 		if ($this->debugOutput) {
 			$this->debug('stmt_execute', $query);
 		}
+
 		return $res;
 	}
 
@@ -846,6 +869,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 				$arr[$k] = $this->fullQuoteStr($v, $table, $allowNull);
 			}
 		}
+
 		return $arr;
 	}
 
@@ -864,6 +888,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 		if (!$this->isConnected) {
 			$this->connectDB();
 		}
+
 		return $this->link->real_escape_string($str);
 	}
 
@@ -893,6 +918,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 		foreach ($arr as $k => $v) {
 			$arr[$k] = intval($arr[$k]);
 		}
+
 		return $arr;
 	}
 
@@ -976,6 +1002,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 		}
 		// Rest is assumed to be "WHERE" clause
 		$wgolParts['WHERE'] = $str;
+
 		return $wgolParts;
 	}
 
@@ -1023,6 +1050,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 		if ($this->debugOutput) {
 			$this->debug('sql_query', $query);
 		}
+
 		return $res;
 	}
 
@@ -1258,6 +1286,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 				GeneralUtility::SYSLOG_SEVERITY_FATAL
 			);
 		}
+
 		return $this->link;
 	}
 
@@ -1312,6 +1341,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 				GeneralUtility::SYSLOG_SEVERITY_FATAL
 			);
 		}
+
 		return $ret;
 	}
 
@@ -1355,6 +1385,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 				}
 			}
 		}
+
 		return $dbArr;
 	}
 
@@ -1377,6 +1408,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			}
 			$tablesResult->free();
 		}
+
 		return $whichTables;
 	}
 
@@ -1404,6 +1436,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			}
 			$columnsRes->free();
 		}
+
 		return $output;
 	}
 
@@ -1427,6 +1460,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			}
 			$keyRes->free();
 		}
+
 		return $output;
 	}
 
@@ -1454,6 +1488,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			}
 			$columnsRes->free();
 		}
+
 		return $output;
 	}
 
@@ -1472,6 +1507,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 		if ($this->debugOutput) {
 			$this->debug('admin_query', $query);
 		}
+
 		return $res;
 	}
 
@@ -1803,6 +1839,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			}
 			GeneralUtility::devLog($msg . '.', 'Core/t3lib_db', 3, $debugLogData);
 		}
+
 		return FALSE;
 	}
 
@@ -1896,6 +1933,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			}
 			return TRUE;
 		}
+
 		return FALSE;
 	}
 
