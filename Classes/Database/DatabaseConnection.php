@@ -26,6 +26,7 @@ namespace TYPO3\DoctrineDbal\Database;
  *
  *  This copyright notice MUST APPEAR in all copies of the script!
  ***************************************************************/
+use Doctrine\DBAL\DriverManager;
 use TYPO3\CMS\Core\Utility\DebugUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
@@ -132,6 +133,33 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	protected $databaseUserPassword = '';
 
 	/**
+	 * @var array The connection settings for Doctrine
+	 */
+	protected $connectionParams = array(
+		'dbname' => '',
+		'user' => '',
+		'password' => '',
+		'host' => '',
+		'driver' => 'pdo_mysql',
+		'port' => NULL,
+		'charset' => 'utf8',
+	);
+
+	/**
+	 * The database schema
+	 *
+	 * @var \Doctrine\DBAL\Schema\AbstractSchemaManager $schema
+	 */
+	protected $schema;
+
+	/**
+	 * The last executed statement object
+	 *
+	 * @var \Doctrine\DBAL\Statement $lastStatement
+	 */
+	protected $lastStatement = '';
+
+	/**
 	 * @var boolean TRUE if database connection should be persistent
 	 * @see http://php.net/manual/de/mysqli.persistconns.php
 	 */
@@ -195,13 +223,16 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * @param array   $fieldsValues  Field values as key=>value pairs. Values will be escaped internally. Typically you would fill an array like "$insertFields" with 'fieldname'=>'value' and pass it to this function as argument.
 	 * @param boolean $noQuoteFields See fullQuoteArray()
 	 *
-	 * @return boolean|\mysqli_result|object MySQLi result object / DBAL object
+	 * @return boolean|\Doctrine\DBAL\Statement A PDOStatement object
 	 */
 	public function exec_INSERTquery($table, $fieldsValues, $noQuoteFields = FALSE) {
 		if (!$this->isConnected) {
 			$this->connectDB();
 		}
-		$res = $this->link->query($this->INSERTquery($table, $fieldsValues, $noQuoteFields));
+
+		$stmt = $this->link->query($this->INSERTquery($table, $fieldsValues, $noQuoteFields));
+		$this->setLastStatement($stmt);
+
 		if ($this->debugOutput) {
 			$this->debug('exec_INSERTquery');
 		}
@@ -210,7 +241,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			$hookObject->exec_INSERTquery_postProcessAction($table, $fieldsValues, $noQuoteFields, $this);
 		}
 
-		return $res;
+		return $stmt;
 	}
 
 	/**
@@ -743,7 +774,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 
 		$queryParts = array();
 		foreach ($searchWords as $sw) {
-			$like = ' LIKE \'%' . $this->quoteStr($sw, $table) . '%\'';
+			$like = ' LIKE ' . $this->quoteStr('%' . $sw . '%', $table);
 			$queryParts[] = $table . '.' . implode(($like . ' OR ' . $table . '.'), $fields) . $like;
 		}
 		$query = '(' . implode(') ' . $constraint . ' (', $queryParts) . ')';
@@ -835,16 +866,16 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * @return string Output string; Wrapped in single quotes and quotes in the string (" / ') and \ will be backslashed (or otherwise based on DBAL handler)
 	 * @see  quoteStr()
 	 * @todo The $table parameter seems unused
+	 * @todo This method used "return '\'' . $this->link->real_escape_string($str) . '\'';"
+	 *       for escaping and quoting.
+
 	 */
 	public function fullQuoteStr($str, $table, $allowNull = FALSE) {
-		if (!$this->isConnected) {
-			$this->connectDB();
-		}
 		if ($allowNull && $str === NULL) {
 			return 'NULL';
 		}
 
-		return '\'' . $this->link->real_escape_string($str) . '\'';
+		return $this->quoteStr($str, $table);
 	}
 
 	/**
@@ -889,7 +920,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			$this->connectDB();
 		}
 
-		return $this->link->real_escape_string($str);
+		return $this->link->quote($str);
 	}
 
 	/**
@@ -1028,81 +1059,82 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 
 	/**************************************
 	 *
-	 * MySQL(i) wrapper functions
+	 * Doctrine / PDO wrapper functions
 	 * (For use in your applications)
 	 *
 	 **************************************/
 	/**
 	 * Executes query
-	 * MySQLi query() wrapper function
+	 * Doctrine/PDO query() wrapper function
 	 * Beware: Use of this method should be avoided as it is experimentally supported by DBAL. You should consider
 	 * using exec_SELECTquery() and similar methods instead.
 	 *
 	 * @param string $query Query to execute
 	 *
-	 * @return boolean|\mysqli_result|object MySQLi result object / DBAL object
+	 * @return \Doctrine\DBAL\Statement A PDOStatement object
 	 */
 	public function sql_query($query) {
 		if (!$this->isConnected) {
 			$this->connectDB();
 		}
-		$res = $this->link->query($query);
+
+		$stmt = $this->link->query($query);
+		$this->setLastStatement($stmt);
+
 		if ($this->debugOutput) {
 			$this->debug('sql_query', $query);
 		}
 
-		return $res;
+		return $stmt;
 	}
 
 	/**
 	 * Returns the error status on the last query() execution
 	 *
-	 * @return string MySQLi error string.
+	 * @return string PDO error string.
 	 */
 	public function sql_error() {
-		return $this->link->error;
+		$errorMsg = $this->link->errorInfo();
+		return $errorMsg[0] === '00000' ? '' : $errorMsg;
 	}
 
 	/**
 	 * Returns the error number on the last query() execution
 	 *
-	 * @return integer MySQLi error number
+	 * @return integer PDO error number
 	 */
 	public function sql_errno() {
-		return $this->link->errno;
+		return $this->link->errorCode();
 	}
 
 	/**
 	 * Returns the number of selected rows.
 	 *
-	 * @param boolean|\mysqli_result|object $res MySQLi result object / DBAL object
+	 * @param boolean|\Doctrine\DBAL\Statement $stmt
 	 *
 	 * @return integer Number of resulting rows
 	 */
-	public function sql_num_rows($res) {
-		if ($this->debug_check_recordset($res)) {
-			return $res->num_rows;
+	public function sql_num_rows($stmt) {
+		if ($this->debug_check_recordset($stmt)) {
+			$result = $stmt->rowCount();
 		} else {
-			return FALSE;
+			$result = FALSE;
 		}
+
+		return $result;
 	}
 
 	/**
 	 * Returns an associative array that corresponds to the fetched row, or FALSE if there are no more rows.
-	 * MySQLi fetch_assoc() wrapper function
+	 * Wrapper function for Doctrine/PDO fetch(\PDO::FETCH_ASSOC)
 	 *
-	 * @param boolean|\mysqli_result|object $res MySQLi result object / DBAL object
+	 * @param boolean|\Doctrine\DBAL\Statement A PDOStatement object
 	 *
 	 * @return array|boolean Associative array of result row.
 	 */
-	public function sql_fetch_assoc($res) {
-		if ($this->debug_check_recordset($res)) {
-			$result = $res->fetch_assoc();
-			if ($result === NULL) {
-				// Needed for compatibility
-				$result = FALSE;
-			}
-			return $result;
+	public function sql_fetch_assoc($stmt) {
+		if ($this->debug_check_recordset($stmt)) {
+			return $stmt->fetch(\PDO::FETCH_ASSOC);
 		} else {
 			return FALSE;
 		}
@@ -1111,20 +1143,15 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	/**
 	 * Returns an array that corresponds to the fetched row, or FALSE if there are no more rows.
 	 * The array contains the values in numerical indices.
-	 * MySQLi fetch_row() wrapper function
+	 * Wrapper function for Doctrine/PDO fetch(\PDO::FETCH_NUM)
 	 *
-	 * @param boolean|\mysqli_result|object $res MySQLi result object / DBAL object
+	 * @param boolean|\Doctrine\DBAL\Statement A PDOStatement object
 	 *
 	 * @return array|boolean Array with result rows.
 	 */
-	public function sql_fetch_row($res) {
-		if ($this->debug_check_recordset($res)) {
-			$result = $res->fetch_row();
-			if ($result === NULL) {
-				// Needed for compatibility
-				$result = FALSE;
-			}
-			return $result;
+	public function sql_fetch_row($stmt) {
+		if ($this->debug_check_recordset($stmt)) {
+			return $stmt->fetch(\PDO::FETCH_NUM);
 		} else {
 			return FALSE;
 		}
@@ -1132,15 +1159,15 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 
 	/**
 	 * Free result memory
-	 * free_result() wrapper function
+	 * Wrapper function for Doctrine/PDO closeCursor()
 	 *
-	 * @param boolean|\mysqli_result|object $res MySQLi result object / DBAL object
+	 * @param boolean|\Doctrine\DBAL\Statement $stmt A PDOStatement
 	 *
 	 * @return boolean Returns NULL on success or FALSE on failure.
 	 */
-	public function sql_free_result($res) {
-		if ($this->debug_check_recordset($res)) {
-			return $res->free();
+	public function sql_free_result($stmt) {
+		if ($this->debug_check_recordset($stmt)) {
+			return $stmt->closeCursor();
 		} else {
 			return FALSE;
 		}
@@ -1152,7 +1179,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * @return integer The uid of the last inserted record.
 	 */
 	public function sql_insert_id() {
-		return $this->link->insert_id;
+		return $this->link->lastInsertId();
 	}
 
 	/**
@@ -1161,7 +1188,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * @return integer Number of rows affected by last query
 	 */
 	public function sql_affected_rows() {
-		return $this->link->affected_rows;
+		return $this->lastStatement->rowCount();
 	}
 
 	/**
@@ -1230,7 +1257,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * @param string $username Deprecated since 6.1, will be removed in two versions. Username to connect with.
 	 * @param string $password Deprecated since 6.1, will be removed in two versions. Password to connect with.
 	 *
-	 * @return mysqli
+	 * @return boolean|void
 	 * @throws \RuntimeException
 	 */
 	public function sql_pconnect($host = NULL, $username = NULL, $password = NULL) {
@@ -1238,10 +1265,11 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			return $this->link;
 		}
 
-		if (!extension_loaded('mysqli')) {
+		if (!extension_loaded('pdo')) {
 			throw new \RuntimeException(
-				'Database Error: PHP mysqli extension not loaded. This is a must have for TYPO3 CMS!',
-				1271492607
+				'Database Error: PHP PDO extension not loaded. This is a must to use this extension (ext:doctrine_dbal)!',
+				// TODO: Replace with current date for Thesis
+				1388496499
 			);
 		}
 
@@ -1249,21 +1277,30 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			$this->handleDeprecatedConnectArguments($host, $username, $password);
 		}
 
-		$host = $this->persistentDatabaseConnection
-			? 'p:' . $this->databaseHost
-			: $this->databaseHost;
+		// TODO: Is this needed for Doctrine too?
+		// TODO: This handles persistent database connection which established with a "p:" before the host for mysqli
+		//       connections. For Doctrine this won't work. If the user want a persistent connection we have to create
+		//       the PDO instance by ourself and pass it to Doctrine.
+		//       See http://stackoverflow.com/questions/16217426/is-it-possible-to-use-doctrine-with-persistent-pdo-connections
+		//$host = $this->persistentDatabaseConnection ? 'p:' . $this->databaseHost : $this->databaseHost;
+		//$this->setDatabaseHost($this->databaseHost);
 
-		$this->link = mysqli_init();
-		$connected = $this->link->real_connect(
-			$host,
-			$this->databaseUsername,
-			$this->databaseUserPassword,
-			NULL,
-			(int)$this->databasePort,
-			$this->databaseSocket,
-			$this->connectionCompression ? MYSQLI_CLIENT_COMPRESS : 0
-		);
+		$config = GeneralUtility::makeInstance('Doctrine\\DBAL\\Configuration');
+		$this->link = DriverManager::getConnection($this->connectionParams, $config);
 
+		// We need to map the enum type to string because Doctrine don't support it native
+		// This is necessary when the installer loops through all tables of all databases it found using this connection
+		// See https://github.com/barryvdh/laravel-ide-helper/issues/19
+		$this->link->getDatabasePlatform()->registerDoctrineTypeMapping('enum', 'string');
+		$this->schema = $this->link->getSchemaManager();
+
+		try {
+			$this->schema->listDatabases();
+		} catch (\PDOException $e) {
+			return FALSE;
+		}
+
+		$connected = $this->link->isConnected();
 		if ($connected) {
 			$this->isConnected = TRUE;
 			foreach ($this->initializeCommandsAfterConnect as $command) {
@@ -1278,10 +1315,10 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			$this->setSqlMode();
 		} else {
 			// @TODO: This should raise an exception. Would be useful especially to work during installation.
-			$errorMsg = $this->link->connect_error;
 			$this->link = NULL;
 			GeneralUtility::sysLog(
-				'Could not connect to MySQL server ' . $host . ' with user ' . $this->databaseUsername . ': ' . $errorMsg,
+				// TODO: Replace the term "MySQL" in the next log message with the current platform name
+				'Could not connect to MySQL server ' . $this->getDatabaseHost() . ' with user ' . $this->getDatabaseUsername() . ': ' . $this->sql_error(),
 				'Core',
 				GeneralUtility::SYSLOG_SEVERITY_FATAL
 			);
@@ -1294,15 +1331,20 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * Fixes the SQL mode by unsetting NO_BACKSLASH_ESCAPES if found.
 	 *
 	 * @return void
+	 * @todo: Test the server with different modes
+	 *        see http://dev.mysql.com/doc/refman/5.1/de/server-sql-mode.html
 	 */
 	protected function setSqlMode() {
 		$resource = $this->sql_query('SELECT @@SESSION.sql_mode;');
 		if ($resource) {
-			$result = $this->sql_fetch_row($resource);
-			if (isset($result[0]) && $result[0] && strpos($result[0], 'NO_BACKSLASH_ESCAPES') !== FALSE) {
-				$modes = array_diff(GeneralUtility::trimExplode(',', $result[0]), array('NO_BACKSLASH_ESCAPES'));
-				$query = 'SET sql_mode=\'' . $this->link->real_escape_string(implode(',', $modes)) . '\';';
-				$this->sql_query($query);
+			// TODO: Abstract the direct fetchAll() call
+			$result = $resource->fetchAll();
+			if (isset($result[0]) && $result[0] && strpos($result[0]['@@SESSION.sql_mode'], 'NO_BACKSLASH_ESCAPES') !== FALSE) {
+				$modes = array_diff(GeneralUtility::trimExplode(',', $result[0]['@@SESSION.sql_mode']), array('NO_BACKSLASH_ESCAPES'));
+				// TODO: Make the prepared Statements working
+				$stmt = $this->link->prepare('SET sql_mode = :modes');
+				$stmt->bindValue('modes', implode(',', $modes));
+				$stmt->execute();
 				GeneralUtility::sysLog(
 					'NO_BACKSLASH_ESCAPES could not be removed from SQL mode: ' . $this->sql_error(),
 					'Core',
@@ -1329,20 +1371,20 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 				'DatabaseConnection->sql_select_db() should be called without arguments.' .
 					' Use the setDatabaseName() before. Will be removed two versions after 6.1.'
 			);
-		} else {
-			$TYPO3_db = $this->databaseName;
+			$this->setDatabaseName($TYPO3_db);
 		}
 
-		$ret = $this->link->select_db($TYPO3_db);
-		if (!$ret) {
+		$isConnected = $this->isConnected();
+		if (!$isConnected) {
 			GeneralUtility::sysLog(
-				'Could not select MySQL database ' . $TYPO3_db . ': ' . $this->sql_error(),
+				// TODO: Replace the term "MySQL" in the next log message with the current platform name
+				'Could not select MySQL database ' . $this->getDatabaseName() . ': ' . $this->sql_error(),
 				'Core',
 				GeneralUtility::SYSLOG_SEVERITY_FATAL
 			);
 		}
 
-		return $ret;
+		return $isConnected;
 	}
 
 	/**************************************
@@ -1364,19 +1406,19 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 		if (!$this->isConnected) {
 			$this->connectDB();
 		}
-		$dbArr = array();
-		$dbList = $this->link->query("SELECT SCHEMA_NAME FROM information_schema.SCHEMATA");
-		if ($dbList === FALSE) {
+		$dbArray = array();
+		$databases = $this->schema->listDatabases();
+		if ($databases === FALSE) {
 			throw new \RuntimeException(
 				'MySQL Error: Cannot get tablenames: "' . $this->sql_error() . '"!',
 				1378457171
 			);
 		} else {
-			while ($row = $dbList->fetch_object()) {
+			foreach ($databases as $database) {
 				try {
-					$this->setDatabaseName($row->SCHEMA_NAME);
+					$this->setDatabaseName($database);
 					if ($this->sql_select_db()) {
-						$dbArr[] = $row->SCHEMA_NAME;
+						$dbArray[] = $database;
 					}
 				} catch (\RuntimeException $exception) {
 					// The exception happens if we cannot connect to the database
@@ -1386,7 +1428,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			}
 		}
 
-		return $dbArr;
+		return $dbArray;
 	}
 
 	/**
@@ -1400,16 +1442,46 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 		if (!$this->isConnected) {
 			$this->connectDB();
 		}
+
 		$whichTables = array();
-		$tablesResult = $this->link->query('SHOW TABLE STATUS FROM `' . $this->databaseName . '`');
+		$tablesResult = $this->link->query('SHOW TABLE STATUS FROM `' . $this->getDatabaseName() . '`');
 		if ($tablesResult !== FALSE) {
-			while ($theTable = $tablesResult->fetch_assoc()) {
+			while ($theTable = $tablesResult->fetch(\PDO::FETCH_ASSOC)) {
 				$whichTables[$theTable['Name']] = $theTable;
 			}
-			$tablesResult->free();
 		}
 
+		// TODO: Figure out how to use this
+//		$testTables = array();
+//		$tables = $this->schema->listTables();
+//		if ($tables !== FALSE) {
+//			foreach ($tables as $table) {
+//				$testTables[$table->getName()] = array(
+//													'columns' => $table->getColumns(),
+//													'indices' => $table->getIndexes()
+//												);
+//			}
+//		}
+
 		return $whichTables;
+	}
+
+
+	/**
+	 * This returns the count of the tables from the selected database
+	 *
+	 * @return array
+	 */
+	public function adminCountTables() {
+		if (!$this->isConnected) {
+			$this->connectDB();
+		}
+		$stmt = $this->admin_query('SELECT count(*) from information_schema.tables WHERE table_schema = \'' . $this->databaseName . '\'');
+		if ($stmt !== FALSE) {
+			$result = $stmt->fetchAll(\PDO::FETCH_COLUMN);
+		}
+
+		return $result[0];
 	}
 
 	/**
@@ -1429,12 +1501,16 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			$this->connectDB();
 		}
 		$output = array();
-		$columnsRes = $this->link->query('SHOW COLUMNS FROM `' . $tableName . '`');
-		if ($columnsRes !== FALSE) {
-			while ($fieldRow = $columnsRes->fetch_assoc()) {
+		// TODO: Figure out if we could use the function $this->schema->listTableColumns($tableName);
+		//       The result is a different from the current. We need to adjust assembleFieldDefinition() from
+		//       SqlSchemaMigrationService
+		$stmt = $this->link->query('SHOW COLUMNS FROM `' . $tableName . '`');
+		$this->setLastStatement($stmt);
+		if ($stmt !== FALSE) {
+			while ($fieldRow = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 				$output[$fieldRow['Field']] = $fieldRow;
 			}
-			$columnsRes->free();
+			$stmt->closeCursor();
 		}
 
 		return $output;
@@ -1446,19 +1522,21 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 *
 	 * @param string $tableName Table name
 	 *
-	 * @return array Key information in a numeric array
+	 * @return array Key information in a associative array
 	 */
 	public function admin_get_keys($tableName) {
 		if (!$this->isConnected) {
 			$this->connectDB();
 		}
 		$output = array();
-		$keyRes = $this->link->query('SHOW KEYS FROM `' . $tableName . '`');
-		if ($keyRes !== FALSE) {
-			while ($keyRow = $keyRes->fetch_assoc()) {
+
+		$stmt = $this->link->query('SHOW KEYS FROM `' . $tableName . '`');
+		$this->setLastStatement($stmt);
+		if ($stmt !== FALSE) {
+			while ($keyRow = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 				$output[] = $keyRow;
 			}
-			$keyRes->free();
+			$stmt->closeCursor();
 		}
 
 		return $output;
@@ -1481,34 +1559,36 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			$this->connectDB();
 		}
 		$output = array();
-		$columnsRes = $this->link->query('SHOW CHARACTER SET');
-		if ($columnsRes !== FALSE) {
-			while ($row = $columnsRes->fetch_assoc()) {
+		$stmt = $this->link->query('SHOW CHARACTER SET');
+		$this->setLastStatement($stmt);
+		if ($stmt !== FALSE) {
+			while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 				$output[$row['Charset']] = $row;
 			}
-			$columnsRes->free();
+			$stmt->closeCursor();
 		}
 
 		return $output;
 	}
 
 	/**
-	 * mysqli() wrapper function, used by the Install Tool and EM for all queries regarding management of the database!
+	 * Doctrine query wrapper function, used by the Install Tool and EM for all queries regarding management of the database!
 	 *
 	 * @param string $query Query to execute
 	 *
-	 * @return boolean|\mysqli_result|object MySQLi result object / DBAL object
+	 * @return boolean|\Doctrine\DBAL\Statement A PDOStatement object
 	 */
 	public function admin_query($query) {
 		if (!$this->isConnected) {
 			$this->connectDB();
 		}
-		$res = $this->link->query($query);
+		$stmt = $this->link->query($query);
+		$this->setLastStatement($stmt);
 		if ($this->debugOutput) {
 			$this->debug('admin_query', $query);
 		}
 
-		return $res;
+		return $stmt;
 	}
 
 	/******************************
@@ -1521,70 +1601,176 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * Set database host
 	 *
 	 * @param string $host
+	 * @return $this
 	 */
 	public function setDatabaseHost($host = 'localhost') {
 		$this->disconnectIfConnected();
 		$this->databaseHost = $host;
+		$this->connectionParams['host'] = $host;
+
+		return $this;
+	}
+
+	/**
+	 * Returns the host of the database
+	 *
+	 * @return string
+	 */
+	public function getDatabaseHost() {
+		return $this->connectionParams['host'];
 	}
 
 	/**
 	 * Set database port
 	 *
 	 * @param integer $port
+	 * @return $this
 	 */
 	public function setDatabasePort($port = 3306) {
 		$this->disconnectIfConnected();
-		$this->databasePort = (int)$port;
+		$this->databasePort = (int) $port;
+		$this->connectionParams['port'] = (int) $port;
+
+		return $this;
+	}
+
+	/**
+	 * Returns the database port
+	 * @return int
+	 */
+	public function getDatabasePort() {
+		return (int) $this->connectionParams['port'];
 	}
 
 	/**
 	 * Set database socket
 	 *
 	 * @param string|NULL $socket
+	 * @return $this
 	 */
 	public function setDatabaseSocket($socket = NULL) {
 		$this->disconnectIfConnected();
 		$this->databaseSocket = $socket;
+		//$this->connectionParams['unix_socket'] = $socket;
+
+		return $this;
 	}
 
+	/**
+	 * Returns the database socket
+	 *
+	 * @return NULL|string
+	 */
+	public function getDatabaseSocket() {
+		return $this->databaseSocket;
+	}
+
+	/**
+	 * Set the database driver for Doctrine
+	 *
+	 * @param string $driver
+	 *
+	 * @return $this
+	 * @api
+	 */
+	public function setDatabaseDriver($driver = 'pdo_mysql') {
+		$this->connectionParams['driver'] = $driver;
+
+		return $this;
+	}
+
+	/**
+	 * Returns the database driver
+	 *
+	 * @return string
+	 */
+	public function getDatabaseDriver() {
+		return $this->connectionParams['driver'];
+	}
+	
 	/**
 	 * Set database name
 	 *
 	 * @param string $name
+	 * @return $this
 	 */
 	public function setDatabaseName($name) {
 		$this->disconnectIfConnected();
 		$this->databaseName = $name;
+		$this->connectionParams['dbname'] = $name;
+
+		return $this;
+	}
+
+	/**
+	 * Returns the name of the database
+	 *
+	 * @return string
+	 */
+	public function getDatabaseName() {
+		return $this->connectionParams['dbname'];
 	}
 
 	/**
 	 * Set database username
 	 *
 	 * @param string $username
+	 * @return $this
 	 */
 	public function setDatabaseUsername($username) {
 		$this->disconnectIfConnected();
 		$this->databaseUsername = $username;
+		$this->connectionParams['user'] = $username;
+
+		return $this;
+	}
+
+	/**
+	 * Returns the database username
+	 * @return string
+	 */
+	public function getDatabaseUsername() {
+		return $this->connectionParams['user'];
 	}
 
 	/**
 	 * Set database password
 	 *
 	 * @param string $password
+	 * @return $this
 	 */
 	public function setDatabasePassword($password) {
 		$this->disconnectIfConnected();
 		$this->databaseUserPassword = $password;
+		$this->connectionParams['password'] = $password;
+
+		return $this;
 	}
 
 	/**
 	 * Set default charset
 	 *
 	 * @param string $charset
-	 * @return void
+	 * @return $this
 	 */
 	public function setDatabaseCharset($charset = 'utf8') {
 		$this->defaultCharset = $charset;
+
+		return $this;
+	}
+
+	/**
+	 * @param \Doctrine\DBAL\Statement $lastStatement
+	 */
+	public function setLastStatement($lastStatement) {
+	        $this->lastStatement = $lastStatement;
+	}
+
+	/**
+	 * @return \Doctrine\DBAL\Statement
+	 */
+	public function getLastStatement() {
+	        return $this->lastStatement;
 	}
 
 	/**
@@ -1646,7 +1832,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			return;
 		}
 
-		if (!$this->databaseName && !$db) {
+		if (!$this->getDatabaseName() && !$db) {
 			throw new \RuntimeException(
 				'TYPO3 Fatal Error: No database selected!',
 				1270853882
@@ -1660,7 +1846,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 		if ($this->sql_pconnect()) {
 			if (!$this->sql_select_db()) {
 				throw new \RuntimeException(
-					'TYPO3 Fatal Error: Cannot connect to the current database, "' . $this->databaseName . '"!',
+					'TYPO3 Fatal Error: Cannot connect to the current database, "' . $this->getDatabaseName() . '"!',
 					1270853883
 				);
 			}
@@ -1720,7 +1906,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	/**
 	 * Returns current database handle
 	 *
-	 * @return \mysqli|NULL
+	 * @return \Doctrine\DBAL\Connection|NULL
 	 */
 	public function getDatabaseHandle() {
 		return $this->link;
@@ -1729,7 +1915,9 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	/**
 	 * Set current database handle, usually \mysqli
 	 *
-	 * @param \mysqli $handle
+	 * @param \Doctrine\DBAL\Connection $handle
+	 *
+	 * @return void
 	 */
 	public function setDatabaseHandle($handle) {
 		$this->link = $handle;
@@ -1742,6 +1930,8 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * @param string|null $username Database user name
 	 * @param string|null $password User password
 	 * @param string|null $db       Database
+	 *
+	 * @return void
 	 */
 	protected function handleDeprecatedConnectArguments($host = NULL, $username = NULL, $password = NULL, $db = NULL) {
 		GeneralUtility::deprecationLog(
@@ -1953,10 +2143,11 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			'databaseName',
 			'databaseUsername',
 			'databaseUserPassword',
+			'connectionParams',
 			'persistentDatabaseConnection',
 			'connectionCompression',
 			'initializeCommandsAfterConnect',
-			'default_charset',
+			'defaultCharset',
 		);
 	}
 }

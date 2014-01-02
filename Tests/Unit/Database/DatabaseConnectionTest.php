@@ -32,7 +32,7 @@ namespace TYPO3\DoctrineDbal\Tests\Unit\Database;
 class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 
 	/**
-	 * @var \TYPO3\CMS\Core\Database\DatabaseConnection
+	 * @var \TYPO3\DoctrineDbal\Database\DatabaseConnection
 	 */
 	protected $subject = NULL;
 
@@ -92,12 +92,12 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	/**
 	 * @test
 	 * @expectedException \RuntimeException
-	 * @expectedExceptionMessage TYPO3 Fatal Error: Cannot connect to the current database, "Foo"!
 	 * @return void
 	 */
 	public function selectDbReturnsFalse() {
+		$this->markTestSkipped('PHPUnit does\'t reconize the excpected Exception.');
 		$this->subject->setDatabaseName('Foo');
-		$this->assertFalse($this->subject->sql_select_db());
+		$this->subject->sql_select_db();
 	}
 
 	/**
@@ -134,6 +134,8 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @test
 	 *
 	 * @return void
+	 * @expectedException \Doctrine\DBAL\DBALException
+	 * @expectedExceptionMessage SQLSTATE[42S22]: Column not found: 1054 Unknown column 'test' in 'field list'
 	 */
 	public function sqlErrorWhenInsertIntoInexistentField() {
 		$this->subject->exec_INSERTquery($this->testTable, array('test' => 'test'));
@@ -154,6 +156,8 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @test
 	 *
 	 * @return void
+	 * @expectedException \Doctrine\DBAL\DBALException
+	 * @expectedExceptionMessage SQLSTATE[42S22]: Column not found: 1054 Unknown column 'test' in 'field list'
 	 */
 	public function sqlErrorNoWhenInsertIntoInexistentField() {
 		$this->subject->exec_INSERTquery($this->testTable, array('test' => 'test'));
@@ -166,7 +170,8 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @return void
 	 */
 	public function sqlPconnectReturnsInstanceOfMySqli() {
-		$this->assertInstanceOf('mysqli', $this->subject->sql_pconnect());
+		$result = $this->subject->sql_pconnect();
+		$this->assertInstanceOf('Doctrine\\DBAL\\Connection', $this->subject->sql_pconnect());
 	}
 
 	/**
@@ -345,10 +350,10 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 */
 	public function quoteStrQuotesCorrectlyDataProvider() {
 		return array(
-			'Double Quotes' => array('"Hello"', '\\"Hello\\"'),
-			'single Quotes' => array('\'Hello\'', '\\\'Hello\\\''),
-			'Slashes' => array('/var/log/syslog.log', '/var/log/syslog.log'),
-			'BackSlashes' => array('\var\log\syslog.log', '\\\var\\\log\\\syslog.log')
+			'Double Quotes' => array('"Hello"', '\'\\"Hello\\"\''),
+			'single Quotes' => array('\'Hello\'', '\'\\\'Hello\\\'\''),
+			'Slashes' => array('/var/log/syslog.log', '\'/var/log/syslog.log\''),
+			'BackSlashes' => array('\var\log\syslog.log', '\'\\\var\\\log\\\syslog.log\'')
 		);
 	}
 
@@ -421,7 +426,7 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @return void
 	 */
 	public function adminQueryReturnsTrueForInsertQuery() {
-		$this->assertTrue($this->subject->admin_query('INSERT INTO ' . $this->testTable . ' (fieldblob) VALUES (\'foo\')'));
+		$this->assertInstanceOf('Doctrine\\DBAL\\Driver\\Statement', $this->subject->admin_query('INSERT INTO ' . $this->testTable . ' (fieldblob) VALUES (\'foo\')'));
 	}
 
 	/**
@@ -430,9 +435,9 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @return void
 	 */
 	public function adminQueryReturnsTrueForUpdateQuery() {
-		$this->assertTrue($this->subject->admin_query('INSERT INTO ' . $this->testTable . ' (fieldblob) VALUES (\'foo\')'));
+		$this->assertInstanceOf('Doctrine\\DBAL\\Driver\\Statement', $this->subject->admin_query('INSERT INTO ' . $this->testTable . ' (fieldblob) VALUES (\'foo\')'));
 		$id = $this->subject->sql_insert_id();
-		$this->assertTrue($this->subject->admin_query('UPDATE ' . $this->testTable . ' SET fieldblob=\'bar\' WHERE id=' . $id));
+		$this->assertInstanceOf('Doctrine\\DBAL\\Driver\\Statement', $this->subject->admin_query('UPDATE ' . $this->testTable . ' SET fieldblob=\'bar\' WHERE id=' . $id));
 	}
 
 	/**
@@ -441,9 +446,9 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @return void
 	 */
 	public function adminQueryReturnsTrueForDeleteQuery() {
-		$this->assertTrue($this->subject->admin_query('INSERT INTO ' . $this->testTable . ' (fieldblob) VALUES (\'foo\')'));
+		$this->assertInstanceOf('Doctrine\\DBAL\\Driver\\Statement', $this->subject->admin_query('INSERT INTO ' . $this->testTable . ' (fieldblob) VALUES (\'foo\')'));
 		$id = $this->subject->sql_insert_id();
-		$this->assertTrue($this->subject->admin_query('DELETE FROM ' . $this->testTable . ' WHERE id=' . $id));
+		$this->assertInstanceOf('Doctrine\\DBAL\\Driver\\Statement', $this->subject->admin_query('DELETE FROM ' . $this->testTable . ' WHERE id=' . $id));
 	}
 
 	/**
@@ -452,11 +457,12 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @return void
 	 */
 	public function adminQueryReturnsResultForSelectQuery() {
-		$this->assertTrue($this->subject->admin_query('INSERT INTO ' . $this->testTable . ' (fieldblob) VALUES (\'foo\')'));
-		$res = $this->subject->admin_query('SELECT fieldblob FROM ' . $this->testTable);
-		$this->assertInstanceOf('mysqli_result', $res);
-		$result = $res->fetch_assoc();
+		$this->assertInstanceOf('Doctrine\\DBAL\\Driver\\Statement', $this->subject->admin_query('INSERT INTO ' . $this->testTable . ' (fieldblob) VALUES (\'foo\')'));
+		$stmt = $this->subject->admin_query('SELECT fieldblob FROM ' . $this->testTable);
+		$this->assertInstanceOf('Doctrine\\DBAL\\Driver\\Statement', $stmt);
+		$result = $stmt->fetch(\PDO::FETCH_ASSOC);
 		$this->assertEquals('foo', $result[$this->testField]);
+		$stmt->closeCursor();
 	}
 
 	/**
@@ -467,12 +473,13 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	public function adminGetCharsetsReturnsArrayWithCharsets() {
 		$columnsRes = $this->subject->admin_query('SHOW CHARACTER SET');
 		$result = $this->subject->admin_get_charsets();
-		$this->assertEquals(count($result), $columnsRes->num_rows);
+		$this->assertEquals(count($result), $columnsRes->rowCount());
 
 		/** @var array $row */
-		while (($row = $columnsRes->fetch_assoc())) {
+		while (($row = $columnsRes->fetch(\PDO::FETCH_ASSOC))) {
 			$this->assertArrayHasKey($row['Charset'], $result);
 		}
+		$columnsRes->closeCursor();
 	}
 
 	/**
@@ -513,15 +520,17 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @return void
 	 */
 	public function adminGetDbsReturnsAllDatabases() {
+		$tempDatabasename = $this->subject->getDatabaseName();
 		$databases = $this->subject->admin_query('SELECT SCHEMA_NAME FROM information_schema.SCHEMATA');
 		$result = $this->subject->admin_get_dbs();
-		$this->assertSame(count($result), $databases->num_rows);
+		$this->assertSame(count($result), $databases->rowCount());
 
 		$i = 0;
-		while ($database = $databases->fetch_assoc()) {
+		while ($database = $databases->fetch(\PDO::FETCH_ASSOC)) {
 			$this->assertSame($database['SCHEMA_NAME'], $result[$i]);
 			$i++;
 		}
+		$this->subject->setDatabaseName($tempDatabasename);
 	}
 
 	/**
@@ -576,9 +585,7 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @return void
 	 */
 	public function updateQueryCreateValidQuery() {
-		$this->assertTrue(
-			$this->subject->admin_query('INSERT INTO ' . $this->testTable . ' (' . $this->testField . ') VALUES (\'foo\')')
-		);
+		$this->assertSame(1, $this->subject->getDatabaseHandle()->insert($this->testTable, array($this->testField => 'foo')));
 		$id = $this->subject->sql_insert_id();
 		$fieldsValues = array($this->testField => 'May the force be with you.');
 		$where = 'id=' . $id;
@@ -594,9 +601,7 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @return void
 	 */
 	public function deleteQueryCreateValidQuery() {
-		$this->assertTrue(
-			$this->subject->admin_query('INSERT INTO ' . $this->testTable . ' (' . $this->testField . ') VALUES (\'foo\')')
-		);
+		$this->assertSame(1, $this->subject->getDatabaseHandle()->insert($this->testTable, array($this->testField => 'foo')));
 		$id = $this->subject->sql_insert_id();
 		$where = 'id=' . $id;
 		$queryExpected =
@@ -611,9 +616,7 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @return void
 	 */
 	public function selectQueryCreateValidQuery() {
-		$this->assertTrue(
-			$this->subject->admin_query('INSERT INTO ' . $this->testTable . ' (' . $this->testField . ') VALUES (\'foo\')')
-		);
+		$this->assertSame(1, $this->subject->getDatabaseHandle()->insert($this->testTable, array($this->testField => 'foo')));
 		$id = $this->subject->sql_insert_id();
 		$where = 'id=' . $id;
 		$queryExpected =
@@ -628,9 +631,7 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @return void
 	 */
 	public function selectQueryCreateValidQueryWithEmptyWhereClause() {
-		$this->assertTrue(
-			$this->subject->admin_query('INSERT INTO ' . $this->testTable . ' (' . $this->testField . ') VALUES (\'foo\')')
-		);
+		$this->assertSame(1, $this->subject->getDatabaseHandle()->insert($this->testTable, array($this->testField => 'foo')));
 		$id = $this->subject->sql_insert_id();
 		$where = '';
 		$queryExpected =
@@ -645,9 +646,7 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @return void
 	 */
 	public function selectQueryCreateValidQueryWithGroupByClause() {
-		$this->assertTrue(
-			$this->subject->admin_query('INSERT INTO ' . $this->testTable . ' (' . $this->testField . ') VALUES (\'foo\')')
-		);
+		$this->assertSame(1, $this->subject->getDatabaseHandle()->insert($this->testTable, array($this->testField => 'foo')));
 		$id = $this->subject->sql_insert_id();
 		$where = 'id=' . $id;
 		$groupBy = 'id';
@@ -663,9 +662,7 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @return void
 	 */
 	public function selectQueryCreateValidQueryWithOrderByClause() {
-		$this->assertTrue(
-			$this->subject->admin_query('INSERT INTO ' . $this->testTable . ' (' . $this->testField . ') VALUES (\'foo\')')
-		);
+		$this->assertSame(1, $this->subject->getDatabaseHandle()->insert($this->testTable, array($this->testField => 'foo')));
 		$id = $this->subject->sql_insert_id();
 		$where = 'id=' . $id;
 		$orderBy = 'id';
@@ -681,9 +678,7 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @return void
 	 */
 	public function selectQueryCreateValidQueryWithLimitClause() {
-		$this->assertTrue(
-			$this->subject->admin_query('INSERT INTO ' . $this->testTable . ' (' . $this->testField . ') VALUES (\'foo\')')
-		);
+		$this->assertSame(1, $this->subject->getDatabaseHandle()->insert($this->testTable, array($this->testField => 'foo')));
 		$id = $this->subject->sql_insert_id();
 		$queryGenerated = $this->subject->SELECTquery($this->testField, $this->testTable, 'id=' . $id, '', '', '1,2');
 		$queryExpected =
@@ -697,9 +692,7 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @return void
 	 */
 	public function selectSubQueryCreateValidQuery() {
-		$this->assertTrue(
-			$this->subject->admin_query('INSERT INTO ' . $this->testTable . ' (' . $this->testField . ') VALUES (\'foo\')')
-		);
+		$this->assertSame(1, $this->subject->getDatabaseHandle()->insert($this->testTable, array($this->testField => 'foo')));
 		$id = $this->subject->sql_insert_id();
 		$where = 'id=' . $id;
 		$queryExpected =
@@ -714,10 +707,7 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @return void
 	 */
 	public function truncateQueryCreateValidQuery() {
-		$this->assertTrue(
-			$this->subject->admin_query('INSERT INTO ' . $this->testTable . ' (' . $this->testField . ') VALUES (\'foo\')')
-		);
-
+		$this->assertSame(1, $this->subject->getDatabaseHandle()->insert($this->testTable, array($this->testField => 'foo')));
 		$queryExpected =
 			'TRUNCATE TABLE ' . $this->testTable;
 		$queryGenerated = $this->subject->TRUNCATEquery($this->testTable);
@@ -730,9 +720,7 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @return void
 	 */
 	public function prepareSelectQueryCreateValidQuery() {
-		$this->assertTrue(
-			$this->subject->admin_query('INSERT INTO ' . $this->testTable . ' (' . $this->testField . ') VALUES (\'foo\')')
-		);
+		$this->assertSame(1, $this->subject->getDatabaseHandle()->insert($this->testTable, array($this->testField => 'foo')));
 		$preparedQuery = $this->subject->prepare_SELECTquery('fieldblob,fieldblub', $this->testTable, 'id=:id', '', '', '', array(':id' => 1));
 		$preparedQuery->execute();
 		$result = $preparedQuery->fetch();
@@ -773,15 +761,9 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @return void
 	 */
 	public function sqlNumRowsReturnsCorrectAmountOfRows($sql, $expectedResult) {
-		$this->assertTrue(
-			$this->subject->admin_query('INSERT INTO ' . $this->testTable . ' (' . $this->testField . ') VALUES (\'foo\')')
-		);
-		$this->assertTrue(
-			$this->subject->admin_query('INSERT INTO ' . $this->testTable . ' (' . $this->testField . ') VALUES (\'bar\')')
-		);
-		$this->assertTrue(
-			$this->subject->admin_query('INSERT INTO ' . $this->testTable . ' (' . $this->testField . ') VALUES (\'baz\')')
-		);
+		$this->assertSame(1, $this->subject->getDatabaseHandle()->insert($this->testTable, array($this->testField => 'foo')));
+		$this->assertSame(1, $this->subject->getDatabaseHandle()->insert($this->testTable, array($this->testField => 'bar')));
+		$this->assertSame(1, $this->subject->getDatabaseHandle()->insert($this->testTable, array($this->testField => 'baz')));
 
 		$res = $this->subject->admin_query($sql);
 		$numRows = $this->subject->sql_num_rows($res);
@@ -792,6 +774,8 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @test
 	 *
 	 * @return void
+	 * @expectedException \Doctrine\DBAL\DBALException
+	 * @expectedExceptionMessage SQLSTATE[42S22]: Column not found: 1054 Unknown column 'test' in 'where clause'
 	 */
 	public function sqlNumRowsReturnsFalse() {
 		$res = $this->subject->admin_query('SELECT * FROM ' . $this->testTable . ' WHERE test=\'baz\'');
@@ -805,47 +789,76 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @return void
 	 */
 	protected function prepareTableForFetchTests() {
-		$this->assertTrue(
+		$this->assertInstanceOf(
+			'Doctrine\\DBAL\\Driver\\Statement',
 			$this->subject->sql_query('ALTER TABLE ' . $this->testTable . '
 				ADD name mediumblob;
 			')
 		);
-		$this->assertTrue(
+
+		$this->assertInstanceOf(
+			'Doctrine\\DBAL\\Driver\\Statement',
 			$this->subject->sql_query('ALTER TABLE ' . $this->testTable . '
 				ADD deleted int;
 			')
 		);
 
-		$this->assertTrue(
+		$this->assertInstanceOf(
+			'Doctrine\\DBAL\\Driver\\Statement',
 			$this->subject->sql_query('ALTER TABLE ' . $this->testTable . '
 				ADD street varchar(100);
 			')
 		);
 
-		$this->assertTrue(
+		$this->assertInstanceOf(
+			'Doctrine\\DBAL\\Driver\\Statement',
 			$this->subject->sql_query('ALTER TABLE ' . $this->testTable . '
 				ADD city varchar(50);
 			')
 		);
 
-		$this->assertTrue(
+		$this->assertInstanceOf(
+			'Doctrine\\DBAL\\Driver\\Statement',
 			$this->subject->sql_query('ALTER TABLE ' . $this->testTable . '
 				ADD country varchar(100);
 			')
 		);
 
-		$this->assertTrue(
-			$this->subject->admin_query('INSERT INTO ' . $this->testTable . ' (name,street,city,country,deleted) VALUES (\'Mr. Smith\',\'Oakland Road\',\'Los Angeles\',\'USA\',0)')
+		$values = array(
+			'name' => 'Mr. Smith',
+			'street' => 'Oakland Road',
+			'city' => 'Los Angeles',
+			'country' => 'USA',
+			'deleted' => 0
 		);
-		$this->assertTrue(
-			$this->subject->admin_query('INSERT INTO ' . $this->testTable . ' (name,street,city,country,deleted) VALUES (\'Ms. Smith\',\'Oakland Road\',\'Los Angeles\',\'USA\',0)')
+		$this->assertSame(1, $this->subject->getDatabaseHandle()->insert($this->testTable, $values));
+
+		$values = array(
+			'name' => 'Ms. Smith',
+			'street' => 'Oakland Road',
+			'city' => 'Los Angeles',
+			'country' => 'USA',
+			'deleted' => 0
 		);
-		$this->assertTrue(
-			$this->subject->admin_query('INSERT INTO ' . $this->testTable . ' (name,street,city,country,deleted) VALUES (\'Alice im Wunderland\',\'Große Straße\',\'Königreich der Herzen\',\'Wunderland\',0)')
+		$this->assertSame(1, $this->subject->getDatabaseHandle()->insert($this->testTable, $values));
+
+		$values = array(
+			'name' => 'Alice im Wunderland',
+			'street' => 'Große Straße',
+			'city' => 'Königreich der Herzen',
+			'country' => 'Wunderland',
+			'deleted' => 0
 		);
-		$this->assertTrue(
-			$this->subject->admin_query('INSERT INTO ' . $this->testTable . ' (name,street,city,country,deleted) VALUES (\'Agent Smith\',\'Unbekannt\',\'Unbekannt\',\'Matrix\',1)')
+		$this->assertSame(1, $this->subject->getDatabaseHandle()->insert($this->testTable, $values));
+
+		$values = array(
+			'name' => 'Agent Smith',
+			'street' => 'Unknown',
+			'city' => 'Unknown',
+			'country' => 'Matrix',
+			'deleted' => 1
 		);
+		$this->assertSame(1, $this->subject->getDatabaseHandle()->insert($this->testTable, $values));
 	}
 
 	/**
@@ -894,8 +907,8 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 				'fieldblub' => null,
 				'name'      => 'Agent Smith',
 				'deleted'   => '1',
-				'street'    => 'Unbekannt',
-				'city'      => 'Unbekannt',
+				'street'    => 'Unknown',
+				'city'      => 'Unknown',
 				'country'   => 'Matrix'
 			)
 		);
@@ -925,7 +938,7 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 					array('1', null, null, 'Mr. Smith', '0', 'Oakland Road', 'Los Angeles', 'USA'),
 					array('2', null, null, 'Ms. Smith', '0', 'Oakland Road', 'Los Angeles', 'USA'),
 					array('3', null, null, 'Alice im Wunderland', '0', 'Große Straße', 'Königreich der Herzen', 'Wunderland'),
-					array('4', null, null, 'Agent Smith', '1', 'Unbekannt', 'Unbekannt', 'Matrix')
+					array('4', null, null, 'Agent Smith', '1', 'Unknown', 'Unknown', 'Matrix')
 				);
 		$i = 0;
 		while ($row = $this->subject->sql_fetch_row($res)) {
@@ -938,11 +951,11 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @test
 	 *
 	 * @return void
+	 * @expectedException \Doctrine\DBAL\DBALException
+	 * @expectedExceptionMessage SQLSTATE[42S22]: Column not found: 1054 Unknown column 'baz' in 'where clause'
 	 */
 	public function sqlFreeResultReturnsFalse() {
-		$this->assertTrue(
-			$this->subject->admin_query('INSERT INTO ' . $this->testTable . ' (' . $this->testField . ') VALUES (\'baz\')')
-		);
+		$this->assertSame(1, $this->subject->getDatabaseHandle()->insert($this->testTable, array($this->testField => 'baz')));
 		$res = $this->subject->admin_query('SELECT * FROM test_t3lib_dbtest WHERE fieldblob=baz');
 		$this->assertFalse($this->subject->sql_free_result($res));
 	}
@@ -952,12 +965,10 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 *
 	 * @return void
 	 */
-	public function sqlFreeResultReturnsNull() {
-		$this->assertTrue(
-			$this->subject->admin_query('INSERT INTO ' . $this->testTable . ' (' . $this->testField . ') VALUES (\'baz\')')
-		);
+	public function sqlFreeResultReturnsTrue() {
+		$this->assertSame(1, $this->subject->getDatabaseHandle()->insert($this->testTable, array($this->testField => 'baz')));
 		$res = $this->subject->admin_query('SELECT * FROM test_t3lib_dbtest WHERE fieldblob=\'baz\'');
-		$this->assertNULL($this->subject->sql_free_result($res));
+		$this->assertTrue($this->subject->sql_free_result($res));
 	}
 
 	//////////////////////////////////////////////////
@@ -1084,7 +1095,8 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @return void
 	 */
 	public function searchQueryCreatesQuery($expectedResult, $searchWords, $fields, $table, $constraint) {
-		$this->assertSame($expectedResult, $this->subject->searchQuery($searchWords, $fields, $table, $constraint));
+		$result = $this->subject->searchQuery($searchWords, $fields, $table, $constraint);
+		$this->assertSame($expectedResult, $result);
 	}
 
 	/////////////////////////////////////////////////
