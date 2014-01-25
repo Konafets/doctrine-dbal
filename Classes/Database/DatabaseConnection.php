@@ -1585,6 +1585,210 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 
 	/**************************************
 	 *
+	 * SQL admin functions
+	 * (For use in the Install Tool and Extension Manager)
+	 *
+	 **************************************/
+
+	/**
+	 * This returns the count of the tables from the selected database
+	 *
+	 * @return array
+	 */
+	public function adminCountTables() {
+		if (!$this->isConnected) {
+			$this->connectDB();
+		}
+		$stmt = $this->admin_query('SELECT count(*) from information_schema.tables WHERE table_schema = \'' . $this->databaseName . '\'');
+		if ($stmt !== FALSE) {
+			$result = $stmt->fetchAll(\PDO::FETCH_COLUMN);
+		}
+
+		return $result[0];
+	}
+
+	/**
+	 * Returns information about the character sets supported by the current DBM
+	 * This function is important not only for the Install Tool but probably for
+	 * DBALs as well since they might need to look up table specific information
+	 * in order to construct correct queries. In such cases this information should
+	 * probably be cached for quick delivery.
+	 *
+	 * This is used by the Install Tool to convert tables tables with non-UTF8 charsets
+	 * Use in Install Tool only!
+	 *
+	 * @return array Array with Charset as key and an array of "Charset", "Description", "Default collation", "Maxlen" as values
+	 */
+	public function admin_get_charsets() {
+		if (!$this->isConnected) {
+			$this->connectDB();
+		}
+		$output = array();
+		$stmt = $this->link->query('SHOW CHARACTER SET');
+		$this->setLastStatement($stmt);
+		if ($stmt !== FALSE) {
+			while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+				$output[$row['Charset']] = $row;
+			}
+			$stmt->closeCursor();
+		}
+
+		return $output;
+	}
+
+	/**
+	 * Listing databases from current MySQL connection. NOTICE: It WILL try to select those databases and thus break selection of current database.
+	 * This is only used as a service function in the (1-2-3 process) of the Install Tool.
+	 * In any case a lookup should be done in the _DEFAULT handler DBMS then.
+	 * Use in Install Tool only!
+	 *
+	 * @return array Each entry represents a database name
+	 * @throws \RuntimeException
+	 */
+	public function admin_get_dbs() {
+		if (!$this->isConnected) {
+			$this->connectDB();
+		}
+		$dbArray = array();
+		$databases = $this->schema->listDatabases();
+		if ($databases === FALSE) {
+			throw new \RuntimeException(
+				'MySQL Error: Cannot get tablenames: "' . $this->sql_error() . '"!',
+				1378457171
+			);
+		} else {
+			foreach ($databases as $database) {
+				try {
+					$this->setDatabaseName($database);
+					if ($this->sql_select_db()) {
+						$dbArray[] = $database;
+					}
+				} catch (\RuntimeException $exception) {
+					// The exception happens if we cannot connect to the database
+					// (usually due to missing permissions). This is ok here.
+					// We catch the exception, skip the database and continue.
+				}
+			}
+		}
+
+		return $dbArray;
+	}
+
+	/**
+	 * Returns information about each field in the $table (quering the DBMS)
+	 * In a DBAL this should look up the right handler for the table and return compatible information
+	 * This function is important not only for the Install Tool but probably for
+	 * DBALs as well since they might need to look up table specific information
+	 * in order to construct correct queries. In such cases this information should
+	 * probably be cached for quick delivery.
+	 *
+	 * @param string $tableName Table name
+	 *
+	 * @return array Field information in an associative array with fieldname => field row
+	 */
+	public function admin_get_fields($tableName) {
+		if (!$this->isConnected) {
+			$this->connectDB();
+		}
+		$output = array();
+		// TODO: Figure out if we could use the function $this->schema->listTableColumns($tableName);
+		//       The result is a different from the current. We need to adjust assembleFieldDefinition() from
+		//       SqlSchemaMigrationService
+		$stmt = $this->link->query('SHOW COLUMNS FROM `' . $tableName . '`');
+		$this->setLastStatement($stmt);
+		if ($stmt !== FALSE) {
+			while ($fieldRow = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+				$output[$fieldRow['Field']] = $fieldRow;
+			}
+			$stmt->closeCursor();
+		}
+
+		return $output;
+	}
+
+	/**
+	 * Returns information about each index key in the $table (quering the DBMS)
+	 * In a DBAL this should look up the right handler for the table and return compatible information
+	 *
+	 * @param string $tableName Table name
+	 *
+	 * @return array Key information in a associative array
+	 */
+	public function admin_get_keys($tableName) {
+		if (!$this->isConnected) {
+			$this->connectDB();
+		}
+		$output = array();
+
+		$stmt = $this->link->query('SHOW KEYS FROM `' . $tableName . '`');
+		$this->setLastStatement($stmt);
+		if ($stmt !== FALSE) {
+			while ($keyRow = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+				$output[] = $keyRow;
+			}
+			$stmt->closeCursor();
+		}
+
+		return $output;
+	}
+
+	/**
+	 * Returns the list of tables from the default database, TYPO3_db (quering the DBMS)
+	 * In a DBAL this method should 1) look up all tables from the DBMS  of
+	 * the _DEFAULT handler and then 2) add all tables *configured* to be managed by other handlers
+	 *
+	 * @return array Array with tablenames as key and arrays with status information as value
+	 */
+	public function admin_get_tables() {
+		if (!$this->isConnected) {
+			$this->connectDB();
+		}
+
+		$whichTables = array();
+		$tablesResult = $this->link->query('SHOW TABLE STATUS FROM `' . $this->getDatabaseName() . '`');
+		if ($tablesResult !== FALSE) {
+			while ($theTable = $tablesResult->fetch(\PDO::FETCH_ASSOC)) {
+				$whichTables[$theTable['Name']] = $theTable;
+			}
+		}
+
+		// TODO: Figure out how to use this
+//		$testTables = array();
+//		$tables = $this->schema->listTables();
+//		if ($tables !== FALSE) {
+//			foreach ($tables as $table) {
+//				$testTables[$table->getName()] = array(
+//													'columns' => $table->getColumns(),
+//													'indices' => $table->getIndexes()
+//												);
+//			}
+//		}
+
+		return $whichTables;
+	}
+
+	/**
+	 * Doctrine query wrapper function, used by the Install Tool and EM for all queries regarding management of the database!
+	 *
+	 * @param string $query Query to execute
+	 *
+	 * @return boolean|\Doctrine\DBAL\Driver\Statement A PDOStatement object
+	 */
+	public function admin_query($query) {
+		if (!$this->isConnected) {
+			$this->connectDB();
+		}
+		$stmt = $this->link->query($query);
+		$this->setLastStatement($stmt);
+		if ($this->debugOutput) {
+			$this->debug('admin_query', $query);
+		}
+
+		return $stmt;
+	}
+
+	/**************************************
+	 *
 	 * Various helper functions
 	 *
 	 * Functions recommended to be used for
@@ -1801,211 +2005,6 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			)
 		);
 	}
-
-	/**************************************
-	 *
-	 * SQL admin functions
-	 * (For use in the Install Tool and Extension Manager)
-	 *
-	 **************************************/
-	/**
-	 * Listing databases from current MySQL connection. NOTICE: It WILL try to select those databases and thus break selection of current database.
-	 * This is only used as a service function in the (1-2-3 process) of the Install Tool.
-	 * In any case a lookup should be done in the _DEFAULT handler DBMS then.
-	 * Use in Install Tool only!
-	 *
-	 * @return array Each entry represents a database name
-	 * @throws \RuntimeException
-	 */
-	public function admin_get_dbs() {
-		if (!$this->isConnected) {
-			$this->connectDB();
-		}
-		$dbArray = array();
-		$databases = $this->schema->listDatabases();
-		if ($databases === FALSE) {
-			throw new \RuntimeException(
-				'MySQL Error: Cannot get tablenames: "' . $this->sql_error() . '"!',
-				1378457171
-			);
-		} else {
-			foreach ($databases as $database) {
-				try {
-					$this->setDatabaseName($database);
-					if ($this->sql_select_db()) {
-						$dbArray[] = $database;
-					}
-				} catch (\RuntimeException $exception) {
-					// The exception happens if we cannot connect to the database
-					// (usually due to missing permissions). This is ok here.
-					// We catch the exception, skip the database and continue.
-				}
-			}
-		}
-
-		return $dbArray;
-	}
-
-	/**
-	 * Returns the list of tables from the default database, TYPO3_db (quering the DBMS)
-	 * In a DBAL this method should 1) look up all tables from the DBMS  of
-	 * the _DEFAULT handler and then 2) add all tables *configured* to be managed by other handlers
-	 *
-	 * @return array Array with tablenames as key and arrays with status information as value
-	 */
-	public function admin_get_tables() {
-		if (!$this->isConnected) {
-			$this->connectDB();
-		}
-
-		$whichTables = array();
-		$tablesResult = $this->link->query('SHOW TABLE STATUS FROM `' . $this->getDatabaseName() . '`');
-		if ($tablesResult !== FALSE) {
-			while ($theTable = $tablesResult->fetch(\PDO::FETCH_ASSOC)) {
-				$whichTables[$theTable['Name']] = $theTable;
-			}
-		}
-
-		// TODO: Figure out how to use this
-//		$testTables = array();
-//		$tables = $this->schema->listTables();
-//		if ($tables !== FALSE) {
-//			foreach ($tables as $table) {
-//				$testTables[$table->getName()] = array(
-//													'columns' => $table->getColumns(),
-//													'indices' => $table->getIndexes()
-//												);
-//			}
-//		}
-
-		return $whichTables;
-	}
-
-
-	/**
-	 * This returns the count of the tables from the selected database
-	 *
-	 * @return array
-	 */
-	public function adminCountTables() {
-		if (!$this->isConnected) {
-			$this->connectDB();
-		}
-		$stmt = $this->admin_query('SELECT count(*) from information_schema.tables WHERE table_schema = \'' . $this->databaseName . '\'');
-		if ($stmt !== FALSE) {
-			$result = $stmt->fetchAll(\PDO::FETCH_COLUMN);
-		}
-
-		return $result[0];
-	}
-
-	/**
-	 * Returns information about each field in the $table (quering the DBMS)
-	 * In a DBAL this should look up the right handler for the table and return compatible information
-	 * This function is important not only for the Install Tool but probably for
-	 * DBALs as well since they might need to look up table specific information
-	 * in order to construct correct queries. In such cases this information should
-	 * probably be cached for quick delivery.
-	 *
-	 * @param string $tableName Table name
-	 *
-	 * @return array Field information in an associative array with fieldname => field row
-	 */
-	public function admin_get_fields($tableName) {
-		if (!$this->isConnected) {
-			$this->connectDB();
-		}
-		$output = array();
-		// TODO: Figure out if we could use the function $this->schema->listTableColumns($tableName);
-		//       The result is a different from the current. We need to adjust assembleFieldDefinition() from
-		//       SqlSchemaMigrationService
-		$stmt = $this->link->query('SHOW COLUMNS FROM `' . $tableName . '`');
-		$this->setLastStatement($stmt);
-		if ($stmt !== FALSE) {
-			while ($fieldRow = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-				$output[$fieldRow['Field']] = $fieldRow;
-			}
-			$stmt->closeCursor();
-		}
-
-		return $output;
-	}
-
-	/**
-	 * Returns information about each index key in the $table (quering the DBMS)
-	 * In a DBAL this should look up the right handler for the table and return compatible information
-	 *
-	 * @param string $tableName Table name
-	 *
-	 * @return array Key information in a associative array
-	 */
-	public function admin_get_keys($tableName) {
-		if (!$this->isConnected) {
-			$this->connectDB();
-		}
-		$output = array();
-
-		$stmt = $this->link->query('SHOW KEYS FROM `' . $tableName . '`');
-		$this->setLastStatement($stmt);
-		if ($stmt !== FALSE) {
-			while ($keyRow = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-				$output[] = $keyRow;
-			}
-			$stmt->closeCursor();
-		}
-
-		return $output;
-	}
-
-	/**
-	 * Returns information about the character sets supported by the current DBM
-	 * This function is important not only for the Install Tool but probably for
-	 * DBALs as well since they might need to look up table specific information
-	 * in order to construct correct queries. In such cases this information should
-	 * probably be cached for quick delivery.
-	 *
-	 * This is used by the Install Tool to convert tables tables with non-UTF8 charsets
-	 * Use in Install Tool only!
-	 *
-	 * @return array Array with Charset as key and an array of "Charset", "Description", "Default collation", "Maxlen" as values
-	 */
-	public function admin_get_charsets() {
-		if (!$this->isConnected) {
-			$this->connectDB();
-		}
-		$output = array();
-		$stmt = $this->link->query('SHOW CHARACTER SET');
-		$this->setLastStatement($stmt);
-		if ($stmt !== FALSE) {
-			while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-				$output[$row['Charset']] = $row;
-			}
-			$stmt->closeCursor();
-		}
-
-		return $output;
-	}
-
-	/**
-	 * Doctrine query wrapper function, used by the Install Tool and EM for all queries regarding management of the database!
-	 *
-	 * @param string $query Query to execute
-	 *
-	 * @return boolean|\Doctrine\DBAL\Driver\Statement A PDOStatement object
-	 */
-	public function admin_query($query) {
-		if (!$this->isConnected) {
-			$this->connectDB();
-		}
-		$stmt = $this->link->query($query);
-		$this->setLastStatement($stmt);
-		if ($this->debugOutput) {
-			$this->debug('admin_query', $query);
-		}
-
-		return $stmt;
-	}
-
 
 	/**
 	 * Handle deprecated arguments for sql_pconnect() and connectDB()
