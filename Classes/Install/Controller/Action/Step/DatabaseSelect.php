@@ -34,7 +34,7 @@ use TYPO3\CMS\Install\Controller\Action;;
 class DatabaseSelect extends Action\AbstractAction implements Action\Step\StepInterface {
 
 	/**
-	 * @var \TYPO3\CMS\Core\Database\DatabaseConnection
+	 * @var \TYPO3\DoctrineDBAL\Database\DatabaseConnection
 	 */
 	protected $databaseConnection = NULL;
 
@@ -153,10 +153,10 @@ class DatabaseSelect extends Action\AbstractAction implements Action\Step\StepIn
 			foreach ($allPossibleDatabases as $database) {
 				$this->databaseConnection->setDatabaseName($database);
 				$this->databaseConnection->sql_select_db();
-				$existingTables = $this->databaseConnection->admin_get_tables();
+				$tableCount = $this->databaseConnection->adminCountTables();
 				$databases[] = array(
 					'name' => $database,
-					'tables' => count($existingTables),
+					'tables' => $tableCount,
 				);
 			}
 			return $databases;
@@ -175,6 +175,7 @@ class DatabaseSelect extends Action\AbstractAction implements Action\Step\StepIn
 		$this->databaseConnection->setDatabaseHost($GLOBALS['TYPO3_CONF_VARS']['DB']['host']);
 		$this->databaseConnection->setDatabasePort($GLOBALS['TYPO3_CONF_VARS']['DB']['port']);
 		$this->databaseConnection->setDatabaseSocket($GLOBALS['TYPO3_CONF_VARS']['DB']['socket']);
+		$this->databaseConnection->setDatabaseName($GLOBALS['TYPO3_CONF_VARS']['DB']['database']);
 		$this->databaseConnection->sql_pconnect();
 	}
 }
