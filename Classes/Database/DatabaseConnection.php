@@ -1338,6 +1338,253 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 
 	/**************************************
 	 *
+	 * Doctrine / PDO wrapper functions
+	 * (For use in your applications)
+	 *
+	 **************************************/
+
+	/**
+	 * Returns the number of rows affected by the last INSERT, UPDATE or DELETE query
+	 *
+	 * @return integer Number of rows affected by last query
+	 */
+	public function sql_affected_rows() {
+		$result = $this->affectedRows;
+		return $this->lastStatement->rowCount();
+	}
+
+	/**
+	 * Move internal result pointer
+	 *
+	 * @param boolean|\mysqli_result|object $res  MySQLi result object / DBAL object
+	 * @param integer                       $seek Seek result number.
+	 *
+	 * @return boolean Returns TRUE on success or FALSE on failure.
+	 */
+	public function sql_data_seek($res, $seek) {
+		if ($this->debug_check_recordset($res)) {
+			return $res->data_seek($seek);
+		} else {
+			return FALSE;
+		}
+	}
+
+	/**
+	 * Returns the error number on the last query() execution
+	 *
+	 * @return integer PDO error number
+	 */
+	public function sql_errno() {
+		return $this->link->errorCode();
+	}
+
+	/**
+	 * Returns the error status on the last query() execution
+	 *
+	 * @return string PDO error string.
+	 */
+	public function sql_error() {
+		$errorMsg = $this->link->errorInfo();
+		return $errorMsg[0] === '00000' ? '' : $errorMsg;
+	}
+
+	/**
+	 * Returns an associative array that corresponds to the fetched row, or FALSE if there are no more rows.
+	 * Wrapper function for Doctrine/PDO fetch(\PDO::FETCH_ASSOC)
+	 *
+	 * @param \Doctrine\DBAL\Driver\Statement A PDOStatement object
+	 *
+	 * @return boolean|array Associative array of result row.
+	 */
+	public function sql_fetch_assoc($stmt) {
+		if ($this->debug_check_recordset($stmt)) {
+			return $stmt->fetch(\PDO::FETCH_ASSOC);
+		} else {
+			return FALSE;
+		}
+	}
+
+	/**
+	 * Returns an array that corresponds to the fetched row, or FALSE if there are no more rows.
+	 * The array contains the values in numerical indices.
+	 * Wrapper function for Doctrine/PDO fetch(\PDO::FETCH_NUM)
+	 *
+	 * @param \Doctrine\DBAL\Driver\Statement A PDOStatement object
+	 *
+	 * @return boolean|array Array with result rows.
+	 */
+	public function sql_fetch_row($stmt) {
+		if ($this->debug_check_recordset($stmt)) {
+			return $stmt->fetch(\PDO::FETCH_NUM);
+		} else {
+			return FALSE;
+		}
+	}
+
+	/**
+	 * Get the type of the specified field in a result
+	 * mysql_field_type() wrapper function
+	 *
+	 * @param boolean|\Doctrine\DBAL\Driver\Statement $stmt    A PDOStatement object
+	 * @param integer                          $pointer Field index.
+	 *
+	 * @return string Returns the name of the specified field index, or FALSE on error
+	 */
+	public function sql_field_type($stmt, $pointer) {
+		// mysql_field_type compatibility map
+		// taken from: http://www.php.net/manual/en/mysqli-result.fetch-field-direct.php#89117
+		// Constant numbers see http://php.net/manual/en/mysqli.constants.php
+
+		$mysqlDataTypeHash = array(
+			'boolean'      => 'boolean',
+			'smallint'     => 'smallint',
+			'integer'      => 'int',
+			'float'        => 'float',
+			'double'       => 'double',
+			'timestamp'    => 'timestamp',
+			'bigint'       => 'bigint',
+			'mediumint'    => 'mediumint',
+			'date'         => 'date',
+			'time'         => 'time',
+			'datetime'     => 'datetime',
+			'text'         => 'varchar',
+			'string'       => 'varchar',
+			'decimal'      => 'decimal',
+			'blob'         => 'blob',
+			'guid'         => 'guid',
+			'object'       => 'object',
+			'datetimetz'   => 'datetimetz',
+			'json_array'   => 'json_array',
+			'simple_array' => 'simple_array',
+			'array'        => 'array',
+		);
+
+		if ($this->debug_check_recordset($stmt)) {
+			$columns = $this->schema->listTableColumns($this->table);
+
+			$i = 0;
+			foreach ($columns as $column) {
+				if ($i === $pointer) {
+					// TODO: Figure out if this is ok like it is and clean up the rest of this mess
+					//$pdoTypeId = $column->getType()->getBindingType();
+					//$typeArray = $column->toArray();
+					$metaInfo = $column->getType()->getName();
+				}
+				$i++;
+			}
+			if ($metaInfo === FALSE) {
+				return FALSE;
+			}
+
+			return $mysqlDataTypeHash[$metaInfo];
+		} else {
+			return FALSE;
+		}
+	}
+
+	/**
+	 * Free result memory
+	 * Wrapper function for Doctrine/PDO closeCursor()
+	 *
+	 * @param boolean|\Doctrine\DBAL\Driver\Statement $stmt A PDOStatement
+	 *
+	 * @return boolean Returns NULL on success or FALSE on failure.
+	 */
+	public function sql_free_result($stmt) {
+		if ($this->debug_check_recordset($stmt)) {
+			return $stmt->closeCursor();
+		} else {
+			return FALSE;
+		}
+	}
+
+	/**
+	 * Get the ID generated from the previous INSERT operation
+	 *
+	 * @return integer The uid of the last inserted record.
+	 */
+	// TODO Write a test to prove that this method returns an integer
+	public function sql_insert_id() {
+		return (integer) $this->link->lastInsertId();
+	}
+
+	/**
+	 * Returns the number of selected rows.
+	 *
+	 * @param boolean|\Doctrine\DBAL\Driver\Statement $stmt
+	 *
+	 * @return integer Number of resulting rows
+	 */
+	public function sql_num_rows($stmt) {
+		if ($this->debug_check_recordset($stmt)) {
+			$result = $stmt->rowCount();
+		} else {
+			$result = FALSE;
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Select a SQL database
+	 *
+	 * @param string $TYPO3_db Deprecated since 6.1, will be removed in two versions. Database to connect to.
+	 *
+	 * @return boolean Returns TRUE on success or FALSE on failure.
+	 */
+	public function sql_select_db($TYPO3_db = NULL) {
+		if (!$this->isConnected) {
+			$this->connectDB();
+		}
+
+		if ($TYPO3_db) {
+			GeneralUtility::deprecationLog(
+				'DatabaseConnection->sql_select_db() should be called without arguments.' .
+					' Use the setDatabaseName() before. Will be removed two versions after 6.1.'
+			);
+			$this->setDatabaseName($TYPO3_db);
+		}
+
+		$isConnected = $this->isConnected();
+		if (!$isConnected) {
+			GeneralUtility::sysLog(
+				// TODO: Replace the term "MySQL" in the next log message with the current platform name
+				'Could not select MySQL database ' . $this->getDatabaseName() . ': ' . $this->sql_error(),
+				'Core',
+				GeneralUtility::SYSLOG_SEVERITY_FATAL
+			);
+		}
+
+		return $isConnected;
+	}
+
+	/**
+	 * Executes query
+	 * Doctrine/PDO query() wrapper function
+	 * Beware: Use of this method should be avoided. You should consider
+	 * using exec_SELECTquery() and similar methods instead.
+	 *
+	 * @param string $query Query to execute
+	 *
+	 * @return \Doctrine\DBAL\Driver\Statement A PDOStatement object
+	 */
+	public function sql_query($query) {
+		if (!$this->isConnected) {
+			$this->connectDB();
+		}
+
+		$stmt = $this->link->query($query);
+		$this->setLastStatement($stmt);
+
+		if ($this->debugOutput) {
+			$this->debug('sql_query', $query);
+		}
+
+		return $stmt;
+	}
+
+	/**************************************
+	 *
 	 * Various helper functions
 	 *
 	 * Functions recommended to be used for
@@ -1553,253 +1800,6 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 				'format' => 'Y-m-d H:i:s'
 			)
 		);
-	}
-
-	/**************************************
-	 *
-	 * Doctrine / PDO wrapper functions
-	 * (For use in your applications)
-	 *
-	 **************************************/
-	/**
-	 * Executes query
-	 * Doctrine/PDO query() wrapper function
-	 * Beware: Use of this method should be avoided as it is experimentally supported by DBAL. You should consider
-	 * using exec_SELECTquery() and similar methods instead.
-	 *
-	 * @param string $query Query to execute
-	 *
-	 * @return \Doctrine\DBAL\Driver\Statement A PDOStatement object
-	 */
-	public function sql_query($query) {
-		if (!$this->isConnected) {
-			$this->connectDB();
-		}
-
-		$stmt = $this->link->query($query);
-		$this->setLastStatement($stmt);
-
-		if ($this->debugOutput) {
-			$this->debug('sql_query', $query);
-		}
-
-		return $stmt;
-	}
-
-	/**
-	 * Returns the error status on the last query() execution
-	 *
-	 * @return string PDO error string.
-	 */
-	public function sql_error() {
-		$errorMsg = $this->link->errorInfo();
-		return $errorMsg[0] === '00000' ? '' : $errorMsg;
-	}
-
-	/**
-	 * Returns the error number on the last query() execution
-	 *
-	 * @return integer PDO error number
-	 */
-	public function sql_errno() {
-		return $this->link->errorCode();
-	}
-
-	/**
-	 * Returns the number of selected rows.
-	 *
-	 * @param boolean|\Doctrine\DBAL\Driver\Statement $stmt
-	 *
-	 * @return integer Number of resulting rows
-	 */
-	public function sql_num_rows($stmt) {
-		if ($this->debug_check_recordset($stmt)) {
-			$result = $stmt->rowCount();
-		} else {
-			$result = FALSE;
-		}
-
-		return $result;
-	}
-
-	/**
-	 * Returns an associative array that corresponds to the fetched row, or FALSE if there are no more rows.
-	 * Wrapper function for Doctrine/PDO fetch(\PDO::FETCH_ASSOC)
-	 *
-	 * @param boolean|\Doctrine\DBAL\Driver\Statement A PDOStatement object
-	 *
-	 * @return array|boolean Associative array of result row.
-	 */
-	public function sql_fetch_assoc($stmt) {
-		if ($this->debug_check_recordset($stmt)) {
-			return $stmt->fetch(\PDO::FETCH_ASSOC);
-		} else {
-			return FALSE;
-		}
-	}
-
-	/**
-	 * Returns an array that corresponds to the fetched row, or FALSE if there are no more rows.
-	 * The array contains the values in numerical indices.
-	 * Wrapper function for Doctrine/PDO fetch(\PDO::FETCH_NUM)
-	 *
-	 * @param boolean|\Doctrine\DBAL\Driver\Statement A PDOStatement object
-	 *
-	 * @return array|boolean Array with result rows.
-	 */
-	public function sql_fetch_row($stmt) {
-		if ($this->debug_check_recordset($stmt)) {
-			return $stmt->fetch(\PDO::FETCH_NUM);
-		} else {
-			return FALSE;
-		}
-	}
-
-	/**
-	 * Free result memory
-	 * Wrapper function for Doctrine/PDO closeCursor()
-	 *
-	 * @param boolean|\Doctrine\DBAL\Driver\Statement $stmt A PDOStatement
-	 *
-	 * @return boolean Returns NULL on success or FALSE on failure.
-	 */
-	public function sql_free_result($stmt) {
-		if ($this->debug_check_recordset($stmt)) {
-			return $stmt->closeCursor();
-		} else {
-			return FALSE;
-		}
-	}
-
-	/**
-	 * Get the ID generated from the previous INSERT operation
-	 *
-	 * @return integer The uid of the last inserted record.
-	 */
-	// TODO Write a test to prove that this method returns an integer
-	public function sql_insert_id() {
-		return (integer) $this->link->lastInsertId();
-	}
-
-	/**
-	 * Returns the number of rows affected by the last INSERT, UPDATE or DELETE query
-	 *
-	 * @return integer Number of rows affected by last query
-	 */
-	public function sql_affected_rows() {
-		$result = $this->affectedRows;
-		return $this->lastStatement->rowCount();
-	}
-
-	/**
-	 * Move internal result pointer
-	 *
-	 * @param boolean|\mysqli_result|object $res  MySQLi result object / DBAL object
-	 * @param integer                       $seek Seek result number.
-	 *
-	 * @return boolean Returns TRUE on success or FALSE on failure.
-	 */
-	public function sql_data_seek($res, $seek) {
-		if ($this->debug_check_recordset($res)) {
-			return $res->data_seek($seek);
-		} else {
-			return FALSE;
-		}
-	}
-
-	/**
-	 * Get the type of the specified field in a result
-	 * mysql_field_type() wrapper function
-	 *
-	 * @param boolean|\Doctrine\DBAL\Driver\Statement $stmt    A PDOStatement object
-	 * @param integer                          $pointer Field index.
-	 *
-	 * @return string Returns the name of the specified field index, or FALSE on error
-	 */
-	public function sql_field_type($stmt, $pointer) {
-		// mysql_field_type compatibility map
-		// taken from: http://www.php.net/manual/en/mysqli-result.fetch-field-direct.php#89117
-		// Constant numbers see http://php.net/manual/en/mysqli.constants.php
-
-		$mysqlDataTypeHash = array(
-			'boolean'      => 'boolean',
-			'smallint'     => 'smallint',
-			'integer'      => 'int',
-			'float'        => 'float',
-			'double'       => 'double',
-			'timestamp'    => 'timestamp',
-			'bigint'       => 'bigint',
-			'mediumint'    => 'mediumint',
-			'date'         => 'date',
-			'time'         => 'time',
-			'datetime'     => 'datetime',
-			'text'         => 'varchar',
-			'string'       => 'varchar',
-			'decimal'      => 'decimal',
-			'blob'         => 'blob',
-			'guid'         => 'guid',
-			'object'       => 'object',
-			'datetimetz'   => 'datetimetz',
-			'json_array'   => 'json_array',
-			'simple_array' => 'simple_array',
-			'array'        => 'array',
-		);
-
-
-		if ($this->debug_check_recordset($stmt)) {
-			$columns = $this->schema->listTableColumns($this->table);
-
-			$i = 0;
-			foreach ($columns as $column) {
-				if ($i === $pointer) {
-					// TODO: Figure out if this is ok like it is and clean up the rest of this mess
-					//$pdoTypeId = $column->getType()->getBindingType();
-					//$typeArray = $column->toArray();
-					$metaInfo = $column->getType()->getName();
-				}
-				$i++;
-			}
-			if ($metaInfo === FALSE) {
-				return FALSE;
-			}
-
-			return $mysqlDataTypeHash[$metaInfo];
-		} else {
-			return FALSE;
-		}
-	}
-
-	/**
-	 * Select a SQL database
-	 *
-	 * @param string $TYPO3_db Deprecated since 6.1, will be removed in two versions. Database to connect to.
-	 *
-	 * @return boolean Returns TRUE on success or FALSE on failure.
-	 */
-	public function sql_select_db($TYPO3_db = NULL) {
-		if (!$this->isConnected) {
-			$this->connectDB();
-		}
-
-		if ($TYPO3_db) {
-			GeneralUtility::deprecationLog(
-				'DatabaseConnection->sql_select_db() should be called without arguments.' .
-					' Use the setDatabaseName() before. Will be removed two versions after 6.1.'
-			);
-			$this->setDatabaseName($TYPO3_db);
-		}
-
-		$isConnected = $this->isConnected();
-		if (!$isConnected) {
-			GeneralUtility::sysLog(
-				// TODO: Replace the term "MySQL" in the next log message with the current platform name
-				'Could not select MySQL database ' . $this->getDatabaseName() . ': ' . $this->sql_error(),
-				'Core',
-				GeneralUtility::SYSLOG_SEVERITY_FATAL
-			);
-		}
-
-		return $isConnected;
 	}
 
 	/**************************************
