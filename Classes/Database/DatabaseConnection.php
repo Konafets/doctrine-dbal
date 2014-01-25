@@ -225,6 +225,253 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 */
 	protected $postProcessHookObjects = array();
 
+	/******************************
+	 *
+	 * Setters / Getters
+	 *
+	 ******************************/
+
+	/**
+	 * Set database username
+	 *
+	 * @param string $username
+	 * @return $this
+	 */
+	public function setDatabaseUsername($username) {
+		$this->disconnectIfConnected();
+		$this->databaseUsername = $username;
+		$this->connectionParams['user'] = $username;
+
+		return $this;
+	}
+
+	/**
+	 * Returns the database username
+	 * @return string
+	 */
+	public function getDatabaseUsername() {
+		return $this->connectionParams['user'];
+	}
+
+	/**
+	 * Set database password
+	 *
+	 * @param string $password
+	 * @return $this
+	 */
+	public function setDatabasePassword($password) {
+		$this->disconnectIfConnected();
+		$this->databaseUserPassword = $password;
+		$this->connectionParams['password'] = $password;
+
+		return $this;
+	}
+
+	/**
+	 * Set database name
+	 *
+	 * @param string $name
+	 * @return $this
+	 */
+	public function setDatabaseName($name) {
+		$this->disconnectIfConnected();
+		$this->databaseName = $name;
+		$this->connectionParams['dbname'] = $name;
+
+		return $this;
+	}
+
+	/**
+	 * Returns the name of the database
+	 *
+	 * @return string
+	 */
+	public function getDatabaseName() {
+		return $this->connectionParams['dbname'];
+	}
+
+	/**
+	 * Set the database driver for Doctrine
+	 *
+	 * @param string $driver
+	 *
+	 * @return $this
+	 * @api
+	 */
+	public function setDatabaseDriver($driver = 'pdo_mysql') {
+		$this->connectionParams['driver'] = $driver;
+
+		return $this;
+	}
+
+	/**
+	 * Returns the database driver
+	 *
+	 * @return string
+	 */
+	public function getDatabaseDriver() {
+		return $this->connectionParams['driver'];
+	}
+
+	/**
+	 * Set database socket
+	 *
+	 * @param string|NULL $socket
+	 * @return $this
+	 */
+	public function setDatabaseSocket($socket = NULL) {
+		$this->disconnectIfConnected();
+		$this->databaseSocket = $socket;
+		//$this->connectionParams['unix_socket'] = $socket;
+
+		return $this;
+	}
+
+	/**
+	 * Returns the database socket
+	 *
+	 * @return NULL|string
+	 */
+	public function getDatabaseSocket() {
+		return $this->databaseSocket;
+	}
+
+	/**
+	 * Set database port
+	 *
+	 * @param integer $port
+	 * @return $this
+	 */
+	public function setDatabasePort($port = 3306) {
+		$this->disconnectIfConnected();
+		$this->databasePort = (int) $port;
+		$this->connectionParams['port'] = (int) $port;
+
+		return $this;
+	}
+
+	/**
+	 * Returns the database port
+	 * @return int
+	 */
+	public function getDatabasePort() {
+		return (int) $this->connectionParams['port'];
+	}
+
+	/**
+	 * Set database host
+	 *
+	 * @param string $host
+	 * @return $this
+	 */
+	public function setDatabaseHost($host = 'localhost') {
+		$this->disconnectIfConnected();
+		$this->databaseHost = $host;
+		$this->connectionParams['host'] = $host;
+
+		return $this;
+	}
+
+	/**
+	 * Returns the host of the database
+	 *
+	 * @return string
+	 */
+	public function getDatabaseHost() {
+		return $this->connectionParams['host'];
+	}
+
+	/**
+	 * Set default charset
+	 *
+	 * @param string $charset
+	 * @return $this
+	 */
+	public function setDatabaseCharset($charset = 'utf8') {
+		$this->defaultCharset = $charset;
+
+		return $this;
+	}
+
+	/**
+	 * Returns the default charset
+	 *
+	 * @return mixed
+	 */
+	public function getDatabaseCharset() {
+		return $this->defaultCharset;
+	}
+
+	/**
+	 * Set current database handle, usually \mysqli
+	 *
+	 * @param \Doctrine\DBAL\Connection $handle
+	 *
+	 * @return void
+	 */
+	public function setDatabaseHandle($handle) {
+		$this->link = $handle;
+	}
+
+	/**
+	 * Returns current database handle
+	 *
+	 * @return \Doctrine\DBAL\Connection|NULL
+	 */
+	public function getDatabaseHandle() {
+		return $this->link;
+	}
+
+	/**
+	 * @param \Doctrine\DBAL\Driver\Statement $lastStatement
+	 */
+	public function setLastStatement($lastStatement) {
+		$this->lastStatement = $lastStatement;
+	}
+
+	/**
+	 * @return \Doctrine\DBAL\Driver\Statement
+	 */
+	public function getLastStatement() {
+		$queries = $this->logger->queries;
+		$currentQuery = $this->logger->currentQuery;
+		$lastStatement = $queries[$currentQuery]['sql'];
+
+		return $lastStatement;
+	}
+
+	/**
+	 * Set commands to be fired after connection was established
+	 *
+	 * @param array $commands List of SQL commands to be executed after connect
+	 */
+	public function setInitializeCommandsAfterConnect(array $commands) {
+		$this->disconnectIfConnected();
+		$this->initializeCommandsAfterConnect = $commands;
+	}
+
+	/**
+	 * Set connection compression. Might be an advantage, if SQL server is not on localhost
+	 *
+	 * @param bool $connectionCompression TRUE if connection should be compressed
+	 */
+	public function setConnectionCompression($connectionCompression) {
+		$this->disconnectIfConnected();
+		$this->connectionCompression = (bool)$connectionCompression;
+	}
+
+	/**
+	 * Set persistent database connection
+	 *
+	 * @param boolean $persistentDatabaseConnection
+	 *
+	 * @see http://php.net/manual/de/mysqli.persistconns.php
+	 */
+	public function setPersistentDatabaseConnection($persistentDatabaseConnection) {
+		$this->disconnectIfConnected();
+		$this->persistentDatabaseConnection = (bool)$persistentDatabaseConnection;
+	}
+
 	/************************************
 	 *
 	 * Query execution
@@ -1670,228 +1917,6 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * Connect handling
 	 *
 	 ******************************/
-
-	/**
-	 * Set database host
-	 *
-	 * @param string $host
-	 * @return $this
-	 */
-	public function setDatabaseHost($host = 'localhost') {
-		$this->disconnectIfConnected();
-		$this->databaseHost = $host;
-		$this->connectionParams['host'] = $host;
-
-		return $this;
-	}
-
-	/**
-	 * Returns the host of the database
-	 *
-	 * @return string
-	 */
-	public function getDatabaseHost() {
-		return $this->connectionParams['host'];
-	}
-
-	/**
-	 * Set database port
-	 *
-	 * @param integer $port
-	 * @return $this
-	 */
-	public function setDatabasePort($port = 3306) {
-		$this->disconnectIfConnected();
-		$this->databasePort = (int) $port;
-		$this->connectionParams['port'] = (int) $port;
-
-		return $this;
-	}
-
-	/**
-	 * Returns the database port
-	 * @return int
-	 */
-	public function getDatabasePort() {
-		return (int) $this->connectionParams['port'];
-	}
-
-	/**
-	 * Set database socket
-	 *
-	 * @param string|NULL $socket
-	 * @return $this
-	 */
-	public function setDatabaseSocket($socket = NULL) {
-		$this->disconnectIfConnected();
-		$this->databaseSocket = $socket;
-		//$this->connectionParams['unix_socket'] = $socket;
-
-		return $this;
-	}
-
-	/**
-	 * Returns the database socket
-	 *
-	 * @return NULL|string
-	 */
-	public function getDatabaseSocket() {
-		return $this->databaseSocket;
-	}
-
-	/**
-	 * Set the database driver for Doctrine
-	 *
-	 * @param string $driver
-	 *
-	 * @return $this
-	 * @api
-	 */
-	public function setDatabaseDriver($driver = 'pdo_mysql') {
-		$this->connectionParams['driver'] = $driver;
-
-		return $this;
-	}
-
-	/**
-	 * Returns the database driver
-	 *
-	 * @return string
-	 */
-	public function getDatabaseDriver() {
-		return $this->connectionParams['driver'];
-	}
-	
-	/**
-	 * Set database name
-	 *
-	 * @param string $name
-	 * @return $this
-	 */
-	public function setDatabaseName($name) {
-		$this->disconnectIfConnected();
-		$this->databaseName = $name;
-		$this->connectionParams['dbname'] = $name;
-
-		return $this;
-	}
-
-	/**
-	 * Returns the name of the database
-	 *
-	 * @return string
-	 */
-	public function getDatabaseName() {
-		return $this->connectionParams['dbname'];
-	}
-
-	/**
-	 * Set database username
-	 *
-	 * @param string $username
-	 * @return $this
-	 */
-	public function setDatabaseUsername($username) {
-		$this->disconnectIfConnected();
-		$this->databaseUsername = $username;
-		$this->connectionParams['user'] = $username;
-
-		return $this;
-	}
-
-	/**
-	 * Returns the database username
-	 * @return string
-	 */
-	public function getDatabaseUsername() {
-		return $this->connectionParams['user'];
-	}
-
-	/**
-	 * Set database password
-	 *
-	 * @param string $password
-	 * @return $this
-	 */
-	public function setDatabasePassword($password) {
-		$this->disconnectIfConnected();
-		$this->databaseUserPassword = $password;
-		$this->connectionParams['password'] = $password;
-
-		return $this;
-	}
-
-	/**
-	 * Set default charset
-	 *
-	 * @param string $charset
-	 * @return $this
-	 */
-	public function setDatabaseCharset($charset = 'utf8') {
-		$this->defaultCharset = $charset;
-
-		return $this;
-	}
-
-	/**
-	 * @param \Doctrine\DBAL\Driver\Statement $lastStatement
-	 */
-	public function setLastStatement($lastStatement) {
-		$this->lastStatement = $lastStatement;
-	}
-
-	/**
-	 * @return \Doctrine\DBAL\Driver\Statement
-	 */
-	public function getLastStatement() {
-		$queries = $this->logger->queries;
-		$currentQuery = $this->logger->currentQuery;
-		$lastStatement = $queries[$currentQuery]['sql'];
-
-		return $lastStatement;
-	}
-
-	/**
-	 * Returns the default charset
-	 *
-	 * @return mixed
-	 */
-	public function getDatabaseCharset() {
-		return $this->defaultCharset;
-	}
-
-	/**
-	 * Set persistent database connection
-	 *
-	 * @param boolean $persistentDatabaseConnection
-	 *
-	 * @see http://php.net/manual/de/mysqli.persistconns.php
-	 */
-	public function setPersistentDatabaseConnection($persistentDatabaseConnection) {
-		$this->disconnectIfConnected();
-		$this->persistentDatabaseConnection = (bool)$persistentDatabaseConnection;
-	}
-
-	/**
-	 * Set connection compression. Might be an advantage, if SQL server is not on localhost
-	 *
-	 * @param bool $connectionCompression TRUE if connection should be compressed
-	 */
-	public function setConnectionCompression($connectionCompression) {
-		$this->disconnectIfConnected();
-		$this->connectionCompression = (bool)$connectionCompression;
-	}
-
-	/**
-	 * Set commands to be fired after connection was established
-	 *
-	 * @param array $commands List of SQL commands to be executed after connect
-	 */
-	public function setInitializeCommandsAfterConnect(array $commands) {
-		$this->disconnectIfConnected();
-		$this->initializeCommandsAfterConnect = $commands;
-	}
-
 	/**
 	 * Connects to database for TYPO3 sites:
 	 *
@@ -1981,25 +2006,6 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 		}
 	}
 
-	/**
-	 * Returns current database handle
-	 *
-	 * @return \Doctrine\DBAL\Connection|NULL
-	 */
-	public function getDatabaseHandle() {
-		return $this->link;
-	}
-
-	/**
-	 * Set current database handle, usually \mysqli
-	 *
-	 * @param \Doctrine\DBAL\Connection $handle
-	 *
-	 * @return void
-	 */
-	public function setDatabaseHandle($handle) {
-		$this->link = $handle;
-	}
 
 	/**
 	 * Handle deprecated arguments for sql_pconnect() and connectDB()
