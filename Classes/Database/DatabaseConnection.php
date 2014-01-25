@@ -742,62 +742,6 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	}
 
 	/**
-	 * Creates and executes an UPDATE SQL-statement for $table where $where-clause (typ. 'uid=...') from the array with field/value pairs $fieldsValues.
-	 * Using this function specifically allow us to handle BLOB and CLOB fields depending on DB
-	 *
-	 * @param string  $table         Database tablename
-	 * @param string  $where         WHERE clause, eg. "uid=1". NOTICE: You must escape values in this argument with $this->fullQuoteStr() yourself!
-	 * @param array   $fieldsValues  Field values as key=>value pairs. Values will be escaped internally. Typically you would fill an array like "$updateFields" with 'fieldname'=>'value' and pass it to this function as argument.
-	 * @param boolean $noQuoteFields See fullQuoteArray()
-	 *
-	 * @return \Doctrine\DBAL\Driver\Statement A PDOStatement object
-	 */
-	public function exec_UPDATEquery($table, $where, $fieldsValues, $noQuoteFields = FALSE) {
-		if (!$this->isConnected) {
-			$this->connectDB();
-		}
-
-		$stmt = $this->link->query($this->UPDATEquery($table, $where, $fieldsValues, $noQuoteFields));
-		$this->setLastStatement($stmt);
-
-		if ($this->debugOutput) {
-			$this->debug('exec_UPDATEquery');
-		}
-		foreach ($this->postProcessHookObjects as $hookObject) {
-			/** @var $hookObject PostProcessQueryHookInterface */
-			$hookObject->exec_UPDATEquery_postProcessAction($table, $where, $fieldsValues, $noQuoteFields, $this);
-		}
-
-		return $stmt;
-	}
-
-	/**
-	 * Creates and executes a DELETE SQL-statement for $table where $where-clause
-	 *
-	 * @param string $table Database tablename
-	 * @param string $where WHERE clause, eg. "uid=1". NOTICE: You must escape values in this argument with $this->fullQuoteStr() yourself!
-	 *
-	 * @return \Doctrine\DBAL\Driver\Statement A PDOStatement object
-	 */
-	public function exec_DELETEquery($table, $where) {
-		if (!$this->isConnected) {
-			$this->connectDB();
-		}
-		$stmt = $this->link->query($this->DELETEquery($table, $where));
-		$this->setLastStatement($stmt);
-
-		if ($this->debugOutput) {
-			$this->debug('exec_DELETEquery');
-		}
-		foreach ($this->postProcessHookObjects as $hookObject) {
-			/** @var $hookObject PostProcessQueryHookInterface */
-			$hookObject->exec_DELETEquery_postProcessAction($table, $where, $this);
-		}
-
-		return $stmt;
-	}
-
-	/**
 	 * Creates and executes a SELECT SQL-statement
 	 * Using this function specifically allow us to handle the LIMIT feature independently of DB.
 	 *
@@ -976,6 +920,36 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	}
 
 	/**
+	 * Creates and executes an UPDATE SQL-statement for $table where $where-clause (typ. 'uid=...') from the array with field/value pairs $fieldsValues.
+	 * Using this function specifically allow us to handle BLOB and CLOB fields depending on DB
+	 *
+	 * @param string  $table         Database tablename
+	 * @param string  $where         WHERE clause, eg. "uid=1". NOTICE: You must escape values in this argument with $this->fullQuoteStr() yourself!
+	 * @param array   $fieldsValues  Field values as key=>value pairs. Values will be escaped internally. Typically you would fill an array like "$updateFields" with 'fieldname'=>'value' and pass it to this function as argument.
+	 * @param boolean $noQuoteFields See fullQuoteArray()
+	 *
+	 * @return \Doctrine\DBAL\Driver\Statement A PDOStatement object
+	 */
+	public function exec_UPDATEquery($table, $where, $fieldsValues, $noQuoteFields = FALSE) {
+		if (!$this->isConnected) {
+			$this->connectDB();
+		}
+
+		$stmt = $this->link->query($this->UPDATEquery($table, $where, $fieldsValues, $noQuoteFields));
+		$this->setLastStatement($stmt);
+
+		if ($this->debugOutput) {
+			$this->debug('exec_UPDATEquery');
+		}
+		foreach ($this->postProcessHookObjects as $hookObject) {
+			/** @var $hookObject PostProcessQueryHookInterface */
+			$hookObject->exec_UPDATEquery_postProcessAction($table, $where, $fieldsValues, $noQuoteFields, $this);
+		}
+
+		return $stmt;
+	}
+
+	/**
 	 * Truncates a table.
 	 *
 	 * @param string $table Database tablename
@@ -996,6 +970,32 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 		foreach ($this->postProcessHookObjects as $hookObject) {
 			/** @var $hookObject PostProcessQueryHookInterface */
 			$hookObject->exec_TRUNCATEquery_postProcessAction($table, $this);
+		}
+
+		return $stmt;
+	}
+
+	/**
+	 * Creates and executes a DELETE SQL-statement for $table where $where-clause
+	 *
+	 * @param string $table Database tablename
+	 * @param string $where WHERE clause, eg. "uid=1". NOTICE: You must escape values in this argument with $this->fullQuoteStr() yourself!
+	 *
+	 * @return \Doctrine\DBAL\Driver\Statement A PDOStatement object
+	 */
+	public function exec_DELETEquery($table, $where) {
+		if (!$this->isConnected) {
+			$this->connectDB();
+		}
+		$stmt = $this->link->query($this->DELETEquery($table, $where));
+		$this->setLastStatement($stmt);
+
+		if ($this->debugOutput) {
+			$this->debug('exec_DELETEquery');
+		}
+		foreach ($this->postProcessHookObjects as $hookObject) {
+			/** @var $hookObject PostProcessQueryHookInterface */
+			$hookObject->exec_DELETEquery_postProcessAction($table, $where, $this);
 		}
 
 		return $stmt;
