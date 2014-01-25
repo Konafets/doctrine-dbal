@@ -1073,71 +1073,6 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	}
 
 	/**
-	 * Creates an UPDATE SQL-statement for $table where $where-clause (typ. 'uid=...') from the array with field/value pairs $fieldsValues.
-	 *
-	 *
-	 * @param string  $table         See exec_UPDATEquery()
-	 * @param string  $where         See exec_UPDATEquery()
-	 * @param array   $fieldsValues  See exec_UPDATEquery()
-	 * @param boolean $noQuoteFields See fullQuoteArray()
-	 *
-	 * @return string Full SQL query for UPDATE*
-	 * @throws \InvalidArgumentException
-	 */
-	public function UPDATEquery($table, $where, $fieldsValues, $noQuoteFields = FALSE) {
-		// Table and fieldnames should be "SQL-injection-safe" when supplied to this
-		// function (contrary to values in the arrays which may be insecure).
-		if (is_string($where)) {
-			foreach ($this->preProcessHookObjects as $hookObject) {
-				/** @var $hookObject PreProcessQueryHookInterface */
-				$hookObject->UPDATEquery_preProcessAction($table, $where, $fieldsValues, $noQuoteFields, $this);
-			}
-			$fields = array();
-			if (is_array($fieldsValues) && count($fieldsValues)) {
-				// Quote and escape values
-				$nArr = $this->fullQuoteArray($fieldsValues, $table, $noQuoteFields, TRUE);
-				foreach ($nArr as $k => $v) {
-					$fields[] = $k . '=' . $v;
-				}
-			}
-			// Build query
-			$query = 'UPDATE ' . $table . ' SET ' . implode(',', $fields) . (strlen($where) > 0 ? ' WHERE ' . $where : '');
-			if ($this->debugOutput || $this->store_lastBuiltQuery) {
-				$this->debug_lastBuiltQuery = $query;
-			}
-			return $query;
-		} else {
-			throw new \InvalidArgumentException('TYPO3 Fatal Error: "Where" clause argument for UPDATE query was not a string in $this->UPDATEquery() !', 1270853880);
-		}
-	}
-
-	/**
-	 * Creates a DELETE SQL-statement for $table where $where-clause
-	 *
-	 * @param string $table See exec_DELETEquery()
-	 * @param string $where See exec_DELETEquery()
-	 *
-	 * @return string Full SQL query for DELETE
-	 * @throws \InvalidArgumentException
-	 */
-	public function DELETEquery($table, $where) {
-		if (is_string($where)) {
-			foreach ($this->preProcessHookObjects as $hookObject) {
-				/** @var $hookObject PreProcessQueryHookInterface */
-				$hookObject->DELETEquery_preProcessAction($table, $where, $this);
-			}
-			// Table and fieldnames should be "SQL-injection-safe" when supplied to this function
-			$query = 'DELETE FROM ' . $table . (strlen($where) > 0 ? ' WHERE ' . $where : '');
-			if ($this->debugOutput || $this->store_lastBuiltQuery) {
-				$this->debug_lastBuiltQuery = $query;
-			}
-			return $query;
-		} else {
-			throw new \InvalidArgumentException('TYPO3 Fatal Error: "Where" clause argument for DELETE query was not a string in $this->DELETEquery() !', 1270853881);
-		}
-	}
-
-	/**
 	 * Creates a SELECT SQL-statement
 	 *
 	 * @param string $selectFields See exec_SELECTquery()
@@ -1194,6 +1129,45 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	}
 
 	/**
+	 * Creates an UPDATE SQL-statement for $table where $where-clause (typ. 'uid=...') from the array with field/value pairs $fieldsValues.
+	 *
+	 *
+	 * @param string  $table         See exec_UPDATEquery()
+	 * @param string  $where         See exec_UPDATEquery()
+	 * @param array   $fieldsValues  See exec_UPDATEquery()
+	 * @param boolean $noQuoteFields See fullQuoteArray()
+	 *
+	 * @return string Full SQL query for UPDATE*
+	 * @throws \InvalidArgumentException
+	 */
+	public function UPDATEquery($table, $where, $fieldsValues, $noQuoteFields = FALSE) {
+		// Table and fieldnames should be "SQL-injection-safe" when supplied to this
+		// function (contrary to values in the arrays which may be insecure).
+		if (is_string($where)) {
+			foreach ($this->preProcessHookObjects as $hookObject) {
+				/** @var $hookObject PreProcessQueryHookInterface */
+				$hookObject->UPDATEquery_preProcessAction($table, $where, $fieldsValues, $noQuoteFields, $this);
+			}
+			$fields = array();
+			if (is_array($fieldsValues) && count($fieldsValues)) {
+				// Quote and escape values
+				$nArr = $this->fullQuoteArray($fieldsValues, $table, $noQuoteFields, TRUE);
+				foreach ($nArr as $k => $v) {
+					$fields[] = $k . '=' . $v;
+				}
+			}
+			// Build query
+			$query = 'UPDATE ' . $table . ' SET ' . implode(',', $fields) . (strlen($where) > 0 ? ' WHERE ' . $where : '');
+			if ($this->debugOutput || $this->store_lastBuiltQuery) {
+				$this->debug_lastBuiltQuery = $query;
+			}
+			return $query;
+		} else {
+			throw new \InvalidArgumentException('TYPO3 Fatal Error: "Where" clause argument for UPDATE query was not a string in $this->UPDATEquery() !', 1270853880);
+		}
+	}
+
+	/**
 	 * Creates a TRUNCATE TABLE SQL-statement
 	 *
 	 * @param string $table See exec_TRUNCATEquery()
@@ -1214,6 +1188,32 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 		}
 
 		return $query;
+	}
+
+	/**
+	 * Creates a DELETE SQL-statement for $table where $where-clause
+	 *
+	 * @param string $table See exec_DELETEquery()
+	 * @param string $where See exec_DELETEquery()
+	 *
+	 * @return string Full SQL query for DELETE
+	 * @throws \InvalidArgumentException
+	 */
+	public function DELETEquery($table, $where) {
+		if (is_string($where)) {
+			foreach ($this->preProcessHookObjects as $hookObject) {
+				/** @var $hookObject PreProcessQueryHookInterface */
+				$hookObject->DELETEquery_preProcessAction($table, $where, $this);
+			}
+			// Table and fieldnames should be "SQL-injection-safe" when supplied to this function
+			$query = 'DELETE FROM ' . $table . (strlen($where) > 0 ? ' WHERE ' . $where : '');
+			if ($this->debugOutput || $this->store_lastBuiltQuery) {
+				$this->debug_lastBuiltQuery = $query;
+			}
+			return $query;
+		} else {
+			throw new \InvalidArgumentException('TYPO3 Fatal Error: "Where" clause argument for DELETE query was not a string in $this->DELETEquery() !', 1270853881);
+		}
 	}
 
 	/**
@@ -1278,6 +1278,27 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 *
 	 **************************************/
 	/**
+	 * Executes a prepared query.
+	 * This method may only be called by \TYPO3\CMS\Core\Database\PreparedStatement
+	 *
+	 * @param string $query           The query to execute
+	 * @param array  $queryComponents The components of the query to execute
+	 *
+	 * @return boolean|\mysqli_result|object MySQLi result object / DBAL object
+	 */
+	public function exec_PREPAREDquery($query, array $queryComponents) {
+		if (!$this->isConnected) {
+			$this->connectDB();
+		}
+		$res = $this->link->query($query);
+		if ($this->debugOutput) {
+			$this->debug('stmt_execute', $query);
+		}
+
+		return $res;
+	}
+
+	/**
 	 * Creates a SELECT prepared SQL statement.
 	 *
 	 * @param string $selectFields    See exec_SELECTquery()
@@ -1313,27 +1334,6 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 */
 	public function prepare_SELECTqueryArray(array $queryParts, array $inputParameters = array()) {
 		return $this->prepare_SELECTquery($queryParts['SELECT'], $queryParts['FROM'], $queryParts['WHERE'], $queryParts['GROUPBY'], $queryParts['ORDERBY'], $queryParts['LIMIT'], $inputParameters);
-	}
-
-	/**
-	 * Executes a prepared query.
-	 * This method may only be called by \TYPO3\CMS\Core\Database\PreparedStatement
-	 *
-	 * @param string $query           The query to execute
-	 * @param array  $queryComponents The components of the query to execute
-	 *
-	 * @return boolean|\mysqli_result|object MySQLi result object / DBAL object
-	 */
-	public function exec_PREPAREDquery($query, array $queryComponents) {
-		if (!$this->isConnected) {
-			$this->connectDB();
-		}
-		$res = $this->link->query($query);
-		if ($this->debugOutput) {
-			$this->debug('stmt_execute', $query);
-		}
-
-		return $res;
 	}
 
 	/**************************************
