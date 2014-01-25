@@ -27,6 +27,7 @@ namespace TYPO3\DoctrineDbal\Database;
  *  This copyright notice MUST APPEAR in all copies of the script!
  ***************************************************************/
 use Doctrine\DBAL\DriverManager;
+use Doctrine\DBAL\Logging\DebugStack;
 use TYPO3\CMS\Core\Utility\DebugUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
@@ -133,6 +134,11 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	protected $databaseUserPassword = '';
 
 	/**
+	 * @var string The configuration for Doctrine DBAL
+	 */
+	protected $connectionConfig = '';
+
+	/**
 	 * @var array The connection settings for Doctrine
 	 */
 	protected $connectionParams = array(
@@ -160,6 +166,13 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	protected $lastStatement = '';
 
 	/**
+	 * The table form last query
+	 *
+	 * @var string $table
+	 */
+	protected $table = '';
+
+	/**
 	 * @var boolean TRUE if database connection should be persistent
 	 * @see http://php.net/manual/de/mysqli.persistconns.php
 	 */
@@ -184,6 +197,16 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * @var \Doctrine\DBAL\Connection $link Database connection object
 	 */
 	protected $link = NULL;
+
+	/**
+	 * @var \Doctrine\DBAL\Logging\SQLLogger
+	 */
+	protected $logger = '';
+
+	/**
+	 * @var int The affected rows from the last UPDATE, INSERT or DELETE query
+	 */
+	protected $affectedRows = -1;
 
 	/**
 	 * Default character set, applies unless character set or collation are explicitly set
@@ -223,7 +246,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * @param array   $fieldsValues  Field values as key=>value pairs. Values will be escaped internally. Typically you would fill an array like "$insertFields" with 'fieldname'=>'value' and pass it to this function as argument.
 	 * @param boolean $noQuoteFields See fullQuoteArray()
 	 *
-	 * @return boolean|\Doctrine\DBAL\Statement A PDOStatement object
+	 * @return \Doctrine\DBAL\Driver\Statement A PDOStatement object
 	 */
 	public function exec_INSERTquery($table, $fieldsValues, $noQuoteFields = FALSE) {
 		if (!$this->isConnected) {
@@ -252,7 +275,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * @param array   $rows          Table rows. Each row should be an array with field values mapping to $fields
 	 * @param boolean $noQuoteFields See fullQuoteArray()
 	 *
-	 * @return boolean|\mysqli_result|object MySQLi result object / DBAL object
+	 * @return \Doctrine\DBAL\Driver\Statement A PDOStatement object
 	 */
 	public function exec_INSERTmultipleRows($table, array $fields, array $rows, $noQuoteFields = FALSE) {
 		if (!$this->isConnected) {
@@ -279,13 +302,16 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * @param array   $fieldsValues  Field values as key=>value pairs. Values will be escaped internally. Typically you would fill an array like "$updateFields" with 'fieldname'=>'value' and pass it to this function as argument.
 	 * @param boolean $noQuoteFields See fullQuoteArray()
 	 *
-	 * @return boolean|\mysqli_result|object MySQLi result object / DBAL object
+	 * @return \Doctrine\DBAL\Driver\Statement A PDOStatement object
 	 */
 	public function exec_UPDATEquery($table, $where, $fieldsValues, $noQuoteFields = FALSE) {
 		if (!$this->isConnected) {
 			$this->connectDB();
 		}
-		$res = $this->link->query($this->UPDATEquery($table, $where, $fieldsValues, $noQuoteFields));
+
+		$stmt = $this->link->query($this->UPDATEquery($table, $where, $fieldsValues, $noQuoteFields));
+		$this->setLastStatement($stmt);
+
 		if ($this->debugOutput) {
 			$this->debug('exec_UPDATEquery');
 		}
@@ -294,7 +320,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			$hookObject->exec_UPDATEquery_postProcessAction($table, $where, $fieldsValues, $noQuoteFields, $this);
 		}
 
-		return $res;
+		return $stmt;
 	}
 
 	/**
@@ -303,13 +329,15 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * @param string $table Database tablename
 	 * @param string $where WHERE clause, eg. "uid=1". NOTICE: You must escape values in this argument with $this->fullQuoteStr() yourself!
 	 *
-	 * @return boolean|\mysqli_result|object MySQLi result object / DBAL object
+	 * @return \Doctrine\DBAL\Driver\Statement A PDOStatement object
 	 */
 	public function exec_DELETEquery($table, $where) {
 		if (!$this->isConnected) {
 			$this->connectDB();
 		}
-		$res = $this->link->query($this->DELETEquery($table, $where));
+		$stmt = $this->link->query($this->DELETEquery($table, $where));
+		$this->setLastStatement($stmt);
+
 		if ($this->debugOutput) {
 			$this->debug('exec_DELETEquery');
 		}
@@ -318,7 +346,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			$hookObject->exec_DELETEquery_postProcessAction($table, $where, $this);
 		}
 
-		return $res;
+		return $stmt;
 	}
 
 	/**
@@ -332,26 +360,30 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * @param string $orderBy      Optional ORDER BY field(s), if none, supply blank string.
 	 * @param string $limit        Optional LIMIT value ([begin,]max), if none, supply blank string.
 	 *
-	 * @return boolean|\mysqli_result|object MySQLi result object / DBAL object
+	 * @return \Doctrine\DBAL\Driver\Statement A PDOStatement object
 	 */
 	public function exec_SELECTquery($selectFields, $fromTable, $whereClause, $groupBy = '', $orderBy = '', $limit = '') {
 		if (!$this->isConnected) {
 			$this->connectDB();
 		}
 		$query = $this->SELECTquery($selectFields, $fromTable, $whereClause, $groupBy, $orderBy, $limit);
-		$res = $this->link->query($query);
+		$stmt = $this->link->query($query);
+
+		$this->setLastStatement($stmt);
+		$this->table = $fromTable;
+
 		if ($this->debugOutput) {
 			$this->debug('exec_SELECTquery');
 		}
 		if ($this->explainOutput) {
-			$this->explain($query, $fromTable, $res->num_rows);
+			$this->explain($query, $fromTable, $stmt->num_rows);
 		}
 		foreach ($this->postProcessHookObjects as $hookObject) {
 			/** @var $hookObject PostProcessQueryHookInterface */
 			$hookObject->exec_SELECTquery_postProcessAction($selectFields, $fromTable, $whereClause, $groupBy = '', $orderBy = '', $limit = '', $this);
 		}
 
-		return $res;
+		return $stmt;
 	}
 
 	/**
@@ -413,23 +445,26 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * @return array|NULL Array of rows, or NULL in case of SQL error
 	 */
 	public function exec_SELECTgetRows($selectFields, $fromTable, $whereClause, $groupBy = '', $orderBy = '', $limit = '', $uidIndexField = '') {
-		$res = $this->exec_SELECTquery($selectFields, $fromTable, $whereClause, $groupBy, $orderBy, $limit);
+		$stmt = $this->exec_SELECTquery($selectFields, $fromTable, $whereClause, $groupBy, $orderBy, $limit);
+		$this->setLastStatement($stmt);
+		$this->table = $fromTable;
+
 		if ($this->debugOutput) {
 			$this->debug('exec_SELECTquery');
 		}
 		if (!$this->sql_error()) {
 			$output = array();
 			if ($uidIndexField) {
-				while ($tempRow = $this->sql_fetch_assoc($res)) {
+				while ($tempRow = $this->sql_fetch_assoc($stmt)) {
 					$output[$tempRow[$uidIndexField]] = $tempRow;
 				}
 			} else {
-				while ($output[] = $this->sql_fetch_assoc($res)) {
+				while ($output[] = $this->sql_fetch_assoc($stmt)) {
 
 				}
 				array_pop($output);
 			}
-			$this->sql_free_result($res);
+			$this->sql_free_result($stmt);
 		} else {
 			$output = NULL;
 		}
@@ -451,18 +486,21 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * @return array Single row or NULL if it fails.
 	 */
 	public function exec_SELECTgetSingleRow($selectFields, $fromTable, $whereClause, $groupBy = '', $orderBy = '', $numIndex = FALSE) {
-		$res = $this->exec_SELECTquery($selectFields, $fromTable, $whereClause, $groupBy, $orderBy, '1');
+		$stmt = $this->exec_SELECTquery($selectFields, $fromTable, $whereClause, $groupBy, $orderBy, '1');
+		$this->setLastStatement($stmt);
+		$this->table = $fromTable;
+
 		if ($this->debugOutput) {
 			$this->debug('exec_SELECTquery');
 		}
 		$output = NULL;
-		if ($res !== FALSE) {
+		if ($stmt !== FALSE) {
 			if ($numIndex) {
-				$output = $this->sql_fetch_row($res);
+				$output = $this->sql_fetch_row($stmt);
 			} else {
-				$output = $this->sql_fetch_assoc($res);
+				$output = $this->sql_fetch_assoc($stmt);
 			}
-			$this->sql_free_result($res);
+			$this->sql_free_result($stmt);
 		}
 
 		return $output;
@@ -500,7 +538,10 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 		if (!$this->isConnected) {
 			$this->connectDB();
 		}
-		$res = $this->link->query($this->TRUNCATEquery($table));
+		$stmt = $this->link->query($this->TRUNCATEquery($table));
+		$this->setLastStatement($stmt);
+		$this->table = $table;
+
 		if ($this->debugOutput) {
 			$this->debug('exec_TRUNCATEquery');
 		}
@@ -509,7 +550,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			$hookObject->exec_TRUNCATEquery_postProcessAction($table, $this);
 		}
 
-		return $res;
+		return $stmt;
 	}
 
 	/**************************************
@@ -537,6 +578,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			$fieldsValues = $this->fullQuoteArray($fieldsValues, $table, $noQuoteFields);
 			// Build query
 			$query = 'INSERT INTO ' . $table . ' (' . implode(',', array_keys($fieldsValues)) . ') VALUES ' . '(' . implode(',', $fieldsValues) . ')';
+
 			// Return query
 			if ($this->debugOutput || $this->store_lastBuiltQuery) {
 				$this->debug_lastBuiltQuery = $query;
@@ -774,7 +816,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 
 		$queryParts = array();
 		foreach ($searchWords as $sw) {
-			$like = ' LIKE ' . $this->quoteStr('%' . $sw . '%', $table);
+			$like = ' LIKE \'%' . $this->quoteStr($sw, $table) . '%\'';
 			$queryParts[] = $table . '.' . implode(($like . ' OR ' . $table . '.'), $fields) . $like;
 		}
 		$query = '(' . implode(') ' . $constraint . ' (', $queryParts) . ')';
@@ -875,7 +917,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			return 'NULL';
 		}
 
-		return $this->quoteStr($str, $table);
+		return '\'' . $this->quoteStr($str, $table) . '\'';
 	}
 
 	/**
@@ -913,14 +955,22 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * @param string $table Table name for which to quote string. Just enter the table that the field-value is selected from (and any DBAL will look up which handler to use and then how to quote the string!).
 	 *
 	 * @return string Output string; Quotes (" / ') and \ will be backslashed (or otherwise based on DBAL handler)
-	 * @see quoteStr()
 	 */
 	public function quoteStr($str, $table) {
 		if (!$this->isConnected) {
 			$this->connectDB();
 		}
 
-		return $this->link->quote($str);
+		$quotedResult = $this->link->quote($str);
+
+		if ($quotedResult[0] == '\'') {
+			$quotedResult = substr($quotedResult, 1);
+		}
+		if ($quotedResult[strlen($quotedResult) - 1] == '\'') {
+			$quotedResult = substr($quotedResult, 0, strlen($quotedResult) - 1);
+		}
+
+		return $quotedResult;
 	}
 
 	/**
@@ -1071,7 +1121,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 *
 	 * @param string $query Query to execute
 	 *
-	 * @return \Doctrine\DBAL\Statement A PDOStatement object
+	 * @return \Doctrine\DBAL\Driver\Statement A PDOStatement object
 	 */
 	public function sql_query($query) {
 		if (!$this->isConnected) {
@@ -1110,7 +1160,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	/**
 	 * Returns the number of selected rows.
 	 *
-	 * @param boolean|\Doctrine\DBAL\Statement $stmt
+	 * @param boolean|\Doctrine\DBAL\Driver\Statement $stmt
 	 *
 	 * @return integer Number of resulting rows
 	 */
@@ -1128,7 +1178,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * Returns an associative array that corresponds to the fetched row, or FALSE if there are no more rows.
 	 * Wrapper function for Doctrine/PDO fetch(\PDO::FETCH_ASSOC)
 	 *
-	 * @param boolean|\Doctrine\DBAL\Statement A PDOStatement object
+	 * @param boolean|\Doctrine\DBAL\Driver\Statement A PDOStatement object
 	 *
 	 * @return array|boolean Associative array of result row.
 	 */
@@ -1145,7 +1195,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * The array contains the values in numerical indices.
 	 * Wrapper function for Doctrine/PDO fetch(\PDO::FETCH_NUM)
 	 *
-	 * @param boolean|\Doctrine\DBAL\Statement A PDOStatement object
+	 * @param boolean|\Doctrine\DBAL\Driver\Statement A PDOStatement object
 	 *
 	 * @return array|boolean Array with result rows.
 	 */
@@ -1161,7 +1211,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * Free result memory
 	 * Wrapper function for Doctrine/PDO closeCursor()
 	 *
-	 * @param boolean|\Doctrine\DBAL\Statement $stmt A PDOStatement
+	 * @param boolean|\Doctrine\DBAL\Driver\Statement $stmt A PDOStatement
 	 *
 	 * @return boolean Returns NULL on success or FALSE on failure.
 	 */
@@ -1178,8 +1228,9 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 *
 	 * @return integer The uid of the last inserted record.
 	 */
+	// TODO Write a test to prove that this method returns an integer
 	public function sql_insert_id() {
-		return $this->link->lastInsertId();
+		return (integer) $this->link->lastInsertId();
 	}
 
 	/**
@@ -1188,6 +1239,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * @return integer Number of rows affected by last query
 	 */
 	public function sql_affected_rows() {
+		$result = $this->affectedRows;
 		return $this->lastStatement->rowCount();
 	}
 
@@ -1211,40 +1263,59 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * Get the type of the specified field in a result
 	 * mysql_field_type() wrapper function
 	 *
-	 * @param boolean|\mysqli_result|object $res     MySQLi result object / DBAL object
-	 * @param integer                       $pointer Field index.
+	 * @param boolean|\Doctrine\DBAL\Driver\Statement $stmt    A PDOStatement object
+	 * @param integer                          $pointer Field index.
 	 *
 	 * @return string Returns the name of the specified field index, or FALSE on error
 	 */
-	public function sql_field_type($res, $pointer) {
+	public function sql_field_type($stmt, $pointer) {
 		// mysql_field_type compatibility map
 		// taken from: http://www.php.net/manual/en/mysqli-result.fetch-field-direct.php#89117
 		// Constant numbers see http://php.net/manual/en/mysqli.constants.php
+
 		$mysqlDataTypeHash = array(
-			1=>'tinyint',
-			2=>'smallint',
-			3=>'int',
-			4=>'float',
-			5=>'double',
-			7=>'timestamp',
-			8=>'bigint',
-			9=>'mediumint',
-			10=>'date',
-			11=>'time',
-			12=>'datetime',
-			13=>'year',
-			16=>'bit',
-			//252 is currently mapped to all text and blob types (MySQL 5.0.51a)
-			253=>'varchar',
-			254=>'char',
-			246=>'decimal'
+			'boolean'      => 'boolean',
+			'smallint'     => 'smallint',
+			'integer'      => 'int',
+			'float'        => 'float',
+			'double'       => 'double',
+			'timestamp'    => 'timestamp',
+			'bigint'       => 'bigint',
+			'mediumint'    => 'mediumint',
+			'date'         => 'date',
+			'time'         => 'time',
+			'datetime'     => 'datetime',
+			'text'         => 'varchar',
+			'string'       => 'varchar',
+			'decimal'      => 'decimal',
+			'blob'         => 'blob',
+			'guid'         => 'guid',
+			'object'       => 'object',
+			'datetimetz'   => 'datetimetz',
+			'json_array'   => 'json_array',
+			'simple_array' => 'simple_array',
+			'array'        => 'array',
 		);
-		if ($this->debug_check_recordset($res)) {
-			$metaInfo = $res->fetch_field_direct($pointer);
+
+
+		if ($this->debug_check_recordset($stmt)) {
+			$columns = $this->schema->listTableColumns($this->table);
+
+			$i = 0;
+			foreach ($columns as $column) {
+				if ($i === $pointer) {
+					// TODO: Figure out if this is ok like it is and clean up the rest of this mess
+					//$pdoTypeId = $column->getType()->getBindingType();
+					//$typeArray = $column->toArray();
+					$metaInfo = $column->getType()->getName();
+				}
+				$i++;
+			}
 			if ($metaInfo === FALSE) {
 				return FALSE;
 			}
-			return $mysqlDataTypeHash[$metaInfo->type];
+
+			return $mysqlDataTypeHash[$metaInfo];
 		} else {
 			return FALSE;
 		}
@@ -1282,11 +1353,14 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 		//       connections. For Doctrine this won't work. If the user want a persistent connection we have to create
 		//       the PDO instance by ourself and pass it to Doctrine.
 		//       See http://stackoverflow.com/questions/16217426/is-it-possible-to-use-doctrine-with-persistent-pdo-connections
+		//           http://www.mysqlperformanceblog.com/2006/11/12/are-php-persistent-connections-evil/
 		//$host = $this->persistentDatabaseConnection ? 'p:' . $this->databaseHost : $this->databaseHost;
 		//$this->setDatabaseHost($this->databaseHost);
 
-		$config = GeneralUtility::makeInstance('Doctrine\\DBAL\\Configuration');
-		$this->link = DriverManager::getConnection($this->connectionParams, $config);
+		$this->connectionConfig = GeneralUtility::makeInstance('Doctrine\\DBAL\\Configuration');
+		$this->connectionConfig->setSQLLogger(new DebugStack());
+		$this->link = DriverManager::getConnection($this->connectionParams, $this->connectionConfig);
+		$this->logger = $this->link->getConfiguration()->getSQLLogger();
 
 		// We need to map the enum type to string because Doctrine don't support it native
 		// This is necessary when the installer loops through all tables of all databases it found using this connection
@@ -1576,7 +1650,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 *
 	 * @param string $query Query to execute
 	 *
-	 * @return boolean|\Doctrine\DBAL\Statement A PDOStatement object
+	 * @return boolean|\Doctrine\DBAL\Driver\Statement A PDOStatement object
 	 */
 	public function admin_query($query) {
 		if (!$this->isConnected) {
@@ -1760,17 +1834,21 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	}
 
 	/**
-	 * @param \Doctrine\DBAL\Statement $lastStatement
+	 * @param \Doctrine\DBAL\Driver\Statement $lastStatement
 	 */
 	public function setLastStatement($lastStatement) {
-	        $this->lastStatement = $lastStatement;
+		$this->lastStatement = $lastStatement;
 	}
 
 	/**
-	 * @return \Doctrine\DBAL\Statement
+	 * @return \Doctrine\DBAL\Driver\Statement
 	 */
 	public function getLastStatement() {
-	        return $this->lastStatement;
+		$queries = $this->logger->queries;
+		$currentQuery = $this->logger->currentQuery;
+		$lastStatement = $queries[$currentQuery]['sql'];
+
+		return $lastStatement;
 	}
 
 	/**

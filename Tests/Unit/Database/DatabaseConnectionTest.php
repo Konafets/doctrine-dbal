@@ -57,6 +57,7 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @return void
 	 */
 	public function setUp() {
+		$GLOBALS['TYPO3_DB']->connectDB();
 		$this->subject = $GLOBALS['TYPO3_DB'];
 		$this->testTable = 'test_t3lib_dbtest';
 		$this->testField = 'fieldblob';
@@ -77,6 +78,7 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 */
 	public function tearDown() {
 		$this->subject->sql_query('DROP TABLE ' . $this->testTable . ';');
+		$this->subject->getDatabaseHandle()->close();
 		unset($this->subject);
 	}
 
@@ -193,14 +195,14 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 */
 	public function fullQuoteStrReturnsQuotedStringDataProvider() {
 		return array(
-			'NULL string with ReturnNull is allowed' => array(array(NULL,TRUE), 'NULL'),
-			'NULL string with ReturnNull is false' => array(array(NULL,FALSE), '\'\''),
-			'Normal string' => array(array('Foo',FALSE), '\'Foo\''),
-			'Single quoted string' => array(array("'Hello'",FALSE), "'\\'Hello\\''"),
-			'Double quoted string' => array(array('"Hello"',FALSE), '\'\\"Hello\\"\''),
-			'String with internal single tick' => array(array('It\'s me',FALSE), '\'It\\\'s me\''),
-			'Slashes' => array(array('/var/log/syslog.log',FALSE), '\'/var/log/syslog.log\''),
-			'Backslashes' => array(array('\var\log\syslog.log',FALSE), '\'\\\var\\\log\\\syslog.log\''),
+			'NULL string with ReturnNull is allowed' => array(array(NULL, TRUE), 'NULL'),
+			'NULL string with ReturnNull is false' => array(array(NULL, FALSE), '\'\''),
+			'Normal string' => array(array('Foo', FALSE), '\'Foo\''),
+			'Single quoted string' => array(array("'Hello'", FALSE), "'\\'Hello\\''"),
+			'Double quoted string' => array(array('"Hello"', FALSE), '\'\\"Hello\\"\''),
+			'String with internal single tick' => array(array('It\'s me', FALSE), '\'It\\\'s me\''),
+			'Slashes' => array(array('/var/log/syslog.log', FALSE), '\'/var/log/syslog.log\''),
+			'Backslashes' => array(array('\var\log\syslog.log', FALSE), '\'\\\var\\\log\\\syslog.log\''),
 		);
 	}
 
@@ -350,10 +352,10 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 */
 	public function quoteStrQuotesCorrectlyDataProvider() {
 		return array(
-			'Double Quotes' => array('"Hello"', '\'\\"Hello\\"\''),
-			'single Quotes' => array('\'Hello\'', '\'\\\'Hello\\\'\''),
-			'Slashes' => array('/var/log/syslog.log', '\'/var/log/syslog.log\''),
-			'BackSlashes' => array('\var\log\syslog.log', '\'\\\var\\\log\\\syslog.log\'')
+			'Single Quotes' => array('\'Hello\'', '\\\'Hello\\\''),
+			'Double Quotes' => array('"Hello"', '\\"Hello\\"'),
+			'Slashes' => array('/var/log/syslog.log', '/var/log/syslog.log'),
+			'BackSlashes' => array('\var\log\syslog.log', '\\\var\\\log\\\syslog.log')
 		);
 	}
 
@@ -767,6 +769,7 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 
 		$res = $this->subject->admin_query($sql);
 		$numRows = $this->subject->sql_num_rows($res);
+
 		$this->assertSame($expectedResult, $numRows);
 	}
 
