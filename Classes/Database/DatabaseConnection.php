@@ -472,6 +472,207 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 		$this->persistentDatabaseConnection = (bool)$persistentDatabaseConnection;
 	}
 
+	/******************************
+	 *
+	 * Connect handling
+	 *
+	 ******************************/
+	/**
+	 * Connects to database for TYPO3 sites:
+	 *
+	 * @param string $host     Deprecated since 6.1, will be removed in two versions Database. host IP/domain[:port]
+	 * @param string $username Deprecated since 6.1, will be removed in two versions. Username to connect with
+	 * @param string $password Deprecated since 6.1, will be removed in two versions. Password to connect with
+	 * @param string $db       Deprecated since 6.1, will be removed in two versions. Database name to connect to
+	 *
+	 * @return void
+	 * @throws \RuntimeException
+	 * @throws \UnexpectedValueException
+	 */
+	public function connectDB($host = NULL, $username = NULL, $password = NULL, $db = NULL) {
+		// Early return if connected already
+		if ($this->isConnected) {
+			return;
+		}
+
+		if (!$this->getDatabaseName() && !$db) {
+			throw new \RuntimeException(
+				'TYPO3 Fatal Error: No database selected!',
+				1270853882
+			);
+		}
+
+		if ($host || $username || $password || $db) {
+			$this->handleDeprecatedConnectArguments($host, $username, $password, $db);
+		}
+
+		if ($this->sql_pconnect()) {
+			if (!$this->sql_select_db()) {
+				throw new \RuntimeException(
+					'TYPO3 Fatal Error: Cannot connect to the current database, "' . $this->getDatabaseName() . '"!',
+					1270853883
+				);
+			}
+		} else {
+			throw new \RuntimeException(
+				'TYPO3 Fatal Error: The current username, password or host was not accepted when the connection to the database was attempted to be established!',
+				1270853884
+			);
+		}
+
+		// Prepare user defined objects (if any) for hooks which extend query methods
+		$this->preProcessHookObjects = array();
+		$this->postProcessHookObjects = array();
+		if (is_array($GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['t3lib/class.t3lib_db.php']['queryProcessors'])) {
+			foreach ($GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['t3lib/class.t3lib_db.php']['queryProcessors'] as $classRef) {
+				$hookObject = GeneralUtility::getUserObj($classRef);
+				if (!(
+					$hookObject instanceof \TYPO3\CMS\Core\Database\PreProcessQueryHookInterface
+					|| $hookObject instanceof \TYPO3\CMS\Core\Database\PostProcessQueryHookInterface
+				)) {
+					throw new \UnexpectedValueException(
+						'$hookObject must either implement interface TYPO3\\CMS\\Core\\Database\\PreProcessQueryHookInterface or interface TYPO3\\CMS\\Core\\Database\\PostProcessQueryHookInterface',
+						1299158548
+					);
+				}
+				if ($hookObject instanceof \TYPO3\CMS\Core\Database\PreProcessQueryHookInterface) {
+					$this->preProcessHookObjects[] = $hookObject;
+				}
+				if ($hookObject instanceof \TYPO3\CMS\Core\Database\PostProcessQueryHookInterface) {
+					$this->postProcessHookObjects[] = $hookObject;
+				}
+			}
+		}
+	}
+
+	/**
+	 * Open a (persistent) connection to a MySQL server
+	 *
+	 * @param string $host     Deprecated since 6.1, will be removed in two versions. Database host IP/domain[:port]
+	 * @param string $username Deprecated since 6.1, will be removed in two versions. Username to connect with.
+	 * @param string $password Deprecated since 6.1, will be removed in two versions. Password to connect with.
+	 *
+	 * @return boolean|void
+	 * @throws \RuntimeException
+	 */
+	public function sql_pconnect($host = NULL, $username = NULL, $password = NULL) {
+		if ($this->isConnected) {
+			return $this->link;
+		}
+
+		if (!extension_loaded('pdo')) {
+			throw new \RuntimeException(
+				'Database Error: PHP PDO extension not loaded. This is a must to use this extension (ext:doctrine_dbal)!',
+				// TODO: Replace with current date for Thesis
+				1388496499
+			);
+		}
+
+		if ($host || $username || $password) {
+			$this->handleDeprecatedConnectArguments($host, $username, $password);
+		}
+
+		// TODO: Is this needed for Doctrine too?
+		// TODO: This handles persistent database connection which established with a "p:" before the host for mysqli
+		//       connections. For Doctrine this won't work. If the user want a persistent connection we have to create
+		//       the PDO instance by ourself and pass it to Doctrine.
+		//       See http://stackoverflow.com/questions/16217426/is-it-possible-to-use-doctrine-with-persistent-pdo-connections
+		//           http://www.mysqlperformanceblog.com/2006/11/12/are-php-persistent-connections-evil/
+		//$host = $this->persistentDatabaseConnection ? 'p:' . $this->databaseHost : $this->databaseHost;
+		//$this->setDatabaseHost($this->databaseHost);
+
+		$this->connectionConfig = GeneralUtility::makeInstance('Doctrine\\DBAL\\Configuration');
+		$this->connectionConfig->setSQLLogger(new DebugStack());
+		$this->link = DriverManager::getConnection($this->connectionParams, $this->connectionConfig);
+		$this->logger = $this->link->getConfiguration()->getSQLLogger();
+
+		// We need to map the enum type to string because Doctrine don't support it native
+		// This is necessary when the installer loops through all tables of all databases it found using this connection
+		// See https://github.com/barryvdh/laravel-ide-helper/issues/19
+		$this->link->getDatabasePlatform()->registerDoctrineTypeMapping('enum', 'string');
+		$this->schema = $this->link->getSchemaManager();
+
+		try {
+			$this->schema->listDatabases();
+		} catch (\PDOException $e) {
+			return FALSE;
+		}
+
+		$connected = $this->link->isConnected();
+		if ($connected) {
+			$this->isConnected = TRUE;
+			foreach ($this->initializeCommandsAfterConnect as $command) {
+				if ($this->link->query($command) === FALSE) {
+					GeneralUtility::sysLog(
+						'Could not initialize DB connection with query "' . $command . '": ' . $this->sql_error(),
+						'Core',
+						GeneralUtility::SYSLOG_SEVERITY_ERROR
+					);
+				}
+			}
+			$this->setSqlMode();
+		} else {
+			// @TODO: This should raise an exception. Would be useful especially to work during installation.
+			$this->link = NULL;
+			GeneralUtility::sysLog(
+				// TODO: Replace the term "MySQL" in the next log message with the current platform name
+				'Could not connect to MySQL server ' . $this->getDatabaseHost() . ' with user ' . $this->getDatabaseUsername() . ': ' . $this->sql_error(),
+				'Core',
+				GeneralUtility::SYSLOG_SEVERITY_FATAL
+			);
+		}
+
+		return $this->link;
+	}
+
+	/**
+	 * Checks if database is connected
+	 *
+	 * @return boolean
+	 */
+	public function isConnected() {
+		return $this->isConnected;
+	}
+
+	/**
+	 * Disconnect from database if connected
+	 *
+	 * @return void
+	 */
+	protected function disconnectIfConnected() {
+		if ($this->isConnected()) {
+			$this->link->close();
+			$this->isConnected = FALSE;
+		}
+	}
+
+	/**
+	 * Fixes the SQL mode by unsetting NO_BACKSLASH_ESCAPES if found.
+	 *
+	 * @return void
+	 * @todo: Test the server with different modes
+	 *        see http://dev.mysql.com/doc/refman/5.1/de/server-sql-mode.html
+	 */
+	protected function setSqlMode() {
+		$resource = $this->sql_query('SELECT @@SESSION.sql_mode;');
+		if ($resource) {
+			// TODO: Abstract the direct fetchAll() call
+			$result = $resource->fetchAll();
+			if (isset($result[0]) && $result[0] && strpos($result[0]['@@SESSION.sql_mode'], 'NO_BACKSLASH_ESCAPES') !== FALSE) {
+				$modes = array_diff(GeneralUtility::trimExplode(',', $result[0]['@@SESSION.sql_mode']), array('NO_BACKSLASH_ESCAPES'));
+				// TODO: Make the prepared Statements working
+				$stmt = $this->link->prepare('SET sql_mode = :modes');
+				$stmt->bindValue('modes', implode(',', $modes));
+				$stmt->execute();
+				GeneralUtility::sysLog(
+					'NO_BACKSLASH_ESCAPES could not be removed from SQL mode: ' . $this->sql_error(),
+					'Core',
+					GeneralUtility::SYSLOG_SEVERITY_ERROR
+				);
+			}
+		}
+	}
+
 	/************************************
 	 *
 	 * Query execution
@@ -1569,113 +1770,6 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	}
 
 	/**
-	 * Open a (persistent) connection to a MySQL server
-	 *
-	 * @param string $host     Deprecated since 6.1, will be removed in two versions. Database host IP/domain[:port]
-	 * @param string $username Deprecated since 6.1, will be removed in two versions. Username to connect with.
-	 * @param string $password Deprecated since 6.1, will be removed in two versions. Password to connect with.
-	 *
-	 * @return boolean|void
-	 * @throws \RuntimeException
-	 */
-	public function sql_pconnect($host = NULL, $username = NULL, $password = NULL) {
-		if ($this->isConnected) {
-			return $this->link;
-		}
-
-		if (!extension_loaded('pdo')) {
-			throw new \RuntimeException(
-				'Database Error: PHP PDO extension not loaded. This is a must to use this extension (ext:doctrine_dbal)!',
-				// TODO: Replace with current date for Thesis
-				1388496499
-			);
-		}
-
-		if ($host || $username || $password) {
-			$this->handleDeprecatedConnectArguments($host, $username, $password);
-		}
-
-		// TODO: Is this needed for Doctrine too?
-		// TODO: This handles persistent database connection which established with a "p:" before the host for mysqli
-		//       connections. For Doctrine this won't work. If the user want a persistent connection we have to create
-		//       the PDO instance by ourself and pass it to Doctrine.
-		//       See http://stackoverflow.com/questions/16217426/is-it-possible-to-use-doctrine-with-persistent-pdo-connections
-		//           http://www.mysqlperformanceblog.com/2006/11/12/are-php-persistent-connections-evil/
-		//$host = $this->persistentDatabaseConnection ? 'p:' . $this->databaseHost : $this->databaseHost;
-		//$this->setDatabaseHost($this->databaseHost);
-
-		$this->connectionConfig = GeneralUtility::makeInstance('Doctrine\\DBAL\\Configuration');
-		$this->connectionConfig->setSQLLogger(new DebugStack());
-		$this->link = DriverManager::getConnection($this->connectionParams, $this->connectionConfig);
-		$this->logger = $this->link->getConfiguration()->getSQLLogger();
-
-		// We need to map the enum type to string because Doctrine don't support it native
-		// This is necessary when the installer loops through all tables of all databases it found using this connection
-		// See https://github.com/barryvdh/laravel-ide-helper/issues/19
-		$this->link->getDatabasePlatform()->registerDoctrineTypeMapping('enum', 'string');
-		$this->schema = $this->link->getSchemaManager();
-
-		try {
-			$this->schema->listDatabases();
-		} catch (\PDOException $e) {
-			return FALSE;
-		}
-
-		$connected = $this->link->isConnected();
-		if ($connected) {
-			$this->isConnected = TRUE;
-			foreach ($this->initializeCommandsAfterConnect as $command) {
-				if ($this->link->query($command) === FALSE) {
-					GeneralUtility::sysLog(
-						'Could not initialize DB connection with query "' . $command . '": ' . $this->sql_error(),
-						'Core',
-						GeneralUtility::SYSLOG_SEVERITY_ERROR
-					);
-				}
-			}
-			$this->setSqlMode();
-		} else {
-			// @TODO: This should raise an exception. Would be useful especially to work during installation.
-			$this->link = NULL;
-			GeneralUtility::sysLog(
-				// TODO: Replace the term "MySQL" in the next log message with the current platform name
-				'Could not connect to MySQL server ' . $this->getDatabaseHost() . ' with user ' . $this->getDatabaseUsername() . ': ' . $this->sql_error(),
-				'Core',
-				GeneralUtility::SYSLOG_SEVERITY_FATAL
-			);
-		}
-
-		return $this->link;
-	}
-
-	/**
-	 * Fixes the SQL mode by unsetting NO_BACKSLASH_ESCAPES if found.
-	 *
-	 * @return void
-	 * @todo: Test the server with different modes
-	 *        see http://dev.mysql.com/doc/refman/5.1/de/server-sql-mode.html
-	 */
-	protected function setSqlMode() {
-		$resource = $this->sql_query('SELECT @@SESSION.sql_mode;');
-		if ($resource) {
-			// TODO: Abstract the direct fetchAll() call
-			$result = $resource->fetchAll();
-			if (isset($result[0]) && $result[0] && strpos($result[0]['@@SESSION.sql_mode'], 'NO_BACKSLASH_ESCAPES') !== FALSE) {
-				$modes = array_diff(GeneralUtility::trimExplode(',', $result[0]['@@SESSION.sql_mode']), array('NO_BACKSLASH_ESCAPES'));
-				// TODO: Make the prepared Statements working
-				$stmt = $this->link->prepare('SET sql_mode = :modes');
-				$stmt->bindValue('modes', implode(',', $modes));
-				$stmt->execute();
-				GeneralUtility::sysLog(
-					'NO_BACKSLASH_ESCAPES could not be removed from SQL mode: ' . $this->sql_error(),
-					'Core',
-					GeneralUtility::SYSLOG_SEVERITY_ERROR
-				);
-			}
-		}
-	}
-
-	/**
 	 * Select a SQL database
 	 *
 	 * @param string $TYPO3_db Deprecated since 6.1, will be removed in two versions. Database to connect to.
@@ -1910,100 +2004,6 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 		}
 
 		return $stmt;
-	}
-
-	/******************************
-	 *
-	 * Connect handling
-	 *
-	 ******************************/
-	/**
-	 * Connects to database for TYPO3 sites:
-	 *
-	 * @param string $host     Deprecated since 6.1, will be removed in two versions Database. host IP/domain[:port]
-	 * @param string $username Deprecated since 6.1, will be removed in two versions. Username to connect with
-	 * @param string $password Deprecated since 6.1, will be removed in two versions. Password to connect with
-	 * @param string $db       Deprecated since 6.1, will be removed in two versions. Database name to connect to
-	 *
-	 * @return void
-	 * @throws \RuntimeException
-	 * @throws \UnexpectedValueException
-	 */
-	public function connectDB($host = NULL, $username = NULL, $password = NULL, $db = NULL) {
-		// Early return if connected already
-		if ($this->isConnected) {
-			return;
-		}
-
-		if (!$this->getDatabaseName() && !$db) {
-			throw new \RuntimeException(
-				'TYPO3 Fatal Error: No database selected!',
-				1270853882
-			);
-		}
-
-		if ($host || $username || $password || $db) {
-			$this->handleDeprecatedConnectArguments($host, $username, $password, $db);
-		}
-
-		if ($this->sql_pconnect()) {
-			if (!$this->sql_select_db()) {
-				throw new \RuntimeException(
-					'TYPO3 Fatal Error: Cannot connect to the current database, "' . $this->getDatabaseName() . '"!',
-					1270853883
-				);
-			}
-		} else {
-			throw new \RuntimeException(
-				'TYPO3 Fatal Error: The current username, password or host was not accepted when the connection to the database was attempted to be established!',
-				1270853884
-			);
-		}
-
-		// Prepare user defined objects (if any) for hooks which extend query methods
-		$this->preProcessHookObjects = array();
-		$this->postProcessHookObjects = array();
-		if (is_array($GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['t3lib/class.t3lib_db.php']['queryProcessors'])) {
-			foreach ($GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['t3lib/class.t3lib_db.php']['queryProcessors'] as $classRef) {
-				$hookObject = GeneralUtility::getUserObj($classRef);
-				if (!(
-					$hookObject instanceof \TYPO3\CMS\Core\Database\PreProcessQueryHookInterface
-					|| $hookObject instanceof \TYPO3\CMS\Core\Database\PostProcessQueryHookInterface
-				)) {
-					throw new \UnexpectedValueException(
-						'$hookObject must either implement interface TYPO3\\CMS\\Core\\Database\\PreProcessQueryHookInterface or interface TYPO3\\CMS\\Core\\Database\\PostProcessQueryHookInterface',
-						1299158548
-					);
-				}
-				if ($hookObject instanceof \TYPO3\CMS\Core\Database\PreProcessQueryHookInterface) {
-					$this->preProcessHookObjects[] = $hookObject;
-				}
-				if ($hookObject instanceof \TYPO3\CMS\Core\Database\PostProcessQueryHookInterface) {
-					$this->postProcessHookObjects[] = $hookObject;
-				}
-			}
-		}
-	}
-
-	/**
-	 * Checks if database is connected
-	 *
-	 * @return boolean
-	 */
-	public function isConnected() {
-		return $this->isConnected;
-	}
-
-	/**
-	 * Disconnect from database if connected
-	 *
-	 * @return void
-	 */
-	protected function disconnectIfConnected() {
-		if ($this->isConnected()) {
-			$this->link->close();
-			$this->isConnected = FALSE;
-		}
 	}
 
 
