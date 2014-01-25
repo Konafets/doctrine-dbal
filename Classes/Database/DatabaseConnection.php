@@ -1277,6 +1277,17 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * Prepared Query Support
 	 *
 	 **************************************/
+	public function preparedSelectQuery($selectFields, $fromTable, $whereClause, $groupBy = '', $orderBy = '', $limit = ''){
+		if (!$this->isConnected) {
+			$this->connectDB();
+		}
+
+		$sql = $this->SELECTquery($selectFields, $fromTable, $whereClause, $groupBy, $orderBy, $limit);
+		$stmt = $this->link->prepare($sql);
+
+		return $stmt;
+	}
+
 	/**
 	 * Executes a prepared query.
 	 * This method may only be called by \TYPO3\CMS\Core\Database\PreparedStatement
