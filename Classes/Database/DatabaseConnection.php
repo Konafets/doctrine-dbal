@@ -1651,7 +1651,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * @see adminGetCharsets()
 	 */
 	public function admin_get_charsets() {
-		return $this->adminGetCharsets();
+		return $this->adminGetCharset();
 	}
 
 	/**
@@ -1666,7 +1666,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 *
 	 * @return array Array with Charset as key and an array of "Charset", "Description", "Default collation", "Maxlen" as values
 	 */
-	public function adminGetCharsets() {
+	public function adminGetCharset() {
 		if (!$this->isConnected) {
 			$this->connectDB();
 		}
