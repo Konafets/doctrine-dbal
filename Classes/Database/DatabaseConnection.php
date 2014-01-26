@@ -604,7 +604,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			foreach ($this->initializeCommandsAfterConnect as $command) {
 				if ($this->link->query($command) === FALSE) {
 					GeneralUtility::sysLog(
-						'Could not initialize DB connection with query "' . $command . '": ' . $this->sql_error(),
+						'Could not initialize DB connection with query "' . $command . '": ' . $this->sqlErrorMessage(),
 						'Core',
 						GeneralUtility::SYSLOG_SEVERITY_ERROR
 					);
@@ -616,7 +616,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			$this->link = NULL;
 			GeneralUtility::sysLog(
 				// TODO: Replace the term "MySQL" in the next log message with the current platform name
-				'Could not connect to MySQL server ' . $this->getDatabaseHost() . ' with user ' . $this->getDatabaseUsername() . ': ' . $this->sql_error(),
+				'Could not connect to MySQL server ' . $this->getDatabaseHost() . ' with user ' . $this->getDatabaseUsername() . ': ' . $this->sqlErrorMessage(),
 				'Core',
 				GeneralUtility::SYSLOG_SEVERITY_FATAL
 			);
@@ -665,7 +665,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 				$stmt->bindValue('modes', implode(',', $modes));
 				$stmt->execute();
 				GeneralUtility::sysLog(
-					'NO_BACKSLASH_ESCAPES could not be removed from SQL mode: ' . $this->sql_error(),
+					'NO_BACKSLASH_ESCAPES could not be removed from SQL mode: ' . $this->sqlErrorMessage(),
 					'Core',
 					GeneralUtility::SYSLOG_SEVERITY_ERROR
 				);
@@ -844,7 +844,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 		if ($this->debugOutput) {
 			$this->debug('exec_SELECTquery');
 		}
-		if (!$this->sql_error()) {
+		if (!$this->sqlErrorMessage()) {
 			$output = array();
 			if ($uidIndexField) {
 				while ($tempRow = $this->sql_fetch_assoc($stmt)) {
@@ -1386,6 +1386,15 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * @return integer PDO error number
 	 */
 	public function sql_errno() {
+		return $this->sqlErrorCode();
+	}
+
+	/**
+	 * Returns the error number on the last query() execution
+	 *
+	 * @return integer PDO error number
+	 */
+	public function sqlErrorCode() {
 		return $this->link->errorCode();
 	}
 
@@ -1395,7 +1404,17 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * @return string PDO error string.
 	 */
 	public function sql_error() {
+		return $this->sqlErrorMessage();
+	}
+
+	/**
+	 * Returns the error status on the last query() execution
+	 *
+	 * @return string PDO error string.
+	 */
+	public function sqlErrorMessage() {
 		$errorMsg = $this->link->errorInfo();
+
 		return $errorMsg[0] === '00000' ? '' : $errorMsg;
 	}
 
@@ -1560,7 +1579,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 		if (!$isConnected) {
 			GeneralUtility::sysLog(
 				// TODO: Replace the term "MySQL" in the next log message with the current platform name
-				'Could not select MySQL database ' . $this->getDatabaseName() . ': ' . $this->sql_error(),
+				'Could not select MySQL database ' . $this->getDatabaseName() . ': ' . $this->sqlErrorMessage(),
 				'Core',
 				GeneralUtility::SYSLOG_SEVERITY_FATAL
 			);
@@ -1664,7 +1683,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 		$databases = $this->schema->listDatabases();
 		if ($databases === FALSE) {
 			throw new \RuntimeException(
-				'MySQL Error: Cannot get tablenames: "' . $this->sql_error() . '"!',
+				'MySQL Error: Cannot get tablenames: "' . $this->sqlErrorMessage() . '"!',
 				1378457171
 			);
 		} else {
@@ -2067,7 +2086,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * @todo Define visibility
 	 */
 	public function debug($func, $query = '') {
-		$error = $this->sql_error();
+		$error = $this->sqlErrorMessage();
 		if ($error || (int) $this->debugOutput === 2) {
 			DebugUtility::debug(
 				array(
@@ -2115,7 +2134,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 		// Send to devLog if enabled
 		if (TYPO3_DLOG) {
 			$debugLogData = array(
-				'SQL Error' => $this->sql_error(),
+				'SQL Error' => $this->sqlErrorMessage(),
 				'Backtrace' => $trace
 			);
 			if ($this->debug_lastBuiltQuery) {
@@ -2157,7 +2176,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 		} else {
 			return FALSE;
 		}
-		$error = $this->sql_error();
+		$error = $this->sqlErrorMessage();
 		$trail = DebugUtility::debugTrail();
 		$explainTables = array();
 		$explainOutput = array();

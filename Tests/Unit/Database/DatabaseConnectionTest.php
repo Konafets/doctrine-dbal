@@ -128,8 +128,11 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @return void
 	 */
 	public function noSqlError() {
-		$this->subject->exec_INSERTquery($this->testTable, array($this->testField => 'test'));
+		$this->subject->exec_INSERTquery($this->testTable, array($this->testField => 'testA'));
 		$this->assertEquals('', $this->subject->sql_error());
+
+		$this->subject->exec_INSERTquery($this->testTable, array($this->testField => 'testB'));
+		$this->assertEquals('', $this->subject->sqlErrorMessage());
 	}
 
 	/**
@@ -150,8 +153,11 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @return void
 	 */
 	public function noSqlErrorCode() {
-		$this->subject->exec_INSERTquery($this->testTable, array($this->testField => 'test'));
+		$this->subject->exec_INSERTquery($this->testTable, array($this->testField => 'testA'));
 		$this->assertEquals(0, $this->subject->sql_errno());
+
+		$this->subject->exec_INSERTquery($this->testTable, array($this->testField => 'testB'));
+		$this->assertEquals(0, $this->subject->sqlErrorCode());
 	}
 
 	/**
@@ -162,8 +168,11 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @expectedExceptionMessage SQLSTATE[42S22]: Column not found: 1054 Unknown column 'test' in 'field list'
 	 */
 	public function sqlErrorNoWhenInsertIntoInexistentField() {
-		$this->subject->exec_INSERTquery($this->testTable, array('test' => 'test'));
+		$this->subject->exec_INSERTquery($this->testTable, array('test' => 'testA'));
 		$this->assertEquals(1054, $this->subject->sql_errno());
+
+		$this->subject->exec_INSERTquery($this->testTable, array('test' => 'testB'));
+		$this->assertEquals(1054, $this->subject->sqlErrorCode());
 	}
 
 	/**
