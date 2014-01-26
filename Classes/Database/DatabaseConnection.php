@@ -1629,12 +1629,29 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 		if (!$this->isConnected) {
 			$this->connectDB();
 		}
-		$stmt = $this->admin_query('SELECT count(*) from information_schema.tables WHERE table_schema = \'' . $this->databaseName . '\'');
-		if ($stmt !== FALSE) {
-			$result = $stmt->fetchAll(\PDO::FETCH_COLUMN);
+		$result[0] = -1;
+		$sql = 'SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = :databaseName';
+
+		$statement = $this->link->prepare($sql);
+		$statement->bindValue('databaseName', $this->getDatabaseName());
+		$isQuerySuccess = $statement->execute();
+
+		if ($isQuerySuccess !== FALSE) {
+			$result = $statement->fetchAll(\PDO::FETCH_COLUMN);
 		}
 
 		return $result[0];
+	}
+
+	/**
+	 * This is the old version of the method. It make usage of the new one which follows the naming convention for method names
+	 * Please use the new one instead of this one.
+	 *
+	 * @return array Array with Charset as key and an array of "Charset", "Description", "Default collation", "Maxlen" as values
+	 * @see adminGetCharsets()
+	 */
+	public function admin_get_charsets() {
+		return $this->adminGetCharsets();
 	}
 
 	/**
@@ -1649,13 +1666,14 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 *
 	 * @return array Array with Charset as key and an array of "Charset", "Description", "Default collation", "Maxlen" as values
 	 */
-	public function admin_get_charsets() {
+	public function adminGetCharsets() {
 		if (!$this->isConnected) {
 			$this->connectDB();
 		}
+
 		$output = array();
-		$stmt = $this->link->query('SHOW CHARACTER SET');
-		$this->setLastStatement($stmt);
+		$stmt = $this->adminQuery('SHOW CHARACTER SET');
+
 		if ($stmt !== FALSE) {
 			while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 				$output[$row['Charset']] = $row;
@@ -1667,6 +1685,18 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	}
 
 	/**
+	 * This is the old version of the method. It make usage of the new one which follows the naming convention for method names
+	 * Please use the new one instead of this one.
+	 *
+	 * @return array Each entry represents a database name
+	 * @throws \RuntimeException
+	 * @see adminGetDatabases
+	 */
+	public function admin_get_dbs() {
+		return $this->adminGetDatabases();
+	}
+
+	/**
 	 * Listing databases from current MySQL connection. NOTICE: It WILL try to select those databases and thus break selection of current database.
 	 * This is only used as a service function in the (1-2-3 process) of the Install Tool.
 	 * In any case a lookup should be done in the _DEFAULT handler DBMS then.
@@ -1675,33 +1705,33 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * @return array Each entry represents a database name
 	 * @throws \RuntimeException
 	 */
-	public function admin_get_dbs() {
+	public function adminGetDatabases() {
 		if (!$this->isConnected) {
 			$this->connectDB();
 		}
-		$dbArray = array();
+
 		$databases = $this->schema->listDatabases();
-		if ($databases === FALSE) {
+		if (empty($databases)) {
 			throw new \RuntimeException(
-				'MySQL Error: Cannot get tablenames: "' . $this->sqlErrorMessage() . '"!',
+				'MySQL Error: Cannot get databases: "' . $this->sqlErrorMessage() . '"!',
 				1378457171
 			);
-		} else {
-			foreach ($databases as $database) {
-				try {
-					$this->setDatabaseName($database);
-					if ($this->sql_select_db()) {
-						$dbArray[] = $database;
-					}
-				} catch (\RuntimeException $exception) {
-					// The exception happens if we cannot connect to the database
-					// (usually due to missing permissions). This is ok here.
-					// We catch the exception, skip the database and continue.
-				}
-			}
 		}
 
-		return $dbArray;
+		return $databases;
+	}
+
+	/**
+	 * This is the old version of the method. It make usage of the new one which follows the naming convention for method names
+	 * Please use the new one instead of this one.
+	 *
+	 * @param string $tableName Table name
+	 *
+	 * @return array Field information in an associative array with fieldname => field row
+	 * @see adminGetFields()
+	 */
+	public function admin_get_fields($tableName) {
+		return $this->adminGetFields($tableName);
 	}
 
 	/**
@@ -1716,7 +1746,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 *
 	 * @return array Field information in an associative array with fieldname => field row
 	 */
-	public function admin_get_fields($tableName) {
+	public function adminGetFields($tableName) {
 		if (!$this->isConnected) {
 			$this->connectDB();
 		}
@@ -1724,8 +1754,8 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 		// TODO: Figure out if we could use the function $this->schema->listTableColumns($tableName);
 		//       The result is a different from the current. We need to adjust assembleFieldDefinition() from
 		//       SqlSchemaMigrationService
-		$stmt = $this->link->query('SHOW COLUMNS FROM `' . $tableName . '`');
-		$this->setLastStatement($stmt);
+		$stmt = $this->adminQuery('SHOW COLUMNS FROM `' . $tableName . '`');
+
 		if ($stmt !== FALSE) {
 			while ($fieldRow = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 				$output[$fieldRow['Field']] = $fieldRow;
@@ -1737,6 +1767,19 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	}
 
 	/**
+	 * This is the old version of the method. It make usage of the new one which follows the naming convention for method names
+	 * Please use the new one instead of this one.
+	 *
+	 * @param string $tableName Table name
+	 *
+	 * @return array Key information in a associative array
+	 * @see adminGetKeys()
+	 */
+	public function admin_get_keys($tableName) {
+		return $this->adminGetKeys($tableName);
+	}
+
+	/**
 	 * Returns information about each index key in the $table (quering the DBMS)
 	 * In a DBAL this should look up the right handler for the table and return compatible information
 	 *
@@ -1744,14 +1787,13 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 *
 	 * @return array Key information in a associative array
 	 */
-	public function admin_get_keys($tableName) {
+	public function adminGetKeys($tableName) {
 		if (!$this->isConnected) {
 			$this->connectDB();
 		}
 		$output = array();
 
-		$stmt = $this->link->query('SHOW KEYS FROM `' . $tableName . '`');
-		$this->setLastStatement($stmt);
+		$stmt = $this->adminQuery('SHOW KEYS FROM `' . $tableName . '`');
 		if ($stmt !== FALSE) {
 			while ($keyRow = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 				$output[] = $keyRow;
@@ -1763,19 +1805,30 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	}
 
 	/**
+	 * This is the old version of the method. It make usage of the new one which follows the naming convention for method names
+	 * Please use the new one instead of this one.
+	 *
+	 * @return array Array with table names as key and arrays with status information as value
+	 * @see adminGetTables()
+	 */
+	public function admin_get_tables() {
+		return $this->adminGetTables();
+	}
+
+	/**
 	 * Returns the list of tables from the default database, TYPO3_db (quering the DBMS)
 	 * In a DBAL this method should 1) look up all tables from the DBMS  of
 	 * the _DEFAULT handler and then 2) add all tables *configured* to be managed by other handlers
 	 *
-	 * @return array Array with tablenames as key and arrays with status information as value
+	 * @return array Array with table names as key and arrays with status information as value
 	 */
-	public function admin_get_tables() {
+	public function adminGetTables() {
 		if (!$this->isConnected) {
 			$this->connectDB();
 		}
 
 		$whichTables = array();
-		$tablesResult = $this->link->query('SHOW TABLE STATUS FROM `' . $this->getDatabaseName() . '`');
+		$tablesResult = $this->adminQuery('SHOW TABLE STATUS FROM `' . $this->getDatabaseName() . '`');
 		if ($tablesResult !== FALSE) {
 			while ($theTable = $tablesResult->fetch(\PDO::FETCH_ASSOC)) {
 				$whichTables[$theTable['Name']] = $theTable;
@@ -1798,20 +1851,33 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	}
 
 	/**
+	 * This is the old version of the method. It make usage of the new one which follows the naming convention for method names
+	 * Please use the new one instead of this one.
+	 *
+	 * @param string $query Query to execute
+	 *
+	 * @return boolean|\Doctrine\DBAL\Driver\Statement A PDOStatement object
+	 * @see adminQuery()
+	 */
+	public function admin_query($query) {
+		return $this->adminQuery($query);
+	}
+
+	/**
 	 * Doctrine query wrapper function, used by the Install Tool and EM for all queries regarding management of the database!
 	 *
 	 * @param string $query Query to execute
 	 *
 	 * @return boolean|\Doctrine\DBAL\Driver\Statement A PDOStatement object
 	 */
-	public function admin_query($query) {
+	public function adminQuery($query) {
 		if (!$this->isConnected) {
 			$this->connectDB();
 		}
 		$stmt = $this->link->query($query);
 		$this->setLastStatement($stmt);
 		if ($this->debugOutput) {
-			$this->debug('admin_query', $query);
+			$this->debug('adminQuery', $query);
 		}
 
 		return $stmt;
