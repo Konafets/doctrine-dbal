@@ -54,7 +54,7 @@ class DatabaseSelect extends Action\AbstractAction implements Action\Step\StepIn
 			$newDatabaseName = $postValues['new'];
 			if (strlen($newDatabaseName) <= 50) {
 				// TODO: Make usage of Doctrine Schemamanager here to create the database
-				$createDatabaseResult = $this->databaseConnection->admin_query('CREATE DATABASE ' . $newDatabaseName . ' CHARACTER SET utf8');
+				$createDatabaseResult = $this->databaseConnection->adminQuery('CREATE DATABASE ' . $newDatabaseName . ' CHARACTER SET utf8');
 				if ($createDatabaseResult) {
 					$localConfigurationPathValuePairs['DB/database'] = $newDatabaseName;
 				} else {
@@ -80,7 +80,7 @@ class DatabaseSelect extends Action\AbstractAction implements Action\Step\StepIn
 			// Only store database information when it's empty
 			$this->databaseConnection->setDatabaseName($postValues['existing']);
 			$this->databaseConnection->sql_select_db();
-			$existingTables = $this->databaseConnection->admin_get_tables();
+			$existingTables = $this->databaseConnection->adminGetTables();
 			$isInitialInstallation = $configurationManager->getConfigurationValueByPath('SYS/isInitialInstallationInProgress');
 			if (!$isInitialInstallation || count($existingTables) === 0) {
 				$localConfigurationPathValuePairs['DB/database'] = $postValues['existing'];
@@ -139,7 +139,7 @@ class DatabaseSelect extends Action\AbstractAction implements Action\Step\StepIn
 	 */
 	protected function getDatabaseList($initialInstallation) {
 		$this->initializeDatabaseConnection();
-		$databaseArray = $this->databaseConnection->admin_get_dbs();
+		$databaseArray = $this->databaseConnection->adminGetDatabases();
 		// Remove mysql organizational tables from database list
 		$reservedDatabaseNames = array('mysql', 'information_schema', 'performance_schema');
 		$allPossibleDatabases = array_diff($databaseArray, $reservedDatabaseNames);
