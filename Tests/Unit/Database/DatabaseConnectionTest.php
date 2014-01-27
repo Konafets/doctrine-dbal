@@ -739,6 +739,19 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 *
 	 * @return void
 	 */
+	public function createTruncateQueryCreateValidQuery() {
+		$this->assertSame(1, $this->subject->getDatabaseHandle()->insert($this->testTable, array($this->testField => 'foo')));
+		$queryExpected =
+			'TRUNCATE ' . $this->testTable;
+		$queryGenerated = $this->subject->createTruncateQuery($this->testTable);
+		$this->assertSame($queryExpected, $queryGenerated);
+	}
+
+	/**
+	 * @test
+	 *
+	 * @return void
+	 */
 	public function prepareSelectQueryCreateValidQuery() {
 		$this->assertSame(1, $this->subject->getDatabaseHandle()->insert($this->testTable, array($this->testField => 'foo')));
 		$preparedQuery = $this->subject->prepare_SELECTquery('fieldblob,fieldblub', $this->testTable, 'id=:id', '', '', '', array(':id' => 1));

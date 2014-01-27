@@ -952,7 +952,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	/**
 	 * Truncates a table.
 	 *
-	 * @param string $table Database tablename
+	 * @param string $table Database table name
 	 *
 	 * @return mixed Result from handler
 	 */
@@ -973,6 +973,32 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 		}
 
 		return $stmt;
+	}
+
+	/**
+	 * Truncates a table.
+	 *
+	 * @param string $table Database table name
+	 *
+	 * @return integer The affected rows
+	 */
+		public function executeTruncateQuery($table) {
+		if (!$this->isConnected) {
+			$this->connectDB();
+		}
+
+		$this->affectedRows = $this->link->executeUpdate($this->createTruncateQuery($table));
+		$this->table = $table;
+
+		if ($this->debugOutput) {
+			$this->debug('executeTruncateQuery');
+		}
+		foreach ($this->postProcessHookObjects as $hookObject) {
+			/** @var $hookObject PostProcessQueryHookInterface */
+			$hookObject->exec_TRUNCATEquery_postProcessAction($table, $this);
+		}
+
+		return $this->affectedRows;
 	}
 
 	/**
@@ -1183,6 +1209,29 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 		// Build basic query:
 		$query = 'TRUNCATE TABLE ' . $table;
 		// Return query:
+		if ($this->debugOutput || $this->store_lastBuiltQuery) {
+			$this->debug_lastBuiltQuery = $query;
+		}
+
+		return $query;
+	}
+
+	/**
+	 * Creates a TRUNCATE TABLE SQL-statement via the Doctrine2 API
+	 *
+	 * @param string $table See exec_TRUNCATEquery()
+	 *
+	 * @return string Full SQL query for TRUNCATE TABLE
+	 */
+	public function createTruncateQuery($table) {
+		foreach ($this->preProcessHookObjects as $hookObject) {
+			/** @var $hookObject PreProcessQueryHookInterface */
+			$hookObject->TRUNCATEquery_preProcessAction($table, $this);
+		}
+
+		$dbPlatform = $this->link->getDatabasePlatform();
+		$query = $dbPlatform->getTruncateTableSQL($table);
+
 		if ($this->debugOutput || $this->store_lastBuiltQuery) {
 			$this->debug_lastBuiltQuery = $query;
 		}
