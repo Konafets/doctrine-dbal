@@ -1073,6 +1073,33 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 		return $stmt;
 	}
 
+	/**
+	 * Executes a DELETE SQL-statement for $table where $where-clause
+	 *
+	 * @param string $table Database table name
+	 * @param array  $where The deletion criteria. An associative array containing column-value pairs eg. array('uid' => 1).
+	 * @param array  $types The types of identifiers.
+	 *
+	 * @return integer The affected rows
+	 */
+	public function executeDeleteQuery($table, array $where, array $types = array()) {
+		if (!$this->isConnected) {
+			$this->connectDB();
+		}
+
+		$this->affectedRows = $this->link->delete($table, $where, $types);
+
+		if ($this->debugOutput) {
+			$this->debug('executeDeleteQuery');
+		}
+		foreach ($this->postProcessHookObjects as $hookObject) {
+			/** @var $hookObject PostProcessQueryHookInterface */
+			$hookObject->exec_DELETEquery_postProcessAction($table, $where, $this);
+		}
+
+		return $this->affectedRows;
+	}
+
 	/**************************************
 	 *
 	 * Query building
@@ -1988,6 +2015,23 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * - stripping of excess ORDER BY/GROUP BY keywords
 	 *
 	 **************************************/
+	/**
+	 * Escaping and quoting values for SQL statements.
+	 *
+	 * @param string  $string    Input string
+	 * @param boolean $allowNull Whether to allow NULL values
+	 *
+	 * @return string Output string; Wrapped in single quotes and quotes in the string (" / ') and \ will be backslashed (or otherwise based on DBAL handler)
+	 * @api
+	 */
+	public function quote($string, $allowNull = FALSE) {
+		if ($allowNull && $string === NULL) {
+			return 'NULL';
+		}
+
+		return $this->link->quote($string);
+	}
+
 	/**
 	 * Escaping and quoting values for SQL statements.
 	 *
