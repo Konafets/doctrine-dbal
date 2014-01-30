@@ -28,6 +28,8 @@ namespace TYPO3\DoctrineDbal\Database;
  ***************************************************************/
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Logging\DebugStack;
+use Doctrine\DBAL\Query\Expression\ExpressionBuilder;
+use Doctrine\DBAL\Query\QueryBuilder;
 use TYPO3\CMS\Core\Utility\DebugUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
@@ -157,6 +159,13 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * @var \Doctrine\DBAL\Schema\AbstractSchemaManager $schema
 	 */
 	protected $schema;
+
+	/**
+	 * The Doctrine QueryBuilder object
+	 *
+	 * @var \Doctrine\DBAL\Query\QueryBuilder $queryBuilder
+	 */
+	protected $queryBuilder;
 
 	/**
 	 * The last executed statement object
@@ -423,6 +432,26 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	}
 
 	/**
+	 * @param \Doctrine\DBAL\Query\QueryBuilder $queryBuilder
+	 */
+	public function setQueryBuilder($queryBuilder) {
+		$this->queryBuilder = $queryBuilder;
+	}
+
+	/**
+	 * @return \Doctrine\DBAL\Query\QueryBuilder
+	 */
+	public function getQueryBuilder() {
+		if (!$this->isConnected()) {
+			$this->connectDB();
+		}
+
+		return $this->link->createQueryBuilder();
+	}
+
+
+
+	/**
 	 * @param \Doctrine\DBAL\Driver\Statement $lastStatement
 	 */
 	public function setLastStatement($lastStatement) {
@@ -470,6 +499,26 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	public function setPersistentDatabaseConnection($persistentDatabaseConnection) {
 		$this->disconnectIfConnected();
 		$this->persistentDatabaseConnection = (bool)$persistentDatabaseConnection;
+	}
+
+	/**
+	 * Initialize Doctrine
+	 *
+	 * @param array $params The parameters.
+	 */
+	public function initDoctrine(array $params = array()) {
+		//$this->connectionParams = $params;
+		$this->connectionConfig = GeneralUtility::makeInstance('Doctrine\\DBAL\\Configuration');
+		$this->connectionConfig->setSQLLogger(new DebugStack());
+		$this->link = DriverManager::getConnection($this->connectionParams, $this->connectionConfig);
+		$this->logger = $this->link->getConfiguration()->getSQLLogger();
+		$this->queryBuilder = $this->link->createQueryBuilder();
+
+		// We need to map the enum type to string because Doctrine don't support it native
+		// This is necessary when the installer loops through all tables of all databases it found using this connection
+		// See https://github.com/barryvdh/laravel-ide-helper/issues/19
+		$this->link->getDatabasePlatform()->registerDoctrineTypeMapping('enum', 'string');
+		$this->schema = $this->link->getSchemaManager();
 	}
 
 	/******************************
@@ -581,10 +630,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 		//$host = $this->persistentDatabaseConnection ? 'p:' . $this->databaseHost : $this->databaseHost;
 		//$this->setDatabaseHost($this->databaseHost);
 
-		$this->connectionConfig = GeneralUtility::makeInstance('Doctrine\\DBAL\\Configuration');
-		$this->connectionConfig->setSQLLogger(new DebugStack());
-		$this->link = DriverManager::getConnection($this->connectionParams, $this->connectionConfig);
-		$this->logger = $this->link->getConfiguration()->getSQLLogger();
+		$this->initDoctrine();
 
 		// We need to map the enum type to string because Doctrine don't support it native
 		// This is necessary when the installer loops through all tables of all databases it found using this connection
@@ -1954,7 +2000,6 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * @todo The $table parameter seems unused
 	 * @todo This method used "return '\'' . $this->link->real_escape_string($str) . '\'';"
 	 *       for escaping and quoting.
-
 	 */
 	public function fullQuoteStr($str, $table, $allowNull = FALSE) {
 		if ($allowNull && $str === NULL) {
