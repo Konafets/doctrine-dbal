@@ -32,6 +32,7 @@ use Doctrine\DBAL\Query\Expression\ExpressionBuilder;
 use Doctrine\DBAL\Query\QueryBuilder;
 use TYPO3\CMS\Core\Utility\DebugUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\DoctrineDbal\Persistence\Doctrine\Query;
 
 /**
  * Contains the class "DatabaseConnection" containing functions for building SQL queries
@@ -159,13 +160,6 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * @var \Doctrine\DBAL\Schema\AbstractSchemaManager $schema
 	 */
 	protected $schema;
-
-	/**
-	 * The Doctrine QueryBuilder object
-	 *
-	 * @var \Doctrine\DBAL\Query\QueryBuilder $queryBuilder
-	 */
-	protected $queryBuilder;
 
 	/**
 	 * The last executed statement object
@@ -432,26 +426,6 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	}
 
 	/**
-	 * @param \Doctrine\DBAL\Query\QueryBuilder $queryBuilder
-	 */
-	public function setQueryBuilder($queryBuilder) {
-		$this->queryBuilder = $queryBuilder;
-	}
-
-	/**
-	 * @return \Doctrine\DBAL\Query\QueryBuilder
-	 */
-	public function getQueryBuilder() {
-		if (!$this->isConnected()) {
-			$this->connectDB();
-		}
-
-		return $this->link->createQueryBuilder();
-	}
-
-
-
-	/**
 	 * @param \Doctrine\DBAL\Driver\Statement $lastStatement
 	 */
 	public function setLastStatement($lastStatement) {
@@ -512,7 +486,6 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 		$this->connectionConfig->setSQLLogger(new DebugStack());
 		$this->link = DriverManager::getConnection($this->connectionParams, $this->connectionConfig);
 		$this->logger = $this->link->getConfiguration()->getSQLLogger();
-		$this->queryBuilder = $this->link->createQueryBuilder();
 
 		// We need to map the enum type to string because Doctrine don't support it native
 		// This is necessary when the installer loops through all tables of all databases it found using this connection
@@ -717,6 +690,33 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 				);
 			}
 		}
+	}
+
+	/************************************
+	 * Fluent API
+	 *
+	 *
+	 ************************************/
+
+	/**
+	 * Returns a new Doctrine QueryBuilder instance
+	 *
+	 * @return \Doctrine\DBAL\Query\QueryBuilder
+	 */
+	public function query(){
+		return $this->link->createQueryBuilder();
+	}
+
+	/**
+	 * Returns a new Query object
+	 *
+	 * @return Query
+	 */
+	public function createQuery() {
+		if (!$this->isConnected()) {
+			$this->connectDB();
+		}
+		return new Query($this->link);
 	}
 
 	/************************************
@@ -1336,6 +1336,21 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 		} else {
 			throw new \InvalidArgumentException('TYPO3 Fatal Error: "Where" clause argument for DELETE query was not a string in $this->DELETEquery() !', 1270853881);
 		}
+	}
+
+	public function createDeleteQuery($table, array $where, array $types = array()) {
+		$criteria = array();
+
+		foreach (array_keys($where) as $columnName) {
+			//$criteria
+		}
+
+//		$query = $this->queryBuilder
+//					->delete($table, $table)
+//					->where($where)
+//					->setParameters($parameters);
+//		$sql = $query->getSQL();
+//		return $sql;
 	}
 
 	/**
@@ -2448,6 +2463,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 	 * Serialize destructs current connection
 	 *
 	 * @return array All protected properties that should be saved
+	 * @todo Add the missing members here
 	 */
 	public function __sleep() {
 		$this->disconnectIfConnected();
@@ -2465,6 +2481,8 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 			'connectionCompression',
 			'initializeCommandsAfterConnect',
 			'defaultCharset',
+			'logger',
+			'link'
 		);
 	}
 }
