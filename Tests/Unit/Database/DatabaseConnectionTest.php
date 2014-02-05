@@ -28,6 +28,7 @@ namespace TYPO3\DoctrineDbal\Tests\Unit\Database;
  * Testcase for TYPO3\CMS\Core\Database\DatabaseConnection
  *
  * @author Ernesto Baschny <ernst@cron-it.de>
+ * @author Stefano Kowalke <blueduck@gmx.net>
  */
 class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 
@@ -1297,5 +1298,165 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	public function splitGroupOrderLimitStripsLastPartOfQueryIntoArray($whereClause, $expectedResult) {
 		$generatedResult = $this->subject->splitGroupOrderLimit($whereClause);
 		$this->assertSame($expectedResult, $generatedResult);
+	}
+
+	/**
+	 * @test
+	 */
+	public function testDelete() {
+		$query = $this->subject->createQuery();
+		$query->delete($this->testTable, 't');
+		$expectedSql = 'DELETE FROM ' . $this->testTable . ' t';
+		$this->assertSame($expectedSql, $query->getSql());
+	}
+
+	/**
+	 * @test
+	 */
+	public function testDeleteWithoutAlias() {
+		$query = $this->subject->createQuery();
+		$query->delete($this->testTable);
+		$expectedSql = 'DELETE FROM ' . $this->testTable;
+		$this->assertSame($expectedSql, $query->getSql());
+	}
+
+	/**
+	 * @test
+	 */
+	public function testDeleteWithSimpleWhere() {
+		$query = $this->subject->createQuery();
+		$query->delete($this->testTable, 't')->matching(
+			$query->equals('t.' . $this->testTable, 'foo')
+		);
+
+		$expectedSql = 'DELETE FROM ' . $this->testTable . ' t WHERE t.' . $this->testTable . ' = ?';
+		$this->assertSame($expectedSql, $query->getSql());
+	}
+
+	/**
+	 * @test
+	 */
+	public function testDeleteWhereAndLessThan() {
+		$query = $this->subject->createQuery();
+		$query->delete($this->testTable, 't')->matching(
+			$query->lessThan('t.' . $this->testTable, 'foo')
+		);
+
+		$expectedSql = 'DELETE FROM ' . $this->testTable . ' t WHERE t.' . $this->testTable . ' < ?';
+		$this->assertSame($expectedSql, $query->getSql());
+	}
+
+
+	/**
+	 * @test
+	 */
+	public function testDeleteWhereAndLessThanOrEqual() {
+		$query = $this->subject->createQuery();
+		$query->delete($this->testTable, 't')->matching(
+			$query->lessThanOrEqual('t.' . $this->testTable, 'foo')
+		);
+
+		$expectedSql = 'DELETE FROM ' . $this->testTable . ' t WHERE t.' . $this->testTable . ' <= ?';
+		$this->assertSame($expectedSql, $query->getSql());
+	}
+
+	/**
+	 * @test
+	 */
+	public function testDeleteWhereAndGreaterThan() {
+		$query = $this->subject->createQuery();
+		$query->delete($this->testTable, 't')->matching(
+			$query->greaterThan('t.' . $this->testTable, 'foo')
+		);
+
+		$expectedSql = 'DELETE FROM ' . $this->testTable . ' t WHERE t.' . $this->testTable . ' > ?';
+		$this->assertSame($expectedSql, $query->getSql());
+	}
+
+
+	/**
+	 * @test
+	 */
+	public function testDeleteWhereAndGreaterThanOrEqual() {
+		$query = $this->subject->createQuery();
+		$query->delete($this->testTable, 't')->matching(
+			$query->greaterThanOrEqual('t.' . $this->testTable, 'foo')
+		);
+
+		$expectedSql = 'DELETE FROM ' . $this->testTable . ' t WHERE t.' . $this->testTable . ' >= ?';
+		$this->assertSame($expectedSql, $query->getSql());
+	}
+
+	/**
+	 * @test
+	 */
+	public function testDeleteAndWhere() {
+		$query = $this->subject->createQuery();
+		$query->delete($this->testTable)->matching(
+			$query->logicalAnd(
+				$query->lessThan($this->testField, 94839839834),
+				$query->equals($this->testFieldSecond, 'session_name')
+			)
+		);
+
+		$expectedSql = 'DELETE FROM ' . $this->testTable . ' WHERE (' . $this->testField . ' < ?) AND (' . $this->testFieldSecond . ' = ?)';
+		$this->assertSame($expectedSql, $query->getSql());
+	}
+
+	/**
+	 * @test
+	 */
+	public function testDeleteOrWhere() {
+		$query = $this->subject->createQuery();
+		$query->delete($this->testTable)->matching(
+			$query->logicalOr(
+				$query->lessThan($this->testField, 94839839834),
+				$query->equals($this->testFieldSecond, 'session_name')
+			)
+		);
+
+		$expectedSql = 'DELETE FROM ' . $this->testTable . ' WHERE (' . $this->testField . ' < ?) OR (' . $this->testFieldSecond . ' = ?)';
+		$this->assertSame($expectedSql, $query->getSql());
+	}
+
+	/**
+	 * @test
+	 */
+	public function testDeleteWithDynamicWhere() {
+		$query = $this->subject->createQuery();
+		for ($i = 0; $i < 2; $i++) {
+			if ($i === 1) {
+				$query->matching(
+					$query->logicalAnd(
+						$query->lessThanOrEqual($this->testField, $GLOBALS['EXEC_TIME']),
+						$query->greaterThan($this->testField, 0)
+					)
+				);
+
+				$expectedSql = 'DELETE FROM ' . $this->testTable . ' WHERE (' . $this->testField . ' <= ?) AND (' . $this->testField . ' > ?)';
+			} else {
+				$query->matching(
+					$query->lessThan($this->testFieldSecond, time())
+				);
+
+				$expectedSql = 'DELETE FROM ' . $this->testTable . ' WHERE ' . $this->testFieldSecond . ' < ?';
+			}
+
+			$query->delete($this->testTable);
+			$this->assertSame($expectedSql, $query->getSql());
+		}
+	}
+
+	/**
+	 * @test
+	 */
+	public function testDeleteWithIn() {
+		$query = $this->subject->createQuery();
+		$query->delete($this->testTable)->matching(
+			$query->in($this->testField, array(1, 2, 3))
+		);
+
+		$expectedSql = 'DELETE FROM ' . $this->testTable . ' WHERE ' . $this->testField . ' IN (1, 2, 3)';
+		$this->assertSame($expectedSql, $query->getSql());
 	}
 }
