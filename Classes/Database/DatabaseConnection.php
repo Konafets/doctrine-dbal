@@ -32,6 +32,8 @@ use Doctrine\DBAL\Query\Expression\ExpressionBuilder;
 use Doctrine\DBAL\Query\QueryBuilder;
 use TYPO3\CMS\Core\Utility\DebugUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\DoctrineDbal\Persistence\Database\DatabaseConnectionInterface;
+use TYPO3\DoctrineDbal\Persistence\Doctrine\DeleteQuery;
 use TYPO3\DoctrineDbal\Persistence\Doctrine\Query;
 
 /**
@@ -61,7 +63,7 @@ use TYPO3\DoctrineDbal\Persistence\Doctrine\Query;
  *
  * @author Kasper Skårhøj <kasperYYYY@typo3.com>
  */
-class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
+class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection implements DatabaseConnectionInterface {
 
 	/**
 	 * The AND constraint in where clause
@@ -1338,12 +1340,15 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection {
 		}
 	}
 
-	public function createDeleteQuery($table, array $where, array $types = array()) {
-		$criteria = array();
+	/**
+	 * Creates a DELETE query object
+	 *
+	 * @return DeleteQuery
+	 */
+	public function createDeleteQuery() {
+		return GeneralUtility::makeInstance('\\TYPO3\\DoctrineDbal\\Persistence\\Doctrine\\DeleteQuery', $this->link);
+	}
 
-		foreach (array_keys($where) as $columnName) {
-			//$criteria
-		}
 
 //		$query = $this->queryBuilder
 //					->delete($table, $table)
