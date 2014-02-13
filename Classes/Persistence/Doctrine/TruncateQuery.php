@@ -1,6 +1,6 @@
 <?php
 
-namespace TYPO3\DoctrineDbal\Persistence\Database;
+namespace TYPO3\DoctrineDbal\Persistence\Doctrine;
 
 /***************************************************************
  *  Copyright notice
@@ -28,28 +28,60 @@ namespace TYPO3\DoctrineDbal\Persistence\Database;
  *  This copyright notice MUST APPEAR in all copies of the script!
  ***************************************************************/
 
+use Doctrine\DBAL\Query\QueryException;
+use TYPO3\DoctrineDbal\Persistence\Database\TruncateQueryInterface;
+
 /**
- * Interface DatabaseConnectionInterface
+ * Class TruncateQueryTest
  *
  * This code is heavily inspired by the database integration of ezPublish
  * from Benjamin Eberlei.
  *
- * @package TYPO3\DoctrineDbal\Persistence\Database
+ * @package TYPO3\DoctrineDbal\Persistence\Doctrine
  * @author  Benjamin Eberlei <kontakt@beberlei.de>
  * @author  Stefano Kowalke <blueduck@gmx.net>
  */
-interface DatabaseConnectionInterface {
+class TruncateQuery extends AbstractQuery implements TruncateQueryInterface {
 	/**
-	 * Creates a DELETE query object
+	 * Returns the type of the query
 	 *
-	 * @return \TYPO3\DoctrineDbal\Persistence\Database\DeleteQueryInterface
+	 * @return int
 	 */
-	public function createDeleteQuery();
+	public function getType() {
+		return self::TRUNCATE;
+	}
 
 	/**
-	 * Creates a TRUNCATE query object
+	 * The table to truncate
 	 *
-	 * @return \TYPO3\DoctrineDbal\Persistence\Database\TruncateQueryInterface
+	 * @var string
 	 */
-	public function createTruncateQuery();
+	private $table = '';
+
+	/**
+	 * Sets the table name
+	 *
+	 * @param string $table
+	 *
+	 * @return TruncateQueryInterface
+	 */
+	public function truncate($table) {
+		$this->table = $table;
+
+		return $this;
+	}
+
+	/**
+	 * Returns the sql statement of this query
+	 *
+	 * @throws \Doctrine\DBAL\Query\QueryException
+	 * @return string
+	 */
+	public function getSql() {
+		if (($this->table === '') || (is_numeric($this->table))) {
+			throw new QueryException('No table name found in TRUNCATE statement.');
+		}
+
+		return 'TRUNCATE TABLE ' . $this->table;
+	}
 }

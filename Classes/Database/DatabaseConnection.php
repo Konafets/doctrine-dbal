@@ -35,6 +35,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\DoctrineDbal\Persistence\Database\DatabaseConnectionInterface;
 use TYPO3\DoctrineDbal\Persistence\Doctrine\DeleteQuery;
 use TYPO3\DoctrineDbal\Persistence\Doctrine\Query;
+use TYPO3\DoctrineDbal\Persistence\Doctrine\TruncateQuery;
 
 /**
  * Contains the class "DatabaseConnection" containing functions for building SQL queries
@@ -1296,22 +1297,26 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection imp
 	 *
 	 * @param string $table See exec_TRUNCATEquery()
 	 *
-	 * @return string Full SQL query for TRUNCATE TABLE
+	 * @return string|\TYPO3\DoctrineDbal\Persistence\Doctrine\TruncateQuery
 	 */
-	public function createTruncateQuery($table) {
-		foreach ($this->preProcessHookObjects as $hookObject) {
-			/** @var $hookObject PreProcessQueryHookInterface */
-			$hookObject->TRUNCATEquery_preProcessAction($table, $this);
+	public function createTruncateQuery($table = '') {
+		if ($table === '') {
+			return GeneralUtility::makeInstance('\\TYPO3\\DoctrineDbal\\Persistence\\Doctrine\\TruncateQuery', $this->link);
+		} else  {
+			foreach ($this->preProcessHookObjects as $hookObject) {
+				/** @var $hookObject PreProcessQueryHookInterface */
+				$hookObject->TRUNCATEquery_preProcessAction($table, $this);
+			}
+
+			$dbPlatform = $this->link->getDatabasePlatform();
+			$query = $dbPlatform->getTruncateTableSQL($table);
+
+			if ($this->debugOutput || $this->store_lastBuiltQuery) {
+				$this->debug_lastBuiltQuery = $query;
+			}
+
+			return $query;
 		}
-
-		$dbPlatform = $this->link->getDatabasePlatform();
-		$query = $dbPlatform->getTruncateTableSQL($table);
-
-		if ($this->debugOutput || $this->store_lastBuiltQuery) {
-			$this->debug_lastBuiltQuery = $query;
-		}
-
-		return $query;
 	}
 
 	/**

@@ -29,7 +29,7 @@ namespace TYPO3\DoctrineDbal\Persistence\Database;
  ***************************************************************/
 
 /**
- * Interface DatabaseConnectionInterface
+ * Interface TruncateQueryInterface
  *
  * This code is heavily inspired by the database integration of ezPublish
  * from Benjamin Eberlei.
@@ -38,18 +38,13 @@ namespace TYPO3\DoctrineDbal\Persistence\Database;
  * @author  Benjamin Eberlei <kontakt@beberlei.de>
  * @author  Stefano Kowalke <blueduck@gmx.net>
  */
-interface DatabaseConnectionInterface {
+interface TruncateQueryInterface extends QueryInterface {
 	/**
-	 * Creates a DELETE query object
+	 * Sets the table name
 	 *
-	 * @return \TYPO3\DoctrineDbal\Persistence\Database\DeleteQueryInterface
-	 */
-	public function createDeleteQuery();
-
-	/**
-	 * Creates a TRUNCATE query object
+	 * @param string $table
 	 *
-	 * @return \TYPO3\DoctrineDbal\Persistence\Database\TruncateQueryInterface
+	 * @return TruncateQueryInterface
 	 */
-	public function createTruncateQuery();
+	public function truncate($table);
 }
