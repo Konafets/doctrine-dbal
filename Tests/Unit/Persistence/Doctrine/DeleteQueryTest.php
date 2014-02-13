@@ -98,6 +98,24 @@ class DeleteQueryTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 
 	/**
 	 * @test
+	 * @expectedException \Doctrine\DBAL\Query\QueryException
+	 */
+	public function deleteWithoutTableThrowsException() {
+		$query = $this->subject->delete('');
+		$query->getSql();
+	}
+
+	/**
+	 * @test
+	 * @expectedException \Doctrine\DBAL\Query\QueryException
+	 */
+	public function deleteWithIntegerAsTableThrowsException() {
+		$query = $this->subject->delete(0);
+		$query->getSql();
+	}
+
+	/**
+	 * @test
 	 */
 	public function deleteWithSimpleWhere() {
 		$this->subject->delete($this->testTable)
