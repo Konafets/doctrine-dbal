@@ -1,5 +1,5 @@
 <?php
-namespace TYPO3\DoctrineDbal\Tests\Unit\Database;
+namespace TYPO3\DoctrineDbal\Unit\Database;
 
 /***************************************************************
  *  Copyright notice
