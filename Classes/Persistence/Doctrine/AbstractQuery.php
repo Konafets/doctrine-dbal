@@ -29,6 +29,7 @@ namespace TYPO3\DoctrineDbal\Persistence\Doctrine;
  ***************************************************************/
 
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Statement;
 use Doctrine\DBAL\Query\QueryException;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
@@ -64,6 +65,31 @@ abstract class AbstractQuery {
 	public $expr;
 
 	/**
+	 * @var int boundCounter
+	 */
+	private $boundCounter = 0;
+
+	/**
+	 * @var array $boundValues
+	 */
+	private $boundValues = array();
+
+	/**
+	 * @var array $boundValuesType
+	 */
+	private $boundValuesType = array();
+
+	/**
+	 * @var array $boundParameters
+	 */
+	private $boundParameters = array();
+
+	/**
+	 * @var array $boundParametersType
+	 */
+	private $boundParametersType = array();
+
+	/**
 	 * The constructor
 	 *
 	 * @param Connection $connection
@@ -73,6 +99,127 @@ abstract class AbstractQuery {
 		$this->expr = GeneralUtility::makeInstance('\\TYPO3\\DoctrineDbal\\Persistence\\Doctrine\\Expression', $connection);
 	}
 
+
+	/**
+	 * Prepares a Prepared statement for the database
+	 *
+	 * @return \PDOStatement
+	 * @api
+	 */
+	public function prepare() {
+		$statement = $this->connection->prepare($this->getSql());
+
+		$this->doBind($statement);
+
+		return $statement;
+	}
+
+	/**
+	 * Performs binding of variables bound with bindValue and bindParam on the statement $statement.
+	 *
+	 * This method must be called if you have used the bind methods in your query.
+	 *
+	 * @param \Doctrine\DBAL\Statement $statement
+	 *
+	 * @return void
+	 */
+	private function doBind(Statement $statement) {
+		foreach ($this->boundValues as $key => $value) {
+			$statement->bindValue($key, $value, $this->boundValuesType[$key]);
+		}
+
+		foreach ($this->boundParameters as $key => $value) {
+			$statement->bindParam($key, $value, $this->boundParametersType[$key]);
+		}
+	}
+
+	/**
+	 * Binds the value $value to the specified variable name $placeholder.
+	 *
+	 * The method provides a shortcut for PDOStatement::bindValue when using
+	 * Prepared Statements.
+	 *
+	 * The parameter $value specifies the value that you want to bind. If $placeholder is
+	 * not provided bindValue() will automatically create a placeholder according the pattern:
+	 * 'placeholder1', 'placeholder2', ...
+	 *
+	 * For more informations see (@link http://dk1.php.net/manual/en/pdostatement.bindvalue.php}
+	 *
+	 * Example:
+	 * <code><br>
+	 * $query = $GLOBALS['TYPO3_DB']->createSelectQuery();<br>
+	 * $expr = $query->expr;<br><br>
+	 *
+	 * $value = 2;<br>
+	 * $expr->eq('id', $query->bindValue($value));<br>
+	 * $stmt = $query->prepare(); // the value 2 is bound to the query.<br>
+	 * $value = 4;<br>
+	 * $stmt->execute(); // executed with 'id = 2'<br>
+	 * </code>
+	 *
+	 * @param string|int $value
+	 * @param string     $placeholder the name to bind with. The string must start with a colon ':'.
+	 * @param int        $type
+	 *
+	 * @return string The used placeholder name
+	 * @api
+	 */
+	public function bindValue($value, $placeholder = NULL, $type = \PDO::PARAM_STR) {
+		if ($placeholder === NULL) {
+			++$this->boundCounter;
+			$placeholder = ':placeholder' . $this->boundCounter;
+		}
+
+		$this->boundValues[$placeholder] = $value;
+		$this->boundValuesType[$placeholder] = $type;
+
+		return $placeholder;
+	}
+
+
+	/**
+	 * Binds the parameter $param to the specified variable name $placeholder.
+	 *
+	 * This method provides a statement for PDOStatement::bindParam when using
+	 * Prepared Statements.
+	 *
+	 * The parameter $param specifies the variable that will be bind. If $placeholder
+	 * is not provided bindParam() will automacially create a placeholder according the pattern:
+	 * 'placeholder1', 'placeholder2', ...
+	 *
+	 * For more informations see (@link http://dk1.php.net/manual/en/pdostatement.bindparam.php}
+	 *
+	 * Example:
+	 * <code><br>
+	 * $query = $GLOBALS['TYPO3_DB']->createSelectQuery();<br>
+	 * $expr = $query->expr;<br><br>
+	 *
+	 * $value = 2;<br>
+	 * $expr->equals('id', $query->bindParam($value));<br>
+	 * $stmt = $query->prepare(); // the parameter $value is bound to the query<br>
+	 * $value = 42;<br>
+	 * $stmt->execute(); // execute with 'id = 4'<br>
+	 * </code>
+	 *
+	 * @param string|int $param
+	 * @param string     $placeholder
+	 * @param int        $type
+	 *
+	 * @return string The used placeholder name
+	 * @api
+	 */
+	public function bindParam(&$param, $placeholder = NULL, $type = \PDO::PARAM_STR) {
+		if ($placeholder === NULL) {
+			++$this->boundCounter;
+			$placeholder = ':placeholder' . $this->boundCounter;
+		}
+
+		$this->boundParameters[$placeholder] =& $param;
+		$this->boundParametersType[$placeholder] = $type;
+
+		return $placeholder;
+	}
+
 	/**
 	 * Executes this query against a database
 	 *
@@ -80,10 +227,16 @@ abstract class AbstractQuery {
 	 * @api
 	 */
 	public function execute() {
-		if ($this->getType() == self::SELECT) {
-			return $this->connection->executeQuery($this->getSQL());
+		if ((!empty($this->boundParameters)) || (!empty($this->boundValues))) {
+			$stmt = $this->prepare();
+
+			return $stmt->execute();
 		} else {
-			return $this->connection->executeUpdate($this->getSQL());
+			if ($this->getType() == self::SELECT) {
+				return $this->connection->executeQuery($this->getSQL());
+			} else {
+				return $this->connection->executeUpdate($this->getSQL());
+			}
 		}
 	}
 

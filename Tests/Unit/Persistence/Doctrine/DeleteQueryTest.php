@@ -130,6 +130,51 @@ class DeleteQueryTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	/**
 	 * @test
 	 */
+	public function deleteWithSimpleWherePreparedStatementWithCustomPlaceholder() {
+		$this->subject->delete($this->testTable)
+				->where(
+					$this->subject->expr->equals($this->testField, $this->subject->bindValue('Foo', ':Foo'))
+				);
+
+		$expectedSql = 'DELETE FROM ' . $this->testTable . ' WHERE ' . $this->testField . ' = :Foo';
+		$this->assertSame($expectedSql, $this->subject->getSql());
+	}
+
+	/**
+	 * @test
+	 */
+	public function deleteWithSimpleWherePreparedStatementWithAutomaticPlaceholders() {
+		$this->subject->delete($this->testTable)
+				->where(
+					$this->subject->expr->logicalAnd(
+							$this->subject->expr->equals($this->testField, $this->subject->bindValue('Foo')),
+							$this->subject->expr->equals($this->testFieldSecond, $this->subject->bindValue(2))
+					)
+				);
+
+		$expectedSql = 'DELETE FROM ' . $this->testTable . ' WHERE (' . $this->testField . ' = :placeholder1) AND (' . $this->testFieldSecond . ' = :placeholder2)';
+		$this->assertSame($expectedSql, $this->subject->getSql());
+	}
+
+	/**
+	 * @test
+	 */
+	public function deleteWithSimpleWherePreparedStatementWithAutomaticAndCustomPlaceholder() {
+		$this->subject->delete($this->testTable)
+				->where(
+					$this->subject->expr->logicalAnd(
+							$this->subject->expr->equals($this->testField, $this->subject->bindValue('Foo', ':Foo')),
+							$this->subject->expr->equals($this->testFieldSecond, $this->subject->bindValue(2))
+					)
+				);
+
+		$expectedSql = 'DELETE FROM ' . $this->testTable . ' WHERE (' . $this->testField . ' = :Foo) AND (' . $this->testFieldSecond . ' = :placeholder1)';
+		$this->assertSame($expectedSql, $this->subject->getSql());
+	}
+
+	/**
+	 * @test
+	 */
 	public function deleteWhereAndLessThan() {
 		$this->subject->delete($this->testTable)->where(
 			$this->subject->expr->lessThan($this->testField, 'Foo')
@@ -290,6 +335,46 @@ class DeleteQueryTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 
 		$expectedSql = 'DELETE FROM ' . $this->testTable . ' WHERE ' . $this->testTable . ' = :parameter1';
 		$this->assertSame($expectedSql, $this->subject->getSql());
+	}
+
+
+	/**
+	 * @test
+	 */
+	public function deleteWithSimpleWherePreparedStatementExecute() {
+		$GLOBALS['TYPO3_DB']->exec_INSERTquery($this->testTable, array($this->testField => 'Test'));
+		$GLOBALS['TYPO3_DB']->exec_INSERTquery($this->testTable, array($this->testField => 'Foo'));
+		$GLOBALS['TYPO3_DB']->exec_INSERTquery($this->testTable, array($this->testField => 'Bar'));
+
+		$this->subject->delete($this->testTable)
+				->where(
+					$this->subject->expr->equals($this->testField, $this->subject->bindValue('Foo', ':Foo'))
+				);
+
+		$expectedSql = 'DELETE FROM ' . $this->testTable . ' WHERE ' . $this->testField . ' = :Foo';
+		$this->assertSame($expectedSql, $this->subject->getSql());
+
+		$stmt = $this->subject->prepare();
+		$this->assertEquals(1, $stmt->execute());
+	}
+
+	/**
+	 * @test
+	 */
+	public function deleteWithSimpleWherePreparedStatementExecuteOnQuery() {
+		$GLOBALS['TYPO3_DB']->exec_INSERTquery($this->testTable, array($this->testField => 'Test'));
+		$GLOBALS['TYPO3_DB']->exec_INSERTquery($this->testTable, array($this->testField => 'Foo'));
+		$GLOBALS['TYPO3_DB']->exec_INSERTquery($this->testTable, array($this->testField => 'Bar'));
+
+		$this->subject->delete($this->testTable)
+				->where(
+					$this->subject->expr->equals($this->testField, $this->subject->bindValue('Foo', ':Foo'))
+				);
+
+		$expectedSql = 'DELETE FROM ' . $this->testTable . ' WHERE ' . $this->testField . ' = :Foo';
+		$this->assertSame($expectedSql, $this->subject->getSql());
+
+		$this->assertEquals(1, $this->subject->execute());
 	}
 }
 
