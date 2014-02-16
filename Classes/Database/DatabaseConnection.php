@@ -2158,7 +2158,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection imp
 	 */
 	public function cleanIntArray($arr) {
 		foreach ($arr as $k => $v) {
-			$arr[$k] = intval($arr[$k]);
+			$arr[$k] = (int)$arr[$k];
 		}
 
 		return $arr;
