@@ -138,6 +138,14 @@ interface QueryInterface {
 	public function getSql();
 
 	/**
+	 * Returns the affected rows of the query
+	 *
+	 * @return int
+	 * @api
+	 */
+	public function getAffectedRows();
+
+	/**
 	 * Returns the sql statement of this query
 	 *
 	 * @return string

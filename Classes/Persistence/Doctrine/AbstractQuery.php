@@ -90,6 +90,20 @@ abstract class AbstractQuery {
 	private $boundParametersType = array();
 
 	/**
+	 * The last executed statement
+	 *
+	 * @var string
+	 */
+	private $lastStatment = '';
+
+	/**
+	 * The affected rows of the last statement
+	 *
+	 * @var int
+	 */
+	private $affectedRows = -1;
+
+	/**
 	 * The constructor
 	 *
 	 * @param Connection $connection
@@ -98,7 +112,6 @@ abstract class AbstractQuery {
 		$this->connection = $connection;
 		$this->expr = GeneralUtility::makeInstance('\\TYPO3\\DoctrineDbal\\Persistence\\Doctrine\\Expression', $connection);
 	}
-
 
 	/**
 	 * Prepares a Prepared statement for the database
@@ -230,11 +243,22 @@ abstract class AbstractQuery {
 		if ((!empty($this->boundParameters)) || (!empty($this->boundValues))) {
 			$stmt = $this->prepare();
 
-			return $stmt->execute();
+			if ($stmt->execute()) {
+				$this->lastStatment = $this->getSql();
+				$this->affectedRows = $stmt->rowCount();
+
+				return $this->affectedRows;
+			} else {
+				return FALSE;
+			}
 		} else {
 			if ($this->getType() == self::SELECT) {
+				$this->lastStatment = $this->getSql();
+
 				return $this->connection->executeQuery($this->getSQL());
 			} else {
+				$this->lastStatment = $this->getSql();
+
 				return $this->connection->executeUpdate($this->getSQL());
 			}
 		}
@@ -260,6 +284,16 @@ abstract class AbstractQuery {
 		}
 
 		return $constraints;
+	}
+
+	/**
+	 * Returns the affected rows of the query
+	 *
+	 * @return int
+	 * @api
+	 */
+	public function getAffectedRows() {
+		return $this->affectedRows;
 	}
 
 	/**
