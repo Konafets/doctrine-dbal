@@ -1348,9 +1348,12 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection imp
 	/**
 	 * Creates a DELETE query object
 	 *
-	 * @return DeleteQuery
+	 * @return \TYPO3\DoctrineDbal\Persistence\Doctrine\DeleteQuery
 	 */
 	public function createDeleteQuery() {
+		if (!$this->isConnected()) {
+			$this->connectDB();
+		}
 		return GeneralUtility::makeInstance('\\TYPO3\\DoctrineDbal\\Persistence\\Doctrine\\DeleteQuery', $this->link);
 	}
 
