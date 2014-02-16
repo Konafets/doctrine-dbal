@@ -1090,6 +1090,16 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection imp
 			$this->connectDB();
 		}
 
+		if (empty($types)) {
+			foreach ($where as $key => $value) {
+				if (is_int($value)) {
+					$types[$key] = \PDO::PARAM_INT;
+				} else if (is_string($value)) {
+					$types[$key] = \PDO::PARAM_STR;
+				}
+			}
+		}
+
 		$this->affectedRows = $this->link->delete($table, $where, $types);
 
 		if ($this->debugOutput) {
