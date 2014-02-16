@@ -52,4 +52,11 @@ interface DatabaseConnectionInterface {
 	 * @return \TYPO3\DoctrineDbal\Persistence\Database\TruncateQueryInterface
 	 */
 	public function createTruncateQuery();
+
+	/**
+	 * Returns the expressions instance
+	 *
+	 * @return \TYPO3\DoctrineDbal\Persistence\Database\ExpressionInterface
+	 */
+	public function expr();
 }

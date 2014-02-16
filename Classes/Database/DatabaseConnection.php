@@ -1364,6 +1364,16 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection imp
 //					->setParameters($parameters);
 //		$sql = $query->getSQL();
 //		return $sql;
+	/**
+	 * Returns the expressions instance
+	 *
+	 * @return \TYPO3\DoctrineDbal\Persistence\Database\ExpressionInterface
+	 */
+	public function expr() {
+		if (!$this->isConnected()) {
+			$this->connectDB();
+		}
+		return GeneralUtility::makeInstance('\\TYPO3\\DoctrineDbal\\Persistence\\Doctrine\\Expression', $this->link);
 	}
 
 	/**
