@@ -193,7 +193,7 @@ class Expression implements ExpressionInterface {
 	 * @api
 	 */
 	public function not($constraint) {
-		// TODO: Implement not() method.
+		return 'NOT (' . $constraint . ')';
 	}
 
 	/**
@@ -218,7 +218,7 @@ class Expression implements ExpressionInterface {
 	 * @api
 	 */
 	public function equals($x, $y) {
-		return $this->connection->createQueryBuilder()->expr()->eq($x, $y);
+		return $x . ' = ' . $y;
 	}
 
 	/**
@@ -243,7 +243,7 @@ class Expression implements ExpressionInterface {
 	 * @api
 	 */
 	public function notEquals($x, $y) {
-		return $this->connection->createQueryBuilder()->expr()->neq($x, $y);
+		return $x . ' <> ' . $y;
 	}
 
 	/**
@@ -268,7 +268,7 @@ class Expression implements ExpressionInterface {
 	 * @api
 	 */
 	public function lessThan($x, $y) {
-		return $this->connection->createQueryBuilder()->expr()->lt($x, $y);
+		return $x . ' < ' . $y;
 	}
 
 	/**
@@ -293,7 +293,7 @@ class Expression implements ExpressionInterface {
 	 * @api
 	 */
 	public function lessThanOrEquals($x, $y) {
-		return $this->connection->createQueryBuilder()->expr()->lte($x, $y);
+		return $x . ' <= ' . $y;
 	}
 
 	/**
@@ -318,7 +318,7 @@ class Expression implements ExpressionInterface {
 	 * @api
 	 */
 	public function greaterThan($x, $y) {
-		return $this->connection->createQueryBuilder()->expr()->gt($x, $y);
+		return $x . ' > ' . $y;
 	}
 
 	/**
@@ -343,7 +343,7 @@ class Expression implements ExpressionInterface {
 	 * @api
 	 */
 	public function greaterThanOrEquals($x, $y) {
-		return $this->connection->createQueryBuilder()->expr()->gte($x, $y);
+		return $x . ' >= ' . $y;
 	}
 
 	/**
@@ -368,7 +368,7 @@ class Expression implements ExpressionInterface {
 	 * @api
 	 */
 	public function like($column, $pattern) {
-		return $this->connection->createQueryBuilder()->expr()->like($column, $pattern);
+		return $column . ' LIKE ' . $pattern;
 	}
 
 	/**

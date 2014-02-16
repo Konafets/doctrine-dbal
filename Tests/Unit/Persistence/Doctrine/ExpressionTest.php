@@ -60,23 +60,29 @@ class ExpressionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	/**
 	 * @test
 	 */
-	public function andConstraintTest() {
-		$eq = $this->subject->equals('pages', 3);
-		$lt = $this->subject->greaterThan('pages', 0);
-		$and = $this->subject->logicalAnd($eq, $lt);
+	public function andConstraintWithSingleExpression() {
+		$and = $this->subject->logicalAnd('pages = 3');
+		$this->assertEquals('pages = 3', $and);
 
-		$expectedSql = '(pages = 3) AND (pages > 0)';
-		$this->assertEquals($expectedSql, $and);
+		$eq = $this->subject->equals('pages', 3);
+		$and = $this->subject->logicalAnd($eq);
+
+		$this->assertEquals('pages = 3', $and);
 	}
 
 	/**
 	 * @test
 	 */
-	public function andConstraintWithSingleExpression() {
-		$eq = $this->subject->equals('pages', 3);
-		$and = $this->subject->logicalAnd($eq);
+	public function andConstraintTestWithMultipleExpressions() {
+		$and = $this->subject->logicalAnd('pages = 3', 'pages > 0');
+		$expectedSql = '(pages = 3) AND (pages > 0)';
+		$this->assertEquals($expectedSql, $and);
 
-		$expectedSql = 'pages = 3';
+		$eq = $this->subject->equals('pages', 3);
+		$lt = $this->subject->greaterThan('pages', 0);
+		$and = $this->subject->logicalAnd($eq, $lt);
+
+		$expectedSql = '(pages = 3) AND (pages > 0)';
 		$this->assertEquals($expectedSql, $and);
 	}
 
@@ -91,7 +97,24 @@ class ExpressionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	/**
 	 * @test
 	 */
-	public function orConstraintTest() {
+	public function orConstraintWithSingleExpression() {
+		$or = $this->subject->logicalOr('pages > 0');
+		$this->assertEquals('pages > 0', $or);
+
+		$gt = $this->subject->greaterThan('pages', 0);
+		$or = $this->subject->logicalOr($gt);
+		$this->assertEquals('pages > 0', $or);
+	}
+
+
+	/**
+	 * @test
+	 */
+	public function orConstraintTestWithMultipleExpressions() {
+		$or = $this->subject->logicalOr('pages = 3', 'pages > 0');
+		$expectedSql = '(pages = 3) OR (pages > 0)';
+		$this->assertEquals($expectedSql, $or);
+
 		$eq = $this->subject->equals('pages', 3);
 		$gt = $this->subject->greaterThan('pages', 0);
 		$or = $this->subject->logicalOr($eq, $gt);
@@ -100,16 +123,6 @@ class ExpressionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 		$this->assertEquals($expectedSql, $or);
 	}
 
-	/**
-	 * @test
-	 */
-	public function orConstraintWithSingleExpression() {
-		$gt = $this->subject->greaterThan('pages', 0);
-		$or = $this->subject->logicalOr($gt);
-
-		$expectedSql = 'pages > 0';
-		$this->assertEquals($expectedSql, $or);
-	}
 
 	/**
 	 * @test
