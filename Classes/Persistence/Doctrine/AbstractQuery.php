@@ -94,7 +94,7 @@ abstract class AbstractQuery {
 	 *
 	 * @var string
 	 */
-	private $lastStatment = '';
+	private $lastStatement = '';
 
 	/**
 	 * The affected rows of the last statement
@@ -244,7 +244,7 @@ abstract class AbstractQuery {
 			$stmt = $this->prepare();
 
 			if ($stmt->execute()) {
-				$this->lastStatment = $this->getSql();
+				$this->lastStatement = $this->getSql();
 				$this->affectedRows = $stmt->rowCount();
 
 				return $this->affectedRows;
@@ -253,11 +253,11 @@ abstract class AbstractQuery {
 			}
 		} else {
 			if ($this->getType() == self::SELECT) {
-				$this->lastStatment = $this->getSql();
+				$this->lastStatement = $this->getSql();
 
 				return $this->connection->executeQuery($this->getSQL());
 			} else {
-				$this->lastStatment = $this->getSql();
+				$this->lastStatement = $this->getSql();
 
 				return $this->connection->executeUpdate($this->getSQL());
 			}
