@@ -34,6 +34,7 @@ use TYPO3\CMS\Core\Utility\DebugUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\DoctrineDbal\Persistence\Database\DatabaseConnectionInterface;
 use TYPO3\DoctrineDbal\Persistence\Doctrine\DeleteQuery;
+use TYPO3\DoctrineDbal\Persistence\Doctrine\InsertQuery;
 use TYPO3\DoctrineDbal\Persistence\Doctrine\Query;
 use TYPO3\DoctrineDbal\Persistence\Doctrine\TruncateQuery;
 
@@ -409,7 +410,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection imp
 	}
 
 	/**
-	 * Set current database handle, usually \mysqli
+	 * Set current database handle
 	 *
 	 * @param \Doctrine\DBAL\Connection $handle
 	 *
@@ -762,6 +763,43 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection imp
 		}
 
 		return $stmt;
+	}
+
+	/**
+	 * Executes a INSERT SQL-statement for $table where $where-clause
+	 *
+	 * @param string $table Database table name
+	 * @param array  $where The deletion criteria. An associative array containing column-value pairs eg. array('uid' => 1).
+	 * @param array  $types The types of identifiers.
+	 *
+	 * @return integer The affected rows
+	 */
+	public function executeInsertQuery($table, array $where, array $types = array()) {
+		if (!$this->isConnected) {
+			$this->connectDB();
+		}
+
+		if (empty($types)) {
+			foreach ($where as $key => $value) {
+				if (is_int($value)) {
+					$types[$key] = \PDO::PARAM_INT;
+				} else if (is_string($value)) {
+					$types[$key] = \PDO::PARAM_STR;
+				}
+			}
+		}
+
+		$this->affectedRows = $this->link->insert($table, $where, $types);
+
+		if ($this->debugOutput) {
+			$this->debug('executeInsertQuery');
+		}
+		foreach ($this->postProcessHookObjects as $hookObject) {
+			/** @var $hookObject PostProcessQueryHookInterface */
+			$hookObject->exec_INSERTquery_postProcessAction($table, $where, FALSE, $this);
+		}
+
+		return $this->affectedRows;
 	}
 
 	/**
@@ -1365,6 +1403,19 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection imp
 			$this->connectDB();
 		}
 		return GeneralUtility::makeInstance('\\TYPO3\\DoctrineDbal\\Persistence\\Doctrine\\DeleteQuery', $this->link);
+	}
+
+
+	/**
+	 * Creates an INSERT query object
+	 *
+	 * @return \TYPO3\DoctrineDbal\Persistence\Database\InsertQueryInterface|InsertQuery
+	 */
+	public function createInsertQuery() {
+		if (!$this->isConnected()) {
+			$this->connectDB();
+		}
+		return GeneralUtility::makeInstance('\\TYPO3\\DoctrineDbal\\Persistence\\Doctrine\\InsertQuery', $this->link);
 	}
 
 
@@ -2490,6 +2541,65 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection imp
 		}
 
 		return FALSE;
+	}
+
+	/**
+	 * Returns a qualified identifier for $columnName in $tableName
+	 *
+	 * Example:
+	 * <code><br>
+	 * // if no $tablename is given it returns: `column`<br>
+	 * $GLOBALS['TYPO3_DB']->quoteTable('column');<br><br>
+	 *
+	 * // if $tablename is given it returns: `pages`.`column`<br>
+	 * $GLOBALS['TYPO3_DB']->quoteTable('column', 'pages');<br>
+	 * </code>
+	 *
+	 * @param string $columnName
+	 * @param string $tableName
+	 *
+	 * @return string
+	 * @api
+	 */
+	public function quoteColumn($columnName, $tableName = NULL) {
+		return ($tableName ? $this->quoteTable($tableName) . '.' : '') .
+				$this->quoteIdentifier($columnName);
+	}
+
+	/**
+	 * Returns a qualified identifier for $tablename
+	 *
+	 * Example:
+	 * <code><br>
+	 * // returns: `pages`<br>
+	 * $GLOBALS['TYPO3_DB']->quoteTable('pages');<br>
+	 * </code>
+	 *
+	 * @param string $tableName
+	 *
+	 * @return string
+	 * @api
+	 */
+	public function quoteTable($tableName) {
+		return $this->quoteIdentifier($tableName);
+	}
+
+	/**
+	 * Custom quote identifer method
+	 *
+	 * Example:
+	 * <code><br>
+	 * // returns `column`<br>
+	 * $GLOBALS['TYPO3_DB']->quoteIdentifier('column');<br>
+	 * </code>
+	 *
+	 * @param string $identifier
+	 *
+	 * @return string
+	 * @api
+	 */
+	public function quoteIdentifier($identifier) {
+		return '`' . $identifier . '`';
 	}
 
 	/**

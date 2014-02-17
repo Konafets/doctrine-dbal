@@ -1299,4 +1299,44 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 		$generatedResult = $this->subject->splitGroupOrderLimit($whereClause);
 		$this->assertSame($expectedResult, $generatedResult);
 	}
+	/**
+	 * @test
+	 */
+	public function executeInsertQueryReturnsInsertRows() {
+		$fields = array(
+				$this->testField => 'Foo',
+				$this->testFieldSecond => 'Bar'
+			);
+
+		$result = $this->subject->executeInsertQuery($this->testTable, $fields);
+		$this->assertSame(1, $result);
+	}
+
+	/**
+	 * @test
+	 */
+	public function quoteColumnWithoutTableName() {
+		$this->assertEquals('`column`', $this->subject->quoteColumn('column'));
+	}
+
+	/**
+	 * @test
+	 */
+	public function quoteColumnWithTableName() {
+		$this->assertEquals('`pages`.`column`', $this->subject->quoteColumn('column', 'pages'));
+	}
+
+	/**
+	 * @test
+	 */
+	public function quoteTable() {
+		$this->assertEquals('`pages`', $this->subject->quoteTable('pages'));
+	}
+
+	/**
+	 * @test
+	 */
+	public function quoteIdentifier(){
+		$this->assertEquals('`pages`', $this->subject->quoteIdentifier('pages'));
+	}
 }

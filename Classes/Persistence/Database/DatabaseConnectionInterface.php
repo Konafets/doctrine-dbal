@@ -54,9 +54,80 @@ interface DatabaseConnectionInterface {
 	public function createTruncateQuery();
 
 	/**
+	/**
+	 * Creates an INSERT query object
+	 *
+	 * @return \TYPO3\DoctrineDbal\Persistence\Database\InsertQueryInterface
+	 * @api
+	 */
+	public function createInsertQuery();
+
 	 * Returns the expressions instance
 	 *
 	 * @return \TYPO3\DoctrineDbal\Persistence\Database\ExpressionInterface
 	 */
 	public function expr();
+
+	/**
+	 * Escaping and quoting values for SQL statements.
+	 *
+	 * @param string  $string    Input string
+	 * @param boolean $allowNull Whether to allow NULL values
+	 *
+	 * @return string Output string; Wrapped in single quotes and quotes in the string (" / ') and \ will be backslashed (or otherwise based on DBAL handler)
+	 * @api
+	 */
+	public function quote($string, $allowNull = FALSE);
+
+	/**
+	 * Returns a qualified identifier for $columnName in $tableName
+	 *
+	 * Example:
+	 * <code><br>
+	 * // if no $tablename is given it returns: `column`<br>
+	 * $GLOBALS['TYPO3_DB']->quoteTable('column');<br><br>
+	 *
+	 * // if $tablename is given it returns: `pages`.`column`<br>
+	 * $GLOBALS['TYPO3_DB']->quoteTable('column', 'pages');<br>
+	 * </code>
+	 *
+	 * @param string $columnName
+	 * @param string $tableName
+	 *
+	 * @return string
+	 * @api
+	 */
+	public function quoteColumn($columnName, $tableName = NULL);
+
+	/**
+	 * Returns a qualified identifier for $tablename
+	 *
+	 * Example:
+	 * <code><br>
+	 * // returns: `pages`<br>
+	 * $GLOBALS['TYPO3_DB']->quoteTable('pages');<br>
+	 * </code>
+	 *
+	 * @param string $tableName
+	 *
+	 * @return string
+	 * @api
+	 */
+	public function quoteTable($tableName);
+
+	/**
+	 * Custom quote identifer method
+	 *
+	 * Example:
+	 * <code><br>
+	 * // returns `column`<br>
+	 * $GLOBALS['TYPO3_DB']->quoteIdentifier('column');<br>
+	 * </code>
+	 *
+	 * @param string $identifier
+	 *
+	 * @return string
+	 * @api
+	 */
+	public function quoteIdentifier($identifier);
 }

@@ -51,6 +51,7 @@ abstract class AbstractQuery {
 	const DELETE = 1;
 	const UPDATE = 2;
 	const TRUNCATE = 3;
+	const INSERT = 4;
 
 	/**
 	 * The connection to Database
