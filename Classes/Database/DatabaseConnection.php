@@ -1455,7 +1455,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection imp
 	 */
 	public function listQuery($field, $value, $table) {
 		$value = (string) $value;
-		if (strpos(',', $value) !== FALSE) {
+		if (strpos($value, ',') !== FALSE) {
 			throw new \InvalidArgumentException('$value must not contain a comma (,) in $this->listQuery() !', 1294585862);
 		}
 		$pattern = $this->quoteStr($value, $table);
