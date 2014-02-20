@@ -43,6 +43,7 @@ interface DatabaseConnectionInterface {
 	 * Creates a DELETE query object
 	 *
 	 * @return \TYPO3\DoctrineDbal\Persistence\Database\DeleteQueryInterface
+	 * @api
 	 */
 	public function createDeleteQuery();
 
@@ -50,6 +51,7 @@ interface DatabaseConnectionInterface {
 	 * Creates a TRUNCATE query object
 	 *
 	 * @return \TYPO3\DoctrineDbal\Persistence\Database\TruncateQueryInterface
+	 * @api
 	 */
 	public function createTruncateQuery();
 
@@ -65,6 +67,7 @@ interface DatabaseConnectionInterface {
 	 * Returns the expressions instance
 	 *
 	 * @return \TYPO3\DoctrineDbal\Persistence\Database\ExpressionInterface
+	 * @api
 	 */
 	public function expr();
 

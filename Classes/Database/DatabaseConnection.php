@@ -1069,7 +1069,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection imp
 	 *
 	 * @return integer The affected rows
 	 */
-		public function executeTruncateQuery($table) {
+	public function executeTruncateQuery($table) {
 		if (!$this->isConnected) {
 			$this->connectDB();
 		}
@@ -1402,6 +1402,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection imp
 		if (!$this->isConnected()) {
 			$this->connectDB();
 		}
+
 		return GeneralUtility::makeInstance('\\TYPO3\\DoctrineDbal\\Persistence\\Doctrine\\DeleteQuery', $this->link);
 	}
 
@@ -1434,6 +1435,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection imp
 		if (!$this->isConnected()) {
 			$this->connectDB();
 		}
+
 		return GeneralUtility::makeInstance('\\TYPO3\\DoctrineDbal\\Persistence\\Doctrine\\Expression', $this->link);
 	}
 
