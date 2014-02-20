@@ -397,4 +397,32 @@ class DeleteQueryTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 		$expectedSql = 'DELETE FROM tx_linkvalidator_link WHERE (record_pid IN (1, 2, 3, 4)) OR (record_uid IN (1, 2, 3, 4)) AND table_name LIKE pages AND link_type IN (5, 6, 7)';
 		$this->assertSame($expectedSql, $query->getSql());
 	}
+
+	/**
+	 * @test
+	 */
+	public function deleteComplexAndOrQuery() {
+		$query = $this->subject;
+		$expr = $query->expr;
+
+		$query->delete('tx_linkvalidator_link')->where(
+			$expr->logicalOr(
+				$expr->logicalAnd(
+						$expr->equals('extension_key', 'a1_teasermenu'),
+						$expr->equals('integer_version', 1000)
+				),
+				$expr->logicalAnd(
+						$expr->equals('extension_key', 'a1_ttnews'),
+						$expr->equals('integer_version', 4000)
+				),
+				$expr->logicalAnd(
+						$expr->equals('extension_key', 'a1_foo'),
+						$expr->equals('integer_version', 3000)
+				)
+			)
+		);
+
+		$expectedSql = 'DELETE FROM tx_linkvalidator_link WHERE ((extension_key = a1_teasermenu) AND (integer_version = 1000)) OR ((extension_key = a1_ttnews) AND (integer_version = 4000)) OR ((extension_key = a1_foo) AND (integer_version = 3000))';
+		$this->assertSame($expectedSql, $query->getSql());
+	}
 }
