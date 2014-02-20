@@ -88,14 +88,6 @@ class ExpressionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 
 	/**
 	 * @test
-	 * @expectedException \Doctrine\DBAL\Query\QueryException
-	 */
-	public function andConstraintWithOutExpressionThrowsException() {
-		$this->subject->logicalAnd();
-	}
-
-	/**
-	 * @test
 	 */
 	public function orConstraintWithSingleExpression() {
 		$or = $this->subject->logicalOr('pages > 0');
@@ -121,15 +113,6 @@ class ExpressionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 
 		$expectedSql = '(pages = 3) OR (pages > 0)';
 		$this->assertEquals($expectedSql, $or);
-	}
-
-
-	/**
-	 * @test
-	 * @expectedException \Doctrine\DBAL\Query\QueryException
-	 */
-	public function orConstraintWithOutExpressionThrowsException() {
-		$or = $this->subject->logicalOr();
 	}
 
 	/**
@@ -385,5 +368,37 @@ class ExpressionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 */
 	public function upper() {
 		$this->assertEquals('UPPER(LowerCasedTestString)', $this->subject->upper('LowerCasedTestString'));
+	}
+
+	/**
+	 * @test
+	 */
+	public function differentWeightOfTheAndComparisionOwnApi() {
+		$expr = $this->subject;
+		$or = $expr->logicalOr(
+				$expr->logicalAnd($expr->equals('extension_key', 'a1_teasermenu'), $expr->equals('integer_version', 2000)),
+				$expr->logicalAnd($expr->equals('extension_key', 'tt_news'), $expr->equals('integer_version', 4500))
+		);
+
+		$expectedSql = '((extension_key = a1_teasermenu) AND (integer_version = 2000)) OR ((extension_key = tt_news) AND (integer_version = 4500))';
+		$this->assertEquals($expectedSql, (string)$or);
+	}
+
+	/**
+	 * @test
+	 */
+	public function findInSet() {
+		$sql = $this->subject->findInSet('54,53,23,42', 'treelist');
+		$expectedSql = 'FIND_IN_SET(\'treelist\',\'54,53,23,42\')';
+
+		$this->assertEquals($expectedSql, $sql);
+	}
+
+	/**
+	 * @test
+	 * @expectedException \Doctrine\DBAL\Query\QueryException
+	 */
+	public function findInListThrowsExceptionIfSecondParameterContainsComma() {
+		$this->subject->findInSet('54,53,23,42', 'treelist,');
 	}
 }

@@ -60,10 +60,12 @@ interface ExpressionInterface {
 	 *                    );<br>
 	 * </code><br>
 	 *
+	 * @param mixed $constraint
+	 *
 	 * @return string
 	 * @api
 	 */
-	public function logicalAnd();
+	public function logicalAnd($constraint);
 
 	/**
 	 * Returns a logical OR constraint by combining the given parameters
@@ -86,10 +88,12 @@ interface ExpressionInterface {
 	 *                    ');<br>
 	 * </code><br>
 	 *
+	 * @param $constraint
+	 *
 	 * @return string
 	 * @api
 	 */
-	public function logicalOr();
+	public function logicalOr($constraint);
 
 	/**
 	 * Performs a logical negation of the given constraint
@@ -374,4 +378,21 @@ interface ExpressionInterface {
 	 * @api
 	 */
 	public function upper($value);
+
+	/**
+	 * Returns a WHERE clause that can find a value ($value) in a list field ($field)
+	 * For instance a record in the database might contain a list of numbers,
+	 * "34,234,5" (with no spaces between). This query would be able to select that
+	 * record based on the value "34", "234" or "5" regardless of their position in
+	 * the list (left, middle or right).
+	 * The value must not contain a comma (,)
+	 * Is nice to look up list-relations to records or files in TYPO3 database tables.
+	 *
+	 * @param string $field Field name
+	 * @param string $value Value to find in list
+	 *
+	 * @return string WHERE clause for a query
+	 * @throws \InvalidArgumentException
+	 */
+	public function findInSet($field, $value);
 }

@@ -49,14 +49,19 @@ class Expression implements ExpressionInterface {
 	 *
 	 * @var \Doctrine\DBAL\Connection $connection
 	 */
-	private $connection = NULL;
+	private $connection;
 
 	/**
 	 * The platform abstraction
 	 *
 	 * @var \Doctrine\DBAL\Platforms\AbstractPlatform
 	 */
-	private $platform = NULL;
+	private $platform;
+
+	/**
+	 * @var \Doctrine\DBAL\Query\Expression\ExpressionBuilder
+	 */
+	private $expr;
 
 	/**
 	 * The constructor
@@ -65,6 +70,7 @@ class Expression implements ExpressionInterface {
 	 */
 	public function __construct(Connection $connection) {
 		$this->connection = $connection;
+		$this->expr = $this->connection->createQueryBuilder()->expr();
 		$this->platform = $this->connection->getDatabasePlatform();
 	}
 
@@ -76,7 +82,7 @@ class Expression implements ExpressionInterface {
 	 *
 	 * Example:
 	 * <code><br>
-	 * // SELECT * FROM pages WHERE pid = 4 AND pid = 5<br><br>
+	 * // SELECT * FROM pages WHERE (pid = 4) AND (pid = 5)<br><br>
 	 *
 	 * $query = $GLOBALS['TYPO3_DB']->getSelectQuery();<br>
 	 * $expr = $query->expr;<br>
@@ -89,13 +95,19 @@ class Expression implements ExpressionInterface {
 	 *                    );<br>
 	 * </code><br>
 	 *
+	 * @param mixed $constraint
+	 *
 	 * @return string
 	 * @api
 	 */
-	public function logicalAnd() {
-		$constraints = func_get_args();
+	public function logicalAnd($constraint) {
+		if (is_array($constraint)) {
+			$constraints = $constraint;
+		} else {
+			$constraints = func_get_args();
+		}
 
-		return $this->combine($constraints, ' AND ');
+		return call_user_func_array(array($this->expr, 'andX'), $constraints);
 	}
 
 	/**
@@ -106,7 +118,7 @@ class Expression implements ExpressionInterface {
 	 *
 	 * Example:
 	 * <code><br>
-	 * // SELECT * FROM pages WHERE pid = 4 OR pid = 5<br><br>
+	 * // SELECT * FROM pages WHERE (pid = 4) OR (pid = 5)<br><br>
 	 *
 	 * $query = $GLOBALS['TYPO3_DB']->getSelectQuery();<br>
 	 * $expr = $query->expr;<br>
@@ -119,40 +131,19 @@ class Expression implements ExpressionInterface {
 	 *                    ');<br>
 	 * </code><br>
 	 *
+	 * @param $constraint
+	 *
 	 * @return string
 	 * @api
 	 */
-	public function logicalOr() {
-		$constraints = func_get_args();
-
-		return $this->combine($constraints, ' OR ');
-	}
-
-	/**
-	 * Combine an array of expressions by OR/AND.
-	 *
-	 * @param array  $constraints
-	 * @param string $by
-	 *
-	 * @throws \Doctrine\DBAL\Query\QueryException
-	 * @return string
-	 */
-	private function combine(array $constraints, $by) {
-		$constraints = $this->flatten($constraints);
-
-		$constraintCount = count($constraints);
-
-		if ($constraintCount < 1) {
-			throw new QueryException(
-				'The "' . $by . '" expression expect at least 1 argument but none given.'
-			);
+	public function logicalOr($constraint) {
+		if (is_array($constraint)) {
+			$constraints = $constraint;
+		} else {
+			$constraints = func_get_args();
 		}
 
-		if ($constraintCount === 1) {
-			return $constraints[0];
-		}
-
-		return '(' . join(')' . $by . '(', $constraints) . ')';
+		return call_user_func_array(array($this->expr, 'orX'), $constraints);
 	}
 
 	/**
@@ -218,7 +209,7 @@ class Expression implements ExpressionInterface {
 	 * @api
 	 */
 	public function equals($x, $y) {
-		return $x . ' = ' . $y;
+		return $this->expr->eq($x, $y);
 	}
 
 	/**
@@ -243,7 +234,7 @@ class Expression implements ExpressionInterface {
 	 * @api
 	 */
 	public function notEquals($x, $y) {
-		return $x . ' <> ' . $y;
+		return $this->expr->neq($x, $y);
 	}
 
 	/**
@@ -268,7 +259,7 @@ class Expression implements ExpressionInterface {
 	 * @api
 	 */
 	public function lessThan($x, $y) {
-		return $x . ' < ' . $y;
+		return $this->expr->lt($x, $y);
 	}
 
 	/**
@@ -293,7 +284,7 @@ class Expression implements ExpressionInterface {
 	 * @api
 	 */
 	public function lessThanOrEquals($x, $y) {
-		return $x . ' <= ' . $y;
+		return $this->expr->lte($x, $y);
 	}
 
 	/**
@@ -318,7 +309,7 @@ class Expression implements ExpressionInterface {
 	 * @api
 	 */
 	public function greaterThan($x, $y) {
-		return $x . ' > ' . $y;
+		return $this->expr->gt($x, $y);
 	}
 
 	/**
@@ -343,7 +334,7 @@ class Expression implements ExpressionInterface {
 	 * @api
 	 */
 	public function greaterThanOrEquals($x, $y) {
-		return $x . ' >= ' . $y;
+		return $this->expr->gte($x, $y);
 	}
 
 	/**
@@ -368,7 +359,7 @@ class Expression implements ExpressionInterface {
 	 * @api
 	 */
 	public function like($column, $pattern) {
-		return $column . ' LIKE ' . $pattern;
+		return $this->expr->like($column, $pattern);
 	}
 
 	/**
@@ -393,7 +384,7 @@ class Expression implements ExpressionInterface {
 	 * @api
 	 */
 	public function in($column, $values) {
-		return $this->connection->createQueryBuilder()->expr()->in($column, $values);
+		return $this->expr->in($column, $values);
 	}
 
 	/**
@@ -418,7 +409,7 @@ class Expression implements ExpressionInterface {
 	 * @api
 	 */
 	public function notIn($column, $values) {
-		return $this->connection->createQueryBuilder()->expr()->notIn($column, $values);
+		return $this->expr->notIn($column, $values);
 	}
 
 	/**
@@ -466,17 +457,27 @@ class Expression implements ExpressionInterface {
 	}
 
 	/**
-	 * Flattens a multi-dimensional array into a single one
+	 * Returns a WHERE clause that can find a value ($value) in a list field ($field)
+	 * For instance a record in the database might contain a list of numbers,
+	 * "34,234,5" (with no spaces between). This query would be able to select that
+	 * record based on the value "34", "234" or "5" regardless of their position in
+	 * the list (left, middle or right).
+	 * The value must not contain a comma (,)
+	 * Is nice to look up list-relations to records or files in TYPO3 database tables.
 	 *
-	 * @param array $array The array to flatten
+	 * @param string $field Field name
+	 * @param string $value Value to find in list
 	 *
-	 * @return array
+	 * @throws \Doctrine\DBAL\Query\QueryException
+	 * @return string WHERE clause for a query
 	 */
-	private function flatten(array $array) {
-		$result = array();
+	public function findInSet($field, $value) {
+		$value = (string)$value;
 
-		array_walk_recursive($array, function($a) use (&$result) {$result[] = $a; });
+		if (strpos($value, ',') !== FALSE) {
+			throw new QueryException('$value must not contain a comma (,) in $this->findInSet($field, $value) !', 1392849386);
+		}
 
-		return $result;
+		return 'FIND_IN_SET(' . $GLOBALS['TYPO3_DB']->quote($value) . ',' . $GLOBALS['TYPO3_DB']->quote($field) . ')';
 	}
 }
