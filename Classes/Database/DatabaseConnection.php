@@ -1756,7 +1756,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection imp
 	 */
 	// TODO Write a test to prove that this method returns an integer
 	public function sql_insert_id() {
-		return (integer) $this->link->lastInsertId();
+		return (int)$this->link->lastInsertId();
 	}
 
 	/**
