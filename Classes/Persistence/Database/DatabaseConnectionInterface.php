@@ -40,6 +40,314 @@ namespace TYPO3\DoctrineDbal\Persistence\Database;
  */
 interface DatabaseConnectionInterface {
 	/**
+	 * Returns the name of the database system
+	 *
+	 * @return string
+	 * @api
+	 */
+	public function getName();
+
+	/**
+	 * Set database username
+	 *
+	 * @param string $username
+	 *
+	 * @return $this
+	 * @api
+	 */
+	public function setDatabaseUsername($username);
+
+	/**
+	 * Returns the database username
+	 *
+	 * @return string
+	 * @api
+	 */
+	public function getDatabaseUsername();
+
+	/**
+	 * Set database password
+	 *
+	 * @param string $password
+	 *
+	 * @return $this
+	 * @api
+	 */
+	public function setDatabasePassword($password);
+
+	/**
+	 * Returns database password
+	 *
+	 * @return string
+	 * @api
+	 */
+	public function getDatabasePassword();
+
+	/**
+	 * Set database name
+	 *
+	 * @param string $name
+	 *
+	 * @return $this
+	 * @api
+	 */
+	public function setDatabaseName($name);
+
+	/**
+	 * Returns the name of the database
+	 *
+	 * @return string
+	 * @api
+	 */
+	public function getDatabaseName();
+
+	/**
+	 * Set the database driver for Doctrine
+	 *
+	 * @param string $driver
+	 *
+	 * @return $this
+	 * @api
+	 */
+	public function setDatabaseDriver($driver = 'pdo_mysql');
+
+	/**
+	 * Returns the database driver
+	 *
+	 * @return string
+	 * @api
+	 */
+	public function getDatabaseDriver();
+
+	/**
+	 * Set database socket
+	 *
+	 * @param string|NULL $socket
+	 *
+	 * @return $this
+	 * @api
+	 */
+	public function setDatabaseSocket($socket = NULL);
+
+	/**
+	 * Returns the database socket
+	 *
+	 * @return NULL|string
+	 * @api
+	 */
+	public function getDatabaseSocket();
+
+	/**
+	 * Set database port
+	 *
+	 * @param integer $port
+	 *
+	 * @return $this
+	 * @api
+	 */
+	public function setDatabasePort($port = 3306);
+
+	/**
+	 * Returns the database port
+	 *
+	 * @return int
+	 * @api
+	 */
+	public function getDatabasePort();
+
+	/**
+	 * Set database host
+	 *
+	 * @param string $host
+	 *
+	 * @return $this
+	 * @api
+	 */
+	public function setDatabaseHost($host = 'localhost');
+
+	/**
+	 * Returns the host of the database
+	 *
+	 * @return string
+	 * @api
+	 */
+	public function getDatabaseHost();
+
+	/**
+	 * Set default charset
+	 *
+	 * @param string $charset
+	 *
+	 * @return $this
+	 * @api
+	 */
+	public function setDatabaseCharset($charset = 'utf8');
+
+	/**
+	 * Returns default charset
+	 *
+	 * @return $this
+	 * @api
+	 */
+	public function getDatabaseCharset();
+
+	/**
+	 * Set current database handle
+	 *
+	 * @param \Doctrine\DBAL\Connection $handle
+	 *
+	 * @return void
+	 * @api
+	 */
+	public function setDatabaseHandle($handle);
+
+	/**
+	 * Returns current database handle
+	 *
+	 * @return \Doctrine\DBAL\Connection|NULL
+	 * @api
+	 */
+	public function getDatabaseHandle();
+
+	/**
+	 * @param \Doctrine\DBAL\Driver\Statement $lastStatement
+	 * @api
+	 */
+	public function setLastStatement($lastStatement);
+
+	/**
+	 * @return \Doctrine\DBAL\Driver\Statement
+	 * @api
+	 */
+	public function getLastStatement();
+
+	/**
+	 * Set commands to be fired after connection was established
+	 *
+	 * @param array $commands List of SQL commands to be executed after connect
+	 * @api
+	 */
+	public function setInitializeCommandsAfterConnect(array $commands);
+
+	/**
+	 * Set connection compression. Might be an advantage, if SQL server is not on localhost
+	 *
+	 * @param bool $connectionCompression TRUE if connection should be compressed
+	 * @api
+	 */
+	public function setConnectionCompression($connectionCompression);
+
+	/**
+	 * Set persistent database connection
+	 *
+	 * @param boolean $persistentDatabaseConnection
+	 * @see http://php.net/manual/de/mysqli.persistconns.php
+	 * @api
+	 */
+	public function setPersistentDatabaseConnection($persistentDatabaseConnection);
+
+	/**
+	 * Connects to database for TYPO3 sites:
+	 *
+	 * @return void
+	 * @throws \RuntimeException
+	 * @throws \UnexpectedValueException
+	 * @api
+	 */
+	public function connectDatabase();
+
+	/**
+	 * Connects to database for TYPO3 sites:
+	 *
+	 * @return void
+	 * @throws \RuntimeException
+	 * @throws \UnexpectedValueException
+	 * @api
+	 */
+	public function connectDB();
+
+	/**
+	 * Closes the connection.
+	 *
+	 * @return void
+	 */
+	public function close();
+
+	/**
+	 * Checks if database is connected
+	 *
+	 * @return boolean
+	 * @api
+	 */
+	public function isConnected();
+
+	/**
+	 * Disconnect from database if connected
+	 *
+	 * @return void
+	 * @api
+	 */
+	public function disconnectIfConnected();
+
+	/**
+	 * Returns the error number on the last query() execution
+	 *
+	 * @return integer PDO error number
+	 * @api
+	 */
+	public function sqlErrorCode();
+
+	/**
+	 * Returns the error status on the last query() execution
+	 *
+	 * @return string PDO error string
+	 * @api
+	 */
+	public function sqlErrorMessage();
+
+	/**
+	 * Returns an associative array that corresponds to the fetched row, or FALSE if there are no more rows.
+	 * Wrapper function for Doctrine/PDO fetch(\PDO::FETCH_ASSOC)
+	 *
+	 * @param \Doctrine\DBAL\Driver\Statement A PDOStatement object
+	 *
+	 * @return boolean|array Associative array of result row.
+	 * @api
+	 */
+	public function fetchAssoc($stmt);
+
+	/**
+	 * Returns an array that corresponds to the fetched row, or FALSE if there are no more rows.
+	 * The array contains the values in numerical indices.
+	 * Wrapper function for Doctrine/PDO fetch(\PDO::FETCH_NUM)
+	 *
+	 * @param \Doctrine\DBAL\Driver\Statement A PDOStatement object
+	 *
+	 * @return boolean|array Array with result rows.
+	 * @api
+	 */
+	public function fetchRow($stmt);
+
+	/**
+	 * Free result memory
+	 * Wrapper function for Doctrine/PDO closeCursor()
+	 *
+	 * @param boolean|\Doctrine\DBAL\Driver\Statement $stmt A PDOStatement
+	 *
+	 * @return boolean Returns NULL on success or FALSE on failure.
+	 * @api
+	 */
+	public function freeResult($stmt);
+
+	/**
+	 * Get the ID generated from the previous INSERT operation
+	 *
+	 * @return integer The uid of the last inserted record.
+	 * @api
+	 */
+	public function getLastInsertId();
+
+	/**
 	 * Creates a DELETE query object
 	 *
 	 * @return \TYPO3\DoctrineDbal\Persistence\Database\DeleteQueryInterface
@@ -48,12 +356,14 @@ interface DatabaseConnectionInterface {
 	public function createDeleteQuery();
 
 	/**
-	 * Creates a TRUNCATE query object
+	 * Creates a TRUNCATE TABLE SQL-statement
 	 *
-	 * @return \TYPO3\DoctrineDbal\Persistence\Database\TruncateQueryInterface
+	 * @param string $table See exec_TRUNCATEquery()
+	 *
+	 * @return string|\TYPO3\DoctrineDbal\Persistence\Doctrine\TruncateQuery
 	 * @api
 	 */
-	public function createTruncateQuery();
+	public function createTruncateQuery($table = '');
 
 	/**
 	 * Creates an UPDATE query object
@@ -71,12 +381,63 @@ interface DatabaseConnectionInterface {
 	 */
 	public function createInsertQuery();
 
+	/**
+	 * Creates a SELECT query object
+	 *
+	 * @return \TYPO3\DoctrineDbal\Persistence\Database\SelectQueryInterface
+	 * @api
+	 */
+	public function createSelectQuery();
+
+	/**
 	 * Returns the expressions instance
 	 *
 	 * @return \TYPO3\DoctrineDbal\Persistence\Database\ExpressionInterface
 	 * @api
 	 */
 	public function expr();
+
+	/**
+	 * Listing databases from current MySQL connection. NOTICE: It WILL try to select those databases and thus break selection of current database.
+	 * This is only used as a service function in the (1-2-3 process) of the Install Tool.
+	 * In any case a lookup should be done in the _DEFAULT handler DBMS then.
+	 * Use in Install Tool only!
+	 *
+	 * @return array Each entry represents a database name
+	 * @throws \RuntimeException
+	 */
+	public function listDatabases();
+
+	/**
+	 * Returns the list of tables from the default database
+	 *
+	 * @return array Array with table names as key and arrays with status information as value
+	 */
+	public function listTables();
+
+	/**
+	 * Returns information about each field in the $table (quering the DBMS)
+	 * In a DBAL this should look up the right handler for the table and return compatible information
+	 * This function is important not only for the Install Tool but probably for
+	 * DBALs as well since they might need to look up table specific information
+	 * in order to construct correct queries. In such cases this information should
+	 * probably be cached for quick delivery.
+	 *
+	 * @param string $tableName Table name
+	 *
+	 * @return array Field information in an associative array with fieldname => field row
+	 */
+	public function listFields($tableName);
+
+	/**
+	 * Returns information about each index key in the $table (quering the DBMS)
+	 * In a DBAL this should look up the right handler for the table and return compatible information
+	 *
+	 * @param string $tableName Table name
+	 *
+	 * @return array Key information in a associative array
+	 */
+	public function listKeys($tableName);
 
 	/**
 	 * Escaping and quoting values for SQL statements.
@@ -94,10 +455,10 @@ interface DatabaseConnectionInterface {
 	 *
 	 * Example:
 	 * <code><br>
-	 * // if no $tablename is given it returns: `column`<br>
+	 * // if no $tableName is given it returns: `column`<br>
 	 * $GLOBALS['TYPO3_DB']->quoteTable('column');<br><br>
 	 *
-	 * // if $tablename is given it returns: `pages`.`column`<br>
+	 * // if $tableName is given it returns: `pages`.`column`<br>
 	 * $GLOBALS['TYPO3_DB']->quoteTable('column', 'pages');<br>
 	 * </code>
 	 *
@@ -126,7 +487,7 @@ interface DatabaseConnectionInterface {
 	public function quoteTable($tableName);
 
 	/**
-	 * Custom quote identifer method
+	 * Custom quote identifier method
 	 *
 	 * Example:
 	 * <code><br>
