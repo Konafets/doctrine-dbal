@@ -37,6 +37,7 @@ use TYPO3\DoctrineDbal\Persistence\Doctrine\DeleteQuery;
 use TYPO3\DoctrineDbal\Persistence\Doctrine\InsertQuery;
 use TYPO3\DoctrineDbal\Persistence\Doctrine\Query;
 use TYPO3\DoctrineDbal\Persistence\Doctrine\TruncateQuery;
+use TYPO3\DoctrineDbal\Persistence\Doctrine\UpdateQuery;
 
 /**
  * Contains the class "DatabaseConnection" containing functions for building SQL queries
@@ -1037,6 +1038,35 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection imp
 	}
 
 	/**
+	 * Executes an SQL UPDATE statement on a table.
+	 *
+	 * @param string $tableName The name of the table to update.
+	 * @param array  $where     The update criteria. An associative array containing column-value pairs.
+	 * @param array  $data      An associative array containing column-value pairs.
+	 * @param array  $types     Types of the merged $data and $identifier arrays in that order.
+	 *
+	 * @return integer The number of affected rows.
+	 */
+	public function executeUpdateQuery($tableName, array $where, array $data, array $types = array()) {
+		if (!$this->isConnected) {
+			$this->connectDB();
+		}
+
+		$this->affectedRows = $this->link->update($tableName, $data, $where, $types);
+
+		if ($this->debugOutput) {
+			$this->debug('executeUpdateQuery');
+		}
+
+		foreach($this->postProcessHookObjects as $hookObject) {
+			/** @var $hookObject PostProcessQueryHookInterface */
+			$hookObject->exec_UPDATEquery_postProcessAction($tableName, $where, $data, FALSE, $this);
+		}
+
+		return $this->affectedRows;
+	}
+
+	/**
 	 * Truncates a table.
 	 *
 	 * @param string $table Database table name
@@ -1416,16 +1446,23 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection imp
 		if (!$this->isConnected()) {
 			$this->connectDB();
 		}
+
 		return GeneralUtility::makeInstance('\\TYPO3\\DoctrineDbal\\Persistence\\Doctrine\\InsertQuery', $this->link);
 	}
 
+	/**
+	 * Creates an UPDATE query object
+	 *
+	 * @return \TYPO3\DoctrineDbal\Persistence\Database\UpdateQueryInterface|UpdateQuery
+	 */
+	public function createUpdateQuery() {
+		if (!$this->isConnected()) {
+			$this->connectDB();
+		}
 
-//		$query = $this->queryBuilder
-//					->delete($table, $table)
-//					->where($where)
-//					->setParameters($parameters);
-//		$sql = $query->getSQL();
-//		return $sql;
+		return GeneralUtility::makeInstance('\\TYPO3\\DoctrineDbal\\Persistence\\Doctrine\\UpdateQuery', $this->link);
+	}
+
 	/**
 	 * Returns the expressions instance
 	 *

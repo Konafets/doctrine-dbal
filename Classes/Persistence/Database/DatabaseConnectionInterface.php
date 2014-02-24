@@ -56,6 +56,13 @@ interface DatabaseConnectionInterface {
 	public function createTruncateQuery();
 
 	/**
+	 * Creates an UPDATE query object
+	 *
+	 * @return \TYPO3\DoctrineDbal\Persistence\Database\UpdateQueryInterface
+	 * @api
+	 */
+	public function createUpdateQuery();
+
 	/**
 	 * Creates an INSERT query object
 	 *
