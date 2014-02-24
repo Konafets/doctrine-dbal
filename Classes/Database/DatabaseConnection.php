@@ -92,14 +92,14 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection imp
 	/**
 	 * Internally: Set to last built query (not necessarily executed...)
 	 *
-	 * @todo Define visibility
+	 * @param string $debug_lastBuiltQuery
 	 */
 	public $debug_lastBuiltQuery = '';
 
 	/**
 	 * Set "TRUE" if you want the last built query to be stored in $debug_lastBuiltQuery independent of $this->debugOutput
 	 *
-	 * @todo Define visibility
+	 * @param string $store_lastBuiltQuery
 	 */
 	public $store_lastBuiltQuery = FALSE;
 
@@ -243,6 +243,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection imp
 	 * Set database username
 	 *
 	 * @param string $username
+	 *
 	 * @return $this
 	 */
 	public function setDatabaseUsername($username) {
@@ -255,6 +256,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection imp
 
 	/**
 	 * Returns the database username
+	 *
 	 * @return string
 	 */
 	public function getDatabaseUsername() {
@@ -265,6 +267,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection imp
 	 * Set database password
 	 *
 	 * @param string $password
+	 *
 	 * @return $this
 	 */
 	public function setDatabasePassword($password) {
@@ -279,6 +282,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection imp
 	 * Set database name
 	 *
 	 * @param string $name
+	 *
 	 * @return $this
 	 */
 	public function setDatabaseName($name) {
@@ -482,11 +486,8 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection imp
 
 	/**
 	 * Initialize Doctrine
-	 *
-	 * @param array $params The parameters.
 	 */
-	public function initDoctrine(array $params = array()) {
-		//$this->connectionParams = $params;
+	public function initDoctrine() {
 		$this->connectionConfig = GeneralUtility::makeInstance('Doctrine\\DBAL\\Configuration');
 		$this->connectionConfig->setSQLLogger(new DebugStack());
 		$this->link = DriverManager::getConnection($this->connectionParams, $this->connectionConfig);
@@ -663,7 +664,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection imp
 	 *
 	 * @return void
 	 */
-	protected function disconnectIfConnected() {
+	public function disconnectIfConnected() {
 		if ($this->isConnected()) {
 			$this->link->close();
 			$this->isConnected = FALSE;
@@ -758,6 +759,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection imp
 		if ($this->debugOutput) {
 			$this->debug('exec_INSERTquery');
 		}
+
 		foreach ($this->postProcessHookObjects as $hookObject) {
 			/** @var $hookObject PostProcessQueryHookInterface */
 			$hookObject->exec_INSERTquery_postProcessAction($table, $fieldsValues, $noQuoteFields, $this);
@@ -826,7 +828,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection imp
 			$hookObject->exec_INSERTmultipleRows_postProcessAction($table, $fields, $rows, $noQuoteFields, $this);
 		}
 
-		return $res;
+		return $stmt;
 	}
 
 	/**
@@ -856,6 +858,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection imp
 			$this->debug('exec_SELECTquery');
 		}
 		if ($this->explainOutput) {
+			// TODO: Look why num_rows not exist
 			$this->explain($query, $fromTable, $stmt->num_rows);
 		}
 		foreach ($this->postProcessHookObjects as $hookObject) {
@@ -1682,9 +1685,10 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection imp
 	 * Returns an associative array that corresponds to the fetched row, or FALSE if there are no more rows.
 	 * Wrapper function for Doctrine/PDO fetch(\PDO::FETCH_ASSOC)
 	 *
-	 * @param \Doctrine\DBAL\Driver\Statement A PDOStatement object
+	 * @param \Doctrine\DBAL\Driver\Statement $stmt A PDOStatement object
 	 *
 	 * @return boolean|array Associative array of result row.
+	 * @api
 	 */
 	public function sql_fetch_assoc($stmt) {
 		if ($this->debug_check_recordset($stmt)) {
@@ -1699,9 +1703,10 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection imp
 	 * The array contains the values in numerical indices.
 	 * Wrapper function for Doctrine/PDO fetch(\PDO::FETCH_NUM)
 	 *
-	 * @param \Doctrine\DBAL\Driver\Statement A PDOStatement object
+	 * @param \Doctrine\DBAL\Driver\Statement $stmt A PDOStatement object
 	 *
 	 * @return boolean|array Array with result rows.
+	 * @api
 	 */
 	public function sql_fetch_row($stmt) {
 		if ($this->debug_check_recordset($stmt)) {
@@ -2587,10 +2592,10 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection imp
 	 *
 	 * Example:
 	 * <code><br>
-	 * // if no $tablename is given it returns: `column`<br>
+	 * // if no $tableName is given it returns: `column`<br>
 	 * $GLOBALS['TYPO3_DB']->quoteTable('column');<br><br>
 	 *
-	 * // if $tablename is given it returns: `pages`.`column`<br>
+	 * // if $tableName is given it returns: `pages`.`column`<br>
 	 * $GLOBALS['TYPO3_DB']->quoteTable('column', 'pages');<br>
 	 * </code>
 	 *
@@ -2624,7 +2629,7 @@ class DatabaseConnection extends \TYPO3\CMS\Core\Database\DatabaseConnection imp
 	}
 
 	/**
-	 * Custom quote identifer method
+	 * Custom quote identifier method
 	 *
 	 * Example:
 	 * <code><br>
