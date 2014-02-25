@@ -1322,6 +1322,36 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	}
 
 	/**
+	 * Returns information about the character sets supported by the current DBM
+	 * This function is important not only for the Install Tool but probably for
+	 * DBALs as well since they might need to look up table specific information
+	 * in order to construct correct queries. In such cases this information should
+	 * probably be cached for quick delivery.
+	 *
+	 * This is used by the Install Tool to convert tables tables with non-UTF8 charsets
+	 * Use in Install Tool only!
+	 *
+	 * @return array Array with Charset as key and an array of "Charset", "Description", "Default collation", "Maxlen" as values
+	 */
+	public function listDatabaseCharsets() {
+		if (!$this->isConnected) {
+			$this->connectDB();
+		}
+
+		$output = array();
+		$stmt = $this->adminQuery('SHOW CHARACTER SET');
+
+		if ($stmt !== FALSE) {
+			while ($row = $this->fetchAssoc($stmt)) {
+				$output[$row['Charset']] = $row;
+			}
+			$stmt->closeCursor();
+		}
+
+		return $output;
+	}
+
+	/**
 	 * Doctrine query wrapper function, used by the Install Tool and EM for all queries regarding management of the database!
 	 *
 	 * @param string $query Query to execute

@@ -661,11 +661,11 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 */
 	public function adminGetCharsetsReturnsArrayWithCharsets() {
 		$columnsRes = $this->subject->adminQuery('SHOW CHARACTER SET');
-		$result = $this->subject->getDatabaseCharset();
+		$result = $this->subject->listDatabaseCharsets();
 		$this->assertEquals(count($result), $columnsRes->rowCount());
 
 		/** @var array $row */
-		while (($row = $columnsRes->fetch(\PDO::FETCH_ASSOC))) {
+		while (($row = $this->subject->fetchAssoc($columnsRes))) {
 			$this->assertArrayHasKey($row['Charset'], $result);
 		}
 		$columnsRes->closeCursor();
