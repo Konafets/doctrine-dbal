@@ -145,6 +145,13 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	protected $schema;
 
 	/**
+	 * The current database platform
+	 *
+	 * @var \Doctrine\DBAL\Platforms\AbstractPlatform
+	 */
+	protected $platform = NULL;
+
+	/**
 	 * The table form last query
 	 *
 	 * @var string $table
@@ -552,19 +559,7 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	}
 
 	/**
-	 * @throws \RuntimeException
-	 */
-	private function checkDatabaseParameter() {
-		if (!$this->getDatabaseName()) {
-			throw new \RuntimeException(
-				'TYPO3 Fatal Error: No database specified!',
-				1270853882
-			);
-		}
-	}
-
-	/**
-	 * Connects to database for TYPO3 sites:
+	 * Connects to database for TYPO3 sites
 	 *
 	 * @return void
 	 * @throws \RuntimeException
@@ -576,23 +571,118 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 			return;
 		}
 
-		$this->checkDatabaseParameter();
+		$this->checkDatabasePreConditions();
+		$this->initDoctrine();
+		$this->link = $this->getConnection();
+		$this->isConnected = $this->checkConnectivity();
 
-		if ($this->connect()) {
-			if (!$this->selectDb()) {
-				throw new \RuntimeException(
-					'TYPO3 Fatal Error: Cannot connect to the current database, "' . $this->getDatabaseName() . '"!',
-					1270853883
-				);
-			}
+		if ($this->isConnected) {
+			$this->initCommandsAfterConnect();
+			$this->selectDb();
+		}
+
+		$this->prepareHooks();
+	}
+
+	/**
+	 * @throws \RuntimeException
+	 * @return void
+	 */
+	private function checkDatabasePreConditions() {
+		if (!$this->getDatabaseName()) {
+			throw new \RuntimeException(
+				'TYPO3 Fatal Error: No database specified!',
+				1270853882
+			);
+		}
+
+		if (!extension_loaded('pdo')) {
+			throw new \RuntimeException(
+				'Database Error: PHP PDO extension not loaded. This is a must to use this extension (ext:doctrine_dbal)!',
+				// TODO: Replace with current date for Thesis
+				1388496499
+			);
+		}
+	}
+
+	/**
+	 * Initialize Doctrine
+	 *
+	 * @return void
+	 */
+	private function initDoctrine() {
+		// If the user want a persistent connection we have to create the PDO instance by ourself and pass it to Doctrine.
+		// See http://stackoverflow.com/questions/16217426/is-it-possible-to-use-doctrine-with-persistent-pdo-connections
+		// http://www.mysqlperformanceblog.com/2006/11/12/are-php-persistent-connections-evil/
+		if ($this->persistentDatabaseConnection) {
+			// pattern: mysql:host=localhost;dbname=databaseName
+			$cdn = substr($this->getDatabaseDriver(), 3) . ':host=' . $this->getDatabaseHost() . ';dbname=' . $this->getDatabaseName();
+			$pdoHandle = new \PDO($cdn, $this->getDatabaseUsername(), $this->getDatabasePassword(), array(\PDO::ATTR_PERSISTENT => true));
+			$this->connectionParams['pdo'] = $pdoHandle;
+		}
+
+		$this->databaseConfiguration = GeneralUtility::makeInstance('\\Doctrine\\DBAL\\Configuration');
+		$this->schema = GeneralUtility::makeInstance('\\Doctrine\\DBAL\\Schema\\Schema');
+	}
+
+	/**
+	 * Returns the database connection
+	 *
+	 * @return \Doctrine\DBAL\Connection
+	 */
+	private function getConnection() {
+		// If the user want a persistent connection we have to create the PDO instance by ourself and pass it to Doctrine.
+		// See http://stackoverflow.com/questions/16217426/is-it-possible-to-use-doctrine-with-persistent-pdo-connections
+		// http://www.mysqlperformanceblog.com/2006/11/12/are-php-persistent-connections-evil/
+		if ($this->persistentDatabaseConnection) {
+			// pattern: mysql:host=localhost;dbname=databaseName
+			$cdn = substr($this->getDatabaseDriver(), 3) . ':host=' . $this->getDatabaseHost() . ';dbname=' . $this->getDatabaseName();
+			$pdoHandle = new \PDO($cdn, $this->getDatabaseUsername(), $this->getDatabasePassword(), array(\PDO::ATTR_PERSISTENT => true));
+			$this->connectionParams['pdo'] = $pdoHandle;
+		}
+
+		$connection = DriverManager::getConnection($this->connectionParams, $this->databaseConfiguration);
+		$this->databaseConfiguration->setSQLLogger(new DebugStack());
+		$this->logger = $connection->getConfiguration()->getSQLLogger();
+		$this->platform = $connection->getDatabasePlatform();
+
+		// We need to map the enum type to string because Doctrine don't support it native
+		// This is necessary when the installer loops through all tables of all databases it found using this connection
+		// See https://github.com/barryvdh/laravel-ide-helper/issues/19
+		$this->platform->registerDoctrineTypeMapping('enum', 'string');
+		$this->schemaManager = $connection->getSchemaManager();
+
+
+		// Send a query to create a connection
+		$connection->query($this->platform->getDummySelectSQL());
+
+		return $connection;
+	}
+
+	/**
+	 * @throws \RuntimeException
+	 * @return bool
+	 */
+	private function checkConnectivity() {
+		$connected = FALSE;
+		if ($this->isConnected()) {
+			$connected = TRUE;
 		} else {
+			GeneralUtility::sysLog(
+				'Could not connect to ' . $this->getName() . ' server ' . $this->getDatabaseHost() . ' with user ' . $this->getDatabaseUsername() . ': ' . $this->sqlErrorMessage(),
+				'Core',
+				GeneralUtility::SYSLOG_SEVERITY_FATAL
+			);
+
+			$this->close();
+
 			throw new \RuntimeException(
 				'TYPO3 Fatal Error: The current username, password or host was not accepted when the connection to the database was attempted to be established!',
 				1270853884
 			);
 		}
 
-		$this->prepareHooks();
+		return $connected;
 	}
 
 	/**
@@ -629,6 +719,7 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	/**
 	 * Select a SQL database
 	 *
+	 * @throws \RuntimeException
 	 * @return boolean Returns TRUE on success or FALSE on failure.
 	 */
 	public function selectDb() {
@@ -644,61 +735,33 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 				'Core',
 				GeneralUtility::SYSLOG_SEVERITY_FATAL
 			);
+
+			throw new \RuntimeException(
+				'TYPO3 Fatal Error: Cannot connect to the current database, "' . $this->getDatabaseName() . '"!',
+				1270853883
+			);
 		}
 
 		return $isConnected;
 	}
 
 	/**
-	 * Open a connection to a MySQL server
+	 * Send initializing query to the database to prepare the database for TYPO3
 	 *
-	 * @return boolean|void
-	 * @throws \RuntimeException
+	 * @return void
 	 */
-	public function connect() {
-		if ($this->isConnected) {
-			return $this->link;
-		}
-
-		if (!extension_loaded('pdo')) {
-			throw new \RuntimeException(
-				'Database Error: PHP PDO extension not loaded. This is a must to use this extension (ext:doctrine_dbal)!',
-				// TODO: Replace with current date for Thesis
-				1388496499
-			);
-		}
-
-		try {
-			$this->initDoctrine();
-		} catch (\PDOException $e) {
-			return FALSE;
-		}
-
-		if ($this->isConnected()) {
-			$this->isConnected = TRUE;
-			foreach ($this->initializeCommandsAfterConnect as $command) {
-				if ($this->query($command) === FALSE) {
-					GeneralUtility::sysLog(
-						'Could not initialize DB connection with query "' . $command . '": ' . $this->sqlErrorMessage(),
-						'Core',
-						GeneralUtility::SYSLOG_SEVERITY_ERROR
-					);
-				}
+	private function initCommandsAfterConnect() {
+		foreach ($this->initializeCommandsAfterConnect as $command) {
+			if ($this->query($command) === FALSE) {
+				GeneralUtility::sysLog(
+					'Could not initialize DB connection with query "' . $command . '": ' . $this->sqlErrorMessage(),
+					'Core',
+					GeneralUtility::SYSLOG_SEVERITY_ERROR
+				);
 			}
-			$this->setSqlMode();
-		} else {
-			// @TODO: This should raise an exception. Would be useful especially to work during installation.
-			$errorMessage = $this->sqlErrorMessage();
-			$this->close();
-			GeneralUtility::sysLog(
-				// TODO: Replace the term "MySQL" in the next log message with the current platform name
-				'Could not connect to MySQL server ' . $this->getDatabaseHost() . ' with user ' . $this->getDatabaseUsername() . ': ' . $errorMessage,
-				'Core',
-				GeneralUtility::SYSLOG_SEVERITY_FATAL
-			);
 		}
 
-		return $this->link;
+		$this->setSqlMode();
 	}
 
 	/**
@@ -707,36 +770,8 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	 * @return void
 	 */
 	public function close() {
-		$this->isConnected = FALSE;
 		$this->link->close();
-	}
-
-	/**
-	 * Initialize Doctrine
-	 */
-	public function initDoctrine() {
-		// If the user want a persistent connection we have to create the PDO instance by ourself and pass it to Doctrine.
-		// See http://stackoverflow.com/questions/16217426/is-it-possible-to-use-doctrine-with-persistent-pdo-connections
-		// http://www.mysqlperformanceblog.com/2006/11/12/are-php-persistent-connections-evil/
-		if ($this->persistentDatabaseConnection) {
-			// pattern: mysql:host=localhost;dbname=databaseName
-			$cdn = substr($this->getDatabaseDriver(), 3) . ':host=' . $this->getDatabaseHost() . ';dbname=' . $this->getDatabaseName();
-			$pdoHandle = new \PDO($cdn, $this->getDatabaseUsername(), $this->getDatabasePassword(), array(\PDO::ATTR_PERSISTENT => true));
-			$this->connectionParams['pdo'] = $pdoHandle;
-		}
-
-		$this->databaseConfiguration = GeneralUtility::makeInstance('\\Doctrine\\DBAL\\Configuration');
-		$this->databaseConfiguration->setSQLLogger(new DebugStack());
-		$this->link = DriverManager::getConnection($this->connectionParams, $this->databaseConfiguration);
-		$this->logger = $this->link->getConfiguration()->getSQLLogger();
-
-		// We need to map the enum type to string because Doctrine don't support it native
-		// This is necessary when the installer loops through all tables of all databases it found using this connection
-		// See https://github.com/barryvdh/laravel-ide-helper/issues/19
-		$this->link->getDatabasePlatform()->registerDoctrineTypeMapping('enum', 'string');
-		$this->schemaManager = $this->link->getSchemaManager();
-		$this->link->query($this->link->getDatabasePlatform()->getDummySelectSQL());
-		$this->schema = GeneralUtility::makeInstance('\\Doctrine\\DBAL\\Schema\\Schema');
+		$this->isConnected = FALSE;
 	}
 
 	/**

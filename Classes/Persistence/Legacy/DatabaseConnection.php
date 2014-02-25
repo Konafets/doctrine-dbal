@@ -114,8 +114,6 @@ class DatabaseConnection extends \TYPO3\DoctrineDbal\Persistence\Doctrine\Databa
 		if ($host || $username || $password) {
 			$this->handleDeprecatedConnectArguments($host, $username, $password);
 		}
-
-		return $this->connect();
 	}
 
 	/************************************

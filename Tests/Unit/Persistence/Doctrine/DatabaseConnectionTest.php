@@ -436,15 +436,6 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 
 	/**
 	 * @test
-	 *
-	 * @return void
-	 */
-	public function sqlPconnectReturnsCorrectInstance() {
-		$this->assertInstanceOf('Doctrine\\DBAL\\Connection', $this->subject->sql_pconnect());
-	}
-
-	/**
-	 * @test
 	 */
 	public function connectDBConnectsDatabase() {
 		$this->subject->disconnectIfConnected();
