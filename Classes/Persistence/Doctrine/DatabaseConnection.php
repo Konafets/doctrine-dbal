@@ -540,6 +540,19 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	}
 
 	/**
+	 * Returns the schema manager
+	 * 
+	 * @return \Doctrine\DBAL\Schema\AbstractSchemaManager
+	 */
+	public function getSchemaManager() {
+		if (!$this->isConnected) {
+			$this->connectDatabase();
+		}
+
+		return $this->schemaManager;
+	}
+
+	/**
 	 * Returns the platform object
 	 *
 	 * @return \Doctrine\DBAL\Platforms\AbstractPlatform
@@ -610,7 +623,13 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 
 		$this->checkDatabasePreConditions();
 		$this->initDoctrine();
-		$this->link = $this->getConnection();
+
+		try {
+			$this->link = $this->getConnection();
+		} catch (\Exception $e) {
+			echo $e->getMessage();
+		}
+
 		$this->isConnected = $this->checkConnectivity();
 
 		if ($this->isConnected) {
@@ -680,17 +699,18 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 		}
 
 		$connection = DriverManager::getConnection($this->connectionParams, $this->databaseConfiguration);
-		$this->logger = $connection->getConfiguration()->getSQLLogger();
 		$this->platform = $connection->getDatabasePlatform();
+
+		// Send a query to create a connection
+		$connection->query($this->platform->getDummySelectSQL());
+
+		$this->logger = $connection->getConfiguration()->getSQLLogger();
 
 		// We need to map the enum type to string because Doctrine don't support it native
 		// This is necessary when the installer loops through all tables of all databases it found using this connection
 		// See https://github.com/barryvdh/laravel-ide-helper/issues/19
 		$this->platform->registerDoctrineTypeMapping('enum', 'string');
 		$this->schemaManager = $connection->getSchemaManager();
-
-		// Send a query to create a connection
-		$connection->query($this->platform->getDummySelectSQL());
 
 		return $connection;
 	}

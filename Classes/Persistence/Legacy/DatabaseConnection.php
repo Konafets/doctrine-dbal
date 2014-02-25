@@ -96,7 +96,7 @@ class DatabaseConnection extends \TYPO3\DoctrineDbal\Persistence\Doctrine\Databa
 			$this->handleDeprecatedConnectArguments($host, $username, $password, $db);
 		}
 
-		parent::connectDatabase();
+		$this->connectDatabase();
 	}
 
 	/**
@@ -113,6 +113,14 @@ class DatabaseConnection extends \TYPO3\DoctrineDbal\Persistence\Doctrine\Databa
 	public function sql_pconnect($host = NULL, $username = NULL, $password = NULL) {
 		if ($host || $username || $password) {
 			$this->handleDeprecatedConnectArguments($host, $username, $password);
+		}
+
+		if ($this->isConnected) {
+			return $this->link;
+		} else {
+			$this->connectDatabase();
+
+			return $this->link;
 		}
 	}
 
@@ -881,7 +889,7 @@ class DatabaseConnection extends \TYPO3\DoctrineDbal\Persistence\Doctrine\Databa
 	 * @deprecated
 	 */
 	public function sql_fetch_assoc($stmt) {
-		$this->fetchAssoc($stmt);
+		return $this->fetchAssoc($stmt);
 	}
 
 	/**
