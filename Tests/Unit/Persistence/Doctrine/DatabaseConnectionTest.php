@@ -59,6 +59,8 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 */
 	protected $testFieldSecond;
 
+	protected $schema;
+
 	/**
 	 * @var array The connection settings for Doctrine
 	 */
@@ -90,11 +92,15 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 		$this->testField       = 'fieldblob';
 		$this->testFieldSecond = 'fieldblub';
 
-		$table = $this->subject->createTable($this->testTable);
+		$this->schema = $this->subject->getSchema();
+		$table = $this->schema->createTable($this->testTable);
 		$table->addColumn('id', 'integer', array('unsigned' => TRUE));
 		$table->addColumn($this->testField, 'blob');
 		$table->addColumn($this->testFieldSecond, 'integer');
 		$table->setPrimaryKey(array('id'));
+
+		$sql = $this->schema->toSql($this->subject->getPlatform());
+		$this->subject->adminQuery($sql[0]);
 	}
 
 	/**
@@ -103,7 +109,8 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @return void
 	 */
 	public function tearDown() {
-		$this->subject->dropTable($this->testTable);
+		$sql = $this->schema->toDropSql($this->subject->getPlatform());
+		$this->subject->adminQuery($sql[0]);
 		$this->subject->close();
 		unset($this->subject);
 	}
@@ -441,6 +448,6 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 		$this->subject->disconnectIfConnected();
 		$this->assertFalse($this->subject->isConnected());
 		$this->subject->connectDB();
-//		$this->assertTrue($this->subject->isConnected());
+		$this->assertTrue($this->subject->isConnected());
 	}
 }

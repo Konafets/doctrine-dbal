@@ -527,6 +527,32 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	}
 
 	/**
+	 * Returns the schema object
+	 *
+	 * @return \Doctrine\DBAL\Schema\Schema
+	 */
+	public function getSchema() {
+		if (!$this->isConnected) {
+			$this->connectDatabase();
+		}
+
+		return $this->schema;
+	}
+
+	/**
+	 * Returns the platform object
+	 *
+	 * @return \Doctrine\DBAL\Platforms\AbstractPlatform
+	 */
+	public function getPlatform() {
+		if (!$this->isConnected) {
+			$this->connectDatabase();
+		}
+
+		return $this->platform;
+	}
+
+	/**
 	 * Set commands to be fired after connection was established
 	 *
 	 * @param array $commands List of SQL commands to be executed after connect
@@ -633,6 +659,7 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 		}
 
 		$this->databaseConfiguration = GeneralUtility::makeInstance('\\Doctrine\\DBAL\\Configuration');
+		$this->databaseConfiguration->setSQLLogger(new DebugStack());
 		$this->schema = GeneralUtility::makeInstance('\\Doctrine\\DBAL\\Schema\\Schema');
 	}
 
@@ -653,7 +680,6 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 		}
 
 		$connection = DriverManager::getConnection($this->connectionParams, $this->databaseConfiguration);
-		$this->databaseConfiguration->setSQLLogger(new DebugStack());
 		$this->logger = $connection->getConfiguration()->getSQLLogger();
 		$this->platform = $connection->getDatabasePlatform();
 
@@ -662,7 +688,6 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 		// See https://github.com/barryvdh/laravel-ide-helper/issues/19
 		$this->platform->registerDoctrineTypeMapping('enum', 'string');
 		$this->schemaManager = $connection->getSchemaManager();
-
 
 		// Send a query to create a connection
 		$connection->query($this->platform->getDummySelectSQL());
@@ -1608,7 +1633,8 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 			'logger',
 			'link',
 			'schema',
-			'schemaManager'
+			'schemaManager',
+			'platform'
 		);
 	}
 

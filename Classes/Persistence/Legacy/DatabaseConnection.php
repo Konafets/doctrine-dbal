@@ -1531,7 +1531,8 @@ class DatabaseConnection extends \TYPO3\DoctrineDbal\Persistence\Doctrine\Databa
 			'logger',
 			'link',
 			'schema',
-			'schemaManager'
+			'schemaManager',
+			'platform'
 		);
 	}
 }
