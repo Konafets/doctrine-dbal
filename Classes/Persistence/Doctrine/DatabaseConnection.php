@@ -128,21 +128,21 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	/**
 	 * @var \Doctrine\DBAL\Logging\SQLLogger
 	 */
-	protected $logger = '';
+	protected $logger = NULL;
 
 	/**
 	 * The database schema
 	 *
 	 * @var \Doctrine\DBAL\Schema\AbstractSchemaManager $schema
 	 */
-	protected $schemaManager;
+	protected $schemaManager = NULL;
 
 	/**
 	 * The database schema
 	 *
 	 * @var \Doctrine\DBAL\Schema\Schema $schema
 	 */
-	protected $schema;
+	protected $schema = NULL;
 
 	/**
 	 * The current database platform
@@ -282,7 +282,6 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 		return $this;
 	}
 
-
 	/**
 	 * Returns database password
 	 *
@@ -333,12 +332,24 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 		return $this;
 	}
 
+	/**
+	 * Set a flag if the SQLLite should live in memory
+	 *
+	 * @param bool $value
+	 *
+	 * @return $this
+	 */
 	public function setDatabaseSQLLiteUseMemory($value) {
 		$this->connectionParams['memory'] = $value;
 
 		return $this;
 	}
 
+	/**
+	 * Set the connection parameter array
+	 *
+	 * @param array $connectionParams
+	 */
 	public function setConnectionParams(array $connectionParams) {
 		$this->connectionParams = $connectionParams;
 	}
@@ -926,7 +937,6 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 		return (int)$this->link->lastInsertId();
 	}
 
-
 	/**
 	 * Creates a DELETE query object
 	 *
@@ -1006,7 +1016,6 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 			return $query;
 		}
 	}
-
 
 	/**
 	 * Truncates a table.
@@ -1481,7 +1490,6 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 			return FALSE;
 		}
 	}
-
 
 	/**
 	 * Returns the date and time formats compatible with the given database table.
