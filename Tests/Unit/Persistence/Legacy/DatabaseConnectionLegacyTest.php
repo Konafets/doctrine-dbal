@@ -39,7 +39,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 class DatabaseConnectionLegacyTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 
 	/**
-	 * @var \TYPO3\DoctrineDbal\Persistence\Legacy\DatabaseConnection
+	 * @var \TYPO3\DoctrineDbal\Persistence\Legacy\DatabaseConnectionLegacy
 	 */
 	private $subject = NULL;
 
@@ -92,7 +92,7 @@ class DatabaseConnectionLegacyTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @return void
 	 */
 	public function setUp() {
-		$this->subject = GeneralUtility::makeInstance('TYPO3\\DoctrineDbal\\Persistence\\Legacy\\DatabaseConnection');
+		$this->subject = GeneralUtility::makeInstance('TYPO3\\DoctrineDbal\\Persistence\\Legacy\\DatabaseConnectionLegacy');
 		$this->subject->setDatabaseName(TYPO3_db);
 		$this->subject->setDatabaseUsername(TYPO3_db_username);
 		$this->subject->setDatabasePassword(TYPO3_db_password);

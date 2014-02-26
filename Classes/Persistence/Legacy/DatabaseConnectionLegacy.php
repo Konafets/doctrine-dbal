@@ -57,7 +57,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  *
  * @author Kasper Skårhøj <kasperYYYY@typo3.com>
  */
-class DatabaseConnection extends \TYPO3\DoctrineDbal\Persistence\Doctrine\DatabaseConnection  {
+class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\DatabaseConnection  {
 
 	/**
 	 * The AND constraint in where clause
