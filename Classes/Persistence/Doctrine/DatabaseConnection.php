@@ -979,7 +979,6 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	 * @api
 	 */
 	public function getLastInsertId() {
-		// TODO Write a test to prove that this method returns an integer
 		return (int)$this->link->lastInsertId();
 	}
 

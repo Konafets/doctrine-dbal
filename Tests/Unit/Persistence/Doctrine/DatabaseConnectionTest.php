@@ -358,6 +358,26 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 
 	/**
 	 * @test
+	 */
+	public function getLastInsertIdReturnsCorrectId() {
+		$this->subject->executeInsertQuery($this->testTable, array($this->testField => 'testA'));
+		$this->subject->executeInsertQuery($this->testTable, array($this->testField => 'testB'));
+		$this->subject->executeInsertQuery($this->testTable, array($this->testField => 'testC'));
+
+		$this->assertEquals(3, $this->subject->getLastInsertId());
+	}
+
+	/**
+	 * @test
+	 */
+	public function getLastInsertIdReturnsInteger() {
+		$this->subject->executeInsertQuery($this->testTable, array($this->testField => 'testA'));
+
+		$this->assertTrue(is_integer($this->subject->getLastInsertId()));
+	}
+
+	/**
+	 * @test
 	 *
 	 * @return void
 	 */

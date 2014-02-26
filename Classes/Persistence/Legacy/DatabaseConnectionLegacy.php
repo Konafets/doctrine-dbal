@@ -925,10 +925,10 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 	 * Get the ID generated from the previous INSERT operation
 	 *
 	 * @return integer The uid of the last inserted record.
+	 * @deprecated
 	 */
-	// TODO Write a test to prove that this method returns an integer
 	public function sql_insert_id() {
-		return (int)$this->link->lastInsertId();
+		return $this->getLastInsertId();
 	}
 
 	/**
