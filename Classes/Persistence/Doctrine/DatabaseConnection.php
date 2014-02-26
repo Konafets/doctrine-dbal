@@ -914,6 +914,7 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 		}
 
 		$stmt = $this->link->query($query);
+
 		$this->affectedRows = $stmt->rowCount();
 
 		return $stmt;
@@ -1505,6 +1506,15 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	}
 
 	/**
+	 * Returns the number of rows affected by the last INSERT, UPDATE or DELETE query
+	 *
+	 * @return int
+	 * @api
+	 */
+	public function getAffectedRows() {
+		return (int)$this->affectedRows;
+	}
+
 	 * Get the type of the specified field in a result
 	 * mysql_field_type() wrapper function
 	 *

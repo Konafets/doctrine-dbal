@@ -824,22 +824,10 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 	 * Returns the number of rows affected by the last INSERT, UPDATE or DELETE query
 	 *
 	 * @return integer Number of rows affected by last query
+	 * @deprecated
 	 */
 	public function sql_affected_rows() {
-		if ($this->lastStatement instanceof \Doctrine\DBAL\Driver\Statement) {
-			return $this->lastStatement->rowCount();
-		} else {
-			return $this->affectedRows;
-		}
-	}
-
-	/**
-	 * Returns the number of rows affected by the last INSERT, UPDATE or DELETE query
-	 *
-	 * @return integer Number of rows affected by last query
-	 */
-	public function getAffectedRows() {
-		return $this->affectedRows;
+		return $this->getAffectedRows();
 	}
 
 	/**

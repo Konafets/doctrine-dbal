@@ -435,14 +435,24 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 
 	/**
 	 * @test
+	/**
+	 * @test
 	 *
-	 * @return void
 	 */
 	public function executeInsertQueryReturnsCorrectAmountOfAffectedRows() {
-		$this->markTestIncomplete('Implement getAffectedRows');
 		$rows = $this->subject->executeInsertQuery($this->testTable, array($this->testField => 'test'));
 		$this->assertEquals(1, $rows);
 		$this->assertEquals(1, $this->subject->getAffectedRows());
+	}
+
+	/**
+	 * @test
+	 *
+	 * @return void
+	 */
+	public function getAffectedRowsReturnsInteger() {
+		$this->subject->executeInsertQuery($this->testTable, array($this->testField => 'test'));
+		$this->assertTrue(is_integer($this->subject->getAffectedRows()));
 	}
 
 	/**
