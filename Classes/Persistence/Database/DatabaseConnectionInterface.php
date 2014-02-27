@@ -210,12 +210,6 @@ interface DatabaseConnectionInterface {
 	public function getDatabaseHandle();
 
 	/**
-	 * @param \Doctrine\DBAL\Driver\Statement $lastStatement
-	 * @api
-	 */
-	public function setLastStatement($lastStatement);
-
-	/**
 	 * @return \Doctrine\DBAL\Driver\Statement
 	 * @api
 	 */

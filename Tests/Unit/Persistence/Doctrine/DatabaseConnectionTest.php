@@ -345,16 +345,55 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	/**
 	 * @test
 	 */
-	public function setAndGetLastStatement() {
-		$this->markTestIncomplete('Implement getLastStatement');
-		// Keep the last statement in mind
-		$statement = $this->subject->getLastStatement();
-
-		$this->subject->setLastStatement('Foo');
-		$this->assertEquals('Foo', $this->subject->getLastStatement());
-
-		$this->subject->setLastStatement($statement);
+	public function getLastStatementReturnsLastStatementForCreateTestTable() {
+		$expectedSql = 'CREATE TABLE test_t3lib_dbtest (id INT UNSIGNED AUTO_INCREMENT NOT NULL, fieldblob LONGBLOB DEFAULT NULL, fieldblub INT DEFAULT NULL, PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci ENGINE = InnoDB';
+		$this->assertEquals($expectedSql, $this->subject->getLastStatement());
 	}
+
+	/**
+	 * @test
+	 */
+	public function getLastStatementReturnsLastStatementForTruncate() {
+		$this->subject->executeTruncateQuery($this->testTable);
+		$this->assertEquals('TRUNCATE ' . $this->testTable, $this->subject->getLastStatement());
+	}
+
+	/**
+	 * @test
+	 */
+	public function getLastStatementReturnsLastStatementForDelete() {
+		$this->subject->executeInsertQuery($this->testTable, array($this->testField => 'testA'));
+		$this->subject->executeDeleteQuery($this->testTable, array($this->testField => 'testA'));
+		$this->assertEquals('DELETE FROM ' . $this->testTable . ' WHERE ' . $this->testField . ' = ?', $this->subject->getLastStatement());
+	}
+
+	/**
+	 * @test
+	 */
+	public function getLastStatementReturnsLastStatementForInsert() {
+		$this->subject->executeInsertQuery($this->testTable, array($this->testField => 'testA'));
+		$this->assertEquals('INSERT INTO ' . $this->testTable . ' (fieldblob) VALUES (?)', $this->subject->getLastStatement());
+	}
+
+	/**
+	 * @test
+	 */
+	public function getLastStatementReturnsLastStatementForUpdate() {
+		$this->subject->executeInsertQuery($this->testTable, array($this->testField => 'testA'));
+		$this->subject->executeUpdateQuery($this->testTable, array($this->testField => 'testA'), array($this->testFieldSecond => 3));
+		$this->assertEquals('UPDATE ' . $this->testTable . ' SET ' . $this->testFieldSecond . ' = ? WHERE ' . $this->testField . ' = ?', $this->subject->getLastStatement());
+	}
+
+	/**
+	 * @test
+	 */
+	public function getLastStatementReturnsLastStatementForSelect() {
+		$this->markTestIncomplete('Implement Select methods');
+		$this->subject->executeTruncateQuery($this->testTable);
+		$this->assertEquals('TRUNCATE ' . $this->testTable, $this->subject->getLastStatement());
+	}
+
+
 
 	/**
 	 * @test

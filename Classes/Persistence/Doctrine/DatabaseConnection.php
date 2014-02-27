@@ -195,13 +195,6 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	protected $debug_lastBuiltQuery = '';
 
 	/**
-	 * The last executed statement object
-	 *
-	 * @var \Doctrine\DBAL\Statement $lastStatement
-	 */
-	protected $lastStatement = NULL;
-
-	/**
 	 * Set this to 1 to get queries explained (devIPmask must match). Set the value to 2 to the same but disregarding the devIPmask.
 	 * There is an alternative option to enable explain output in the admin panel under "TypoScript", which will produce much nicer output, but only works in FE.
 	 *
@@ -501,21 +494,15 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	}
 
 	/**
-	 * @param \Doctrine\DBAL\Driver\Statement $lastStatement
-	 *
-	 * @return $this
-	 * @api
-	 */
-	public function setLastStatement($lastStatement) {
-		// TODO: Implement setLastStatement() method.
-	}
-
-	/**
 	 * @return \Doctrine\DBAL\Driver\Statement
 	 * @api
 	 */
 	public function getLastStatement() {
-		// TODO: Implement getLastStatement() method.
+		$queries = $this->logger->queries;
+		$currentQuery = $this->logger->currentQuery;
+		$lastStatement = $queries[$currentQuery]['sql'];
+
+		return $lastStatement;
 	}
 
 	/**
@@ -1171,7 +1158,6 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 		}
 
 		$this->affectedRows = $this->link->insert($table, $where, $types);
-		$this->lastStatement = $this->getLastStatement();
 
 		if ($this->debugOutput) {
 			$this->debug('executeInsertQuery');
@@ -1365,10 +1351,6 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 		}
 
 		$stmt = $this->link->query($query);
-
-		// TODO: Is that necessary here or can we abstract it more
-		// Maybe use the logger for all statements
-		$this->setLastStatement($stmt);
 
 		if ($this->isDebugMode) {
 			$this->debug('adminQuery', $query);
@@ -1635,7 +1617,7 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 					'caller' => get_class() . '::' . $func,
 					'Errormessage' => $errorMessage,
 					'Errorcode' => $errorCode,
-					'lastBuiltQuery' => $query ? $query : $this->debug_lastBuiltQuery,
+					'lastBuiltQuery' => $query ? $query : $this->getLastStatement(),
 					'debug_backtrace' => DebugUtility::debugTrail()
 				),
 				$func,
@@ -1679,7 +1661,7 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 				'Backtrace' => $trace
 			);
 			if ($this->debug_lastBuiltQuery) {
-				$debugLogData = array('SQL Query' => $this->debug_lastBuiltQuery) + $debugLogData;
+				$debugLogData = array('SQL Query' => $this->getLastStatement()) + $debugLogData;
 			}
 			GeneralUtility::devLog($msg . '.', 'Core/Database/DatabaseConnection', 3, $debugLogData);
 		}

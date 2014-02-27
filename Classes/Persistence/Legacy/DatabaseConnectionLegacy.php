@@ -151,7 +151,6 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 	 */
 	public function exec_INSERTquery($table, $fieldsValues, $noQuoteFields = FALSE) {
 		$stmt = $this->query($this->INSERTquery($table, $fieldsValues, $noQuoteFields));
-		$this->setLastStatement($stmt);
 
 		if ($this->debugOutput) {
 			$this->debug('exec_INSERTquery');
@@ -207,7 +206,6 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 		$query = $this->SELECTquery($selectFields, $fromTable, $whereClause, $groupBy, $orderBy, $limit);
 		$stmt = $this->query($query);
 
-		$this->setLastStatement($stmt);
 		$this->table = $fromTable;
 
 		if ($this->debugOutput) {
@@ -288,7 +286,6 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 	 */
 	public function exec_SELECTgetRows($selectFields, $fromTable, $whereClause, $groupBy = '', $orderBy = '', $limit = '', $uidIndexField = '') {
 		$stmt = $this->exec_SELECTquery($selectFields, $fromTable, $whereClause, $groupBy, $orderBy, $limit);
-		$this->setLastStatement($stmt);
 		$this->table = $fromTable;
 
 		if ($this->debugOutput) {
@@ -330,7 +327,6 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 	 */
 	public function exec_SELECTgetSingleRow($selectFields, $fromTable, $whereClause, $groupBy = '', $orderBy = '', $numIndex = FALSE) {
 		$stmt = $this->exec_SELECTquery($selectFields, $fromTable, $whereClause, $groupBy, $orderBy, '1');
-		$this->setLastStatement($stmt);
 		$this->table = $fromTable;
 
 		if ($this->debugOutput) {
@@ -385,7 +381,6 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 	 */
 	public function exec_UPDATEquery($table, $where, $fieldsValues, $noQuoteFields = FALSE) {
 		$stmt = $this->query($this->UPDATEquery($table, $where, $fieldsValues, $noQuoteFields));
-		$this->setLastStatement($stmt);
 
 		if ($this->debugOutput) {
 			$this->debug('exec_UPDATEquery');
@@ -408,7 +403,6 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 	 */
 	public function exec_TRUNCATEquery($table) {
 		$stmt = $this->query($this->TRUNCATEquery($table));
-		$this->setLastStatement($stmt);
 		$this->table = $table;
 
 		if ($this->debugOutput) {
@@ -433,7 +427,6 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 	 */
 	public function exec_DELETEquery($table, $where) {
 		$stmt = $this->query($this->DELETEquery($table, $where));
-		$this->setLastStatement($stmt);
 
 		if ($this->debugOutput) {
 			$this->debug('exec_DELETEquery');
@@ -981,7 +974,6 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 		}
 
 		$stmt = $this->link->query($query);
-		$this->setLastStatement($stmt);
 
 		if ($this->debugOutput) {
 			$this->debug('sql_query', $query);
