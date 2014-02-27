@@ -164,7 +164,7 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	 *
 	 * @param int $debugOutput
 	 */
-	protected $debugOutput = FALSE;
+	public $debugOutput = FALSE;
 
 	/**
 	 * Set "TRUE" or "1" if you want database errors outputted. Set to "2" if you also want successful database actions outputted.
@@ -192,7 +192,7 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	 *
 	 * @param string $debug_lastBuiltQuery
 	 */
-	protected $debug_lastBuiltQuery = '';
+	public $debug_lastBuiltQuery = '';
 
 	/**
 	 * Set this to 1 to get queries explained (devIPmask must match). Set the value to 2 to the same but disregarding the devIPmask.
