@@ -683,16 +683,6 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	 * @return void
 	 */
 	private function initDoctrine() {
-		// If the user want a persistent connection we have to create the PDO instance by ourself and pass it to Doctrine.
-		// See http://stackoverflow.com/questions/16217426/is-it-possible-to-use-doctrine-with-persistent-pdo-connections
-		// http://www.mysqlperformanceblog.com/2006/11/12/are-php-persistent-connections-evil/
-		if ($this->persistentDatabaseConnection) {
-			// pattern: mysql:host=localhost;dbname=databaseName
-			$cdn = substr($this->getDatabaseDriver(), 3) . ':host=' . $this->getDatabaseHost() . ';dbname=' . $this->getDatabaseName();
-			$pdoHandle = new \PDO($cdn, $this->getDatabaseUsername(), $this->getDatabasePassword(), array(\PDO::ATTR_PERSISTENT => true));
-			$this->connectionParams['pdo'] = $pdoHandle;
-		}
-
 		$this->databaseConfiguration = GeneralUtility::makeInstance('\\Doctrine\\DBAL\\Configuration');
 		$this->databaseConfiguration->setSQLLogger(new DebugStack());
 		$this->schema = GeneralUtility::makeInstance('\\Doctrine\\DBAL\\Schema\\Schema');
