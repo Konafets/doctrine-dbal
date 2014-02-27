@@ -346,7 +346,7 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @test
 	 */
 	public function setAndGetLastStatement() {
-		$this->markTestIncomplete();
+		$this->markTestIncomplete('Implement getLastStatement');
 		// Keep the last statement in mind
 		$statement = $this->subject->getLastStatement();
 
