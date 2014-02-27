@@ -77,13 +77,13 @@ class DatabaseConnectionLegacyTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @var array The connection settings for Doctrine
 	 */
 	protected $connectionParams = array(
-		'dbname' => '',
-		'user' => '',
+		'dbname'   => '',
+		'user'     => '',
 		'password' => '',
-		'host' => 'localhost',
-		'driver' => 'pdo_mysql',
-		'port' => 3306,
-		'charset' => 'utf8',
+		'host'     => 'localhost',
+		'driver'   => 'pdo_mysql',
+		'port'     => 3306,
+		'charset'  => 'utf8',
 	);
 
 	/**
