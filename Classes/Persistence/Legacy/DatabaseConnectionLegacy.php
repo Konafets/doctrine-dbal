@@ -27,6 +27,7 @@ namespace TYPO3\DoctrineDbal\Persistence\Legacy;
  *  This copyright notice MUST APPEAR in all copies of the script!
  ***************************************************************/
 
+use Doctrine\DBAL\Driver\Statement;
 use TYPO3\CMS\Core\Utility\DebugUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
@@ -937,15 +938,10 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 	 * @param boolean|\Doctrine\DBAL\Driver\Statement $stmt
 	 *
 	 * @return integer Number of resulting rows
+	 * @deprecated
 	 */
-	public function sql_num_rows($stmt) {
-		if ($this->debug_check_recordset($stmt)) {
-			$result = $stmt->rowCount();
-		} else {
-			$result = FALSE;
-		}
-
-		return $result;
+	public function sql_num_rows(Statement $stmt) {
+		return $this->getResultRowCount($stmt);
 	}
 
 	/**

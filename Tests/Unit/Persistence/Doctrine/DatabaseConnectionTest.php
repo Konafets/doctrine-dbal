@@ -781,14 +781,13 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 *
 	 * @return void
 	 */
-	public function sqlNumRowsReturnsCorrectAmountOfRows($sql, $expectedResult) {
-		$this->markTestIncomplete('Implement sql_num_rows behavior for Doctrine');
-		$this->assertSame(1, $this->subject->getDatabaseHandle()->insert($this->testTable, array($this->testField => 'foo')));
-		$this->assertSame(1, $this->subject->getDatabaseHandle()->insert($this->testTable, array($this->testField => 'bar')));
-		$this->assertSame(1, $this->subject->getDatabaseHandle()->insert($this->testTable, array($this->testField => 'baz')));
+	public function getResultRowCountReturnsCorrectAmountOfRows($sql, $expectedResult) {
+		$this->assertSame(1, $this->subject->executeInsertQuery($this->testTable, array($this->testField => 'foo')));
+		$this->assertSame(1, $this->subject->executeInsertQuery($this->testTable, array($this->testField => 'bar')));
+		$this->assertSame(1, $this->subject->executeInsertQuery($this->testTable, array($this->testField => 'baz')));
 
 		$res = $this->subject->adminQuery($sql);
-		$numRows = $this->subject->sql_num_rows($res);
+		$numRows = $this->subject->getResultRowCount($res);
 
 		$this->assertSame($expectedResult, $numRows);
 	}
@@ -800,10 +799,9 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @expectedException \Doctrine\DBAL\DBALException
 	 * @expectedExceptionMessage SQLSTATE[42S22]: Column not found: 1054 Unknown column 'test' in 'where clause'
 	 */
-	public function sqlNumRowsReturnsFalse() {
-		$this->markTestIncomplete('Implement sql_num_rows behavior for Doctrine');
+	public function getResultRowCountReturnsFalse() {
 		$res = $this->subject->adminQuery('SELECT * FROM ' . $this->testTable . ' WHERE test=\'baz\'');
-		$numRows = $this->subject->sql_num_rows($res);
+		$numRows = $this->subject->getResultRowCount($res);
 		$this->assertFalse($numRows);
 	}
 

@@ -30,6 +30,7 @@ namespace TYPO3\DoctrineDbal\Persistence\Doctrine;
 
 use Doctrine\DBAL\Configuration;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Driver\Statement;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Logging\DebugStack;
 use TYPO3\CMS\Core\Utility\DebugUtility;
@@ -1514,6 +1515,24 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 		return (int)$this->affectedRows;
 	}
 
+	/**
+	 * Returns the number of selected rows.
+	 *
+	 * @param boolean|\Doctrine\DBAL\Driver\Statement $stmt
+	 *
+	 * @return integer Number of resulting rows
+	 */
+	public function getResultRowCount(Statement $stmt){
+		if ($this->debug_check_recordset($stmt)) {
+			$result = $stmt->rowCount();
+		} else {
+			$result = FALSE;
+		}
+
+		return $result;
+	}
+
+	/**
 	 * Get the type of the specified field in a result
 	 * mysql_field_type() wrapper function
 	 *
