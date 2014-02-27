@@ -455,6 +455,14 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 
 	/**
 	 * @test
+	 */
+	public function exprReturnsExpressionObject() {
+		$this->assertInstanceOf(
+				'\TYPO3\DoctrineDbal\Persistence\Database\ExpressionInterface',
+				$this->subject->expr()
+		);
+	}
+
 	/**
 	 * @test
 	 *
