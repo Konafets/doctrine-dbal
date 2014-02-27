@@ -238,7 +238,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 	 * @param string $orderBy      Optional ORDER BY field(s), if none, supply blank string.
 	 * @param string $limit        Optional LIMIT value ([begin,]max), if none, supply blank string.
 	 *
-	 * @return boolean|\mysqli_result|object MySQLi result object / DBAL object
+	 * @return \Doctrine\DBAL\Driver\Statement A PDOStatement object
 	 * @see exec_SELECTquery()
 	 * @deprecated
 	 */
@@ -262,7 +262,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 	 *
 	 * @param array $queryParts Query parts array
 	 *
-	 * @return boolean|\mysqli_result|object MySQLi result object / DBAL object
+	 * @return \Doctrine\DBAL\Driver\Statement A PDOStatement object
 	 * @see exec_SELECTquery()
 	 * @deprecated
 	 */
@@ -281,7 +281,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 	 * @param string $limit         See exec_SELECTquery()
 	 * @param string $uidIndexField If set, the result array will carry this field names value as index. Requires that field to be selected of course!
 	 *
-	 * @return array|NULL Array of rows, or NULL in case of SQL error
+	 * @return \Doctrine\DBAL\Driver\Statement A PDOStatement object
 	 * @deprecated
 	 */
 	public function exec_SELECTgetRows($selectFields, $fromTable, $whereClause, $groupBy = '', $orderBy = '', $limit = '', $uidIndexField = '') {
