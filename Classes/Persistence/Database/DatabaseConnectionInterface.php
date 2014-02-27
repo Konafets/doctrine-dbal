@@ -241,6 +241,28 @@ interface DatabaseConnectionInterface {
 	public function setPersistentDatabaseConnection($persistentDatabaseConnection);
 
 	/**
+	 * Set the debug mode.
+	 *
+	 * Possible values are:
+	 *
+	 * - 0|FALSE: deactivate debug mode
+	 * - 1|TRUE:  activate debug mode
+	 * - 2     :  output also successful database actions
+	 *
+	 * @param int $mode
+	 *
+	 * @return $this
+	 */
+	public function setDebugMode($mode);
+
+	/**
+	 * Return the debug mode setting
+	 *
+	 * @return int
+	 */
+	public function getDebugMode();
+
+	/**
 	 * Connects to database for TYPO3 sites:
 	 *
 	 * @return void

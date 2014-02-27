@@ -152,7 +152,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 	public function exec_INSERTquery($table, $fieldsValues, $noQuoteFields = FALSE) {
 		$stmt = $this->query($this->INSERTquery($table, $fieldsValues, $noQuoteFields));
 
-		if ($this->debugOutput) {
+		if ($this->getDebugMode()) {
 			$this->debug('exec_INSERTquery');
 		}
 
@@ -177,7 +177,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 	 */
 	public function exec_INSERTmultipleRows($table, array $fields, array $rows, $noQuoteFields = FALSE) {
 		$stmt = $this->query($this->INSERTmultipleRows($table, $fields, $rows, $noQuoteFields));
-		if ($this->debugOutput) {
+		if ($this->getDebugMode()) {
 			$this->debug('exec_INSERTmultipleRows');
 		}
 		foreach ($this->postProcessHookObjects as $hookObject) {
@@ -208,7 +208,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 
 		$this->table = $fromTable;
 
-		if ($this->debugOutput) {
+		if ($this->getDebugMode()) {
 			$this->debug('exec_SELECTquery');
 		}
 		if ($this->explainOutput) {
@@ -288,7 +288,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 		$stmt = $this->exec_SELECTquery($selectFields, $fromTable, $whereClause, $groupBy, $orderBy, $limit);
 		$this->table = $fromTable;
 
-		if ($this->debugOutput) {
+		if ($this->getDebugMode()) {
 			$this->debug('exec_SELECTquery');
 		}
 		if (!$this->sqlErrorMessage()) {
@@ -329,7 +329,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 		$stmt = $this->exec_SELECTquery($selectFields, $fromTable, $whereClause, $groupBy, $orderBy, '1');
 		$this->table = $fromTable;
 
-		if ($this->debugOutput) {
+		if ($this->getDebugMode()) {
 			$this->debug('exec_SELECTquery');
 		}
 		$output = NULL;
@@ -382,7 +382,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 	public function exec_UPDATEquery($table, $where, $fieldsValues, $noQuoteFields = FALSE) {
 		$stmt = $this->query($this->UPDATEquery($table, $where, $fieldsValues, $noQuoteFields));
 
-		if ($this->debugOutput) {
+		if ($this->getDebugMode()) {
 			$this->debug('exec_UPDATEquery');
 		}
 		foreach ($this->postProcessHookObjects as $hookObject) {
@@ -405,7 +405,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 		$stmt = $this->query($this->TRUNCATEquery($table));
 		$this->table = $table;
 
-		if ($this->debugOutput) {
+		if ($this->getDebugMode()) {
 			$this->debug('exec_TRUNCATEquery');
 		}
 		foreach ($this->postProcessHookObjects as $hookObject) {
@@ -428,7 +428,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 	public function exec_DELETEquery($table, $where) {
 		$stmt = $this->query($this->DELETEquery($table, $where));
 
-		if ($this->debugOutput) {
+		if ($this->getDebugMode()) {
 			$this->debug('exec_DELETEquery');
 		}
 		foreach ($this->postProcessHookObjects as $hookObject) {
@@ -467,7 +467,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 			$query = 'INSERT INTO ' . $table . ' (' . implode(',', array_keys($fieldsValues)) . ') VALUES ' . '(' . implode(',', $fieldsValues) . ')';
 
 			// Return query
-			if ($this->debugOutput || $this->store_lastBuiltQuery) {
+			if ($this->getDebugMode() || $this->store_lastBuiltQuery) {
 				$this->debug_lastBuiltQuery = $query;
 			}
 
@@ -504,7 +504,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 			}
 			$query .= implode(', ', $rowSQL);
 			// Return query
-			if ($this->debugOutput || $this->store_lastBuiltQuery) {
+			if ($this->getDebugMode() || $this->store_lastBuiltQuery) {
 				$this->debug_lastBuiltQuery = $query;
 			}
 
@@ -540,7 +540,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 		// Group by
 		$query .= strlen($limit) > 0 ? ' LIMIT ' . $limit : '';
 		// Return query
-		if ($this->debugOutput || $this->store_lastBuiltQuery) {
+		if ($this->getDebugMode() || $this->store_lastBuiltQuery) {
 			$this->debug_lastBuiltQuery = $query;
 		}
 
@@ -563,7 +563,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 		// Build basic query:
 		$query = 'SELECT ' . $selectFields . ' FROM ' . $fromTable . (strlen($whereClause) > 0 ? ' WHERE ' . $whereClause : '');
 		// Return query
-		if ($this->debugOutput || $this->store_lastBuiltQuery) {
+		if ($this->getDebugMode() || $this->store_lastBuiltQuery) {
 			$this->debug_lastBuiltQuery = $query;
 		}
 
@@ -601,9 +601,10 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 			}
 			// Build query
 			$query = 'UPDATE ' . $table . ' SET ' . implode(',', $fields) . (strlen($where) > 0 ? ' WHERE ' . $where : '');
-			if ($this->debugOutput || $this->store_lastBuiltQuery) {
+			if ($this->getDebugMode() || $this->store_lastBuiltQuery) {
 				$this->debug_lastBuiltQuery = $query;
 			}
+
 			return $query;
 		} else {
 			throw new \InvalidArgumentException('TYPO3 Fatal Error: "Where" clause argument for UPDATE query was not a string in $this->UPDATEquery() !', 1270853880);
@@ -627,7 +628,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 		// Build basic query:
 		$query = 'TRUNCATE TABLE ' . $table;
 		// Return query:
-		if ($this->debugOutput || $this->store_lastBuiltQuery) {
+		if ($this->getDebugMode() || $this->store_lastBuiltQuery) {
 			$this->debug_lastBuiltQuery = $query;
 		}
 
@@ -652,9 +653,10 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 			}
 			// Table and fieldnames should be "SQL-injection-safe" when supplied to this function
 			$query = 'DELETE FROM ' . $table . (strlen($where) > 0 ? ' WHERE ' . $where : '');
-			if ($this->debugOutput || $this->store_lastBuiltQuery) {
+			if ($this->getDebugMode() || $this->store_lastBuiltQuery) {
 				$this->debug_lastBuiltQuery = $query;
 			}
+
 			return $query;
 		} else {
 			throw new \InvalidArgumentException('TYPO3 Fatal Error: "Where" clause argument for DELETE query was not a string in $this->DELETEquery() !', 1270853881);
@@ -760,7 +762,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 			$this->connectDB();
 		}
 		$res = $this->link->query($query);
-		if ($this->debugOutput) {
+		if ($this->getDebugMode()) {
 			$this->debug('stmt_execute', $query);
 		}
 
@@ -975,7 +977,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 
 		$stmt = $this->link->query($query);
 
-		if ($this->debugOutput) {
+		if ($this->getDebugMode()) {
 			$this->debug('sql_query', $query);
 		}
 

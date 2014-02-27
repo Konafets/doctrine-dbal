@@ -597,6 +597,34 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	}
 
 	/**
+	 * Set the debug mode.
+	 *
+	 * Possible values are:
+	 *
+	 * - 0|FALSE: deactivate debug mode
+	 * - 1|TRUE:  activate debug mode
+	 * - 2     :  output also successful database actions
+	 *
+	 * @param int $mode
+	 *
+	 * @return $this
+	 */
+	public function setDebugMode($mode){
+		$this->debugOutput = $mode;
+
+		return $this;
+	}
+
+	/**
+	 * Return the debug mode setting
+	 *
+	 * @return int
+	 */
+	public function getDebugMode(){
+		return (int)$this->debugOutput;
+	}
+
+	/**
 	 * Connects to database for TYPO3 sites
 	 *
 	 * @return void
@@ -1011,7 +1039,7 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 
 		$this->affectedRows = $this->link->delete($table, $where, $types);
 
-		if ($this->debugOutput) {
+		if ($this->getDebugMode()) {
 			$this->debug('executeDeleteQuery');
 		}
 		foreach ($this->postProcessHookObjects as $hookObject) {
@@ -1042,7 +1070,7 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 			$dbPlatform = $this->link->getDatabasePlatform();
 			$query = $dbPlatform->getTruncateTableSQL($table);
 
-			if ($this->debugOutput || $this->store_lastBuiltQuery) {
+			if ($this->getDebugMode() || $this->store_lastBuiltQuery) {
 				$this->debug_lastBuiltQuery = $query;
 			}
 
@@ -1065,7 +1093,7 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 		$this->affectedRows = $this->link->executeUpdate($this->createTruncateQuery($table));
 		$this->table = $table;
 
-		if ($this->debugOutput) {
+		if ($this->getDebugMode()) {
 			$this->debug('executeTruncateQuery');
 		}
 		foreach ($this->postProcessHookObjects as $hookObject) {
@@ -1107,7 +1135,7 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 
 		$this->affectedRows = $this->link->update($tableName, $data, $where, $types);
 
-		if ($this->debugOutput) {
+		if ($this->getDebugMode()) {
 			$this->debug('executeUpdateQuery');
 		}
 
@@ -1159,7 +1187,7 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 
 		$this->affectedRows = $this->link->insert($table, $where, $types);
 
-		if ($this->debugOutput) {
+		if ($this->getDebugMode()) {
 			$this->debug('executeInsertQuery');
 		}
 		foreach ($this->postProcessHookObjects as $hookObject) {
