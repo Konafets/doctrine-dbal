@@ -27,7 +27,6 @@ namespace TYPO3\DoctrineDbal\Persistence\Legacy;
  *  This copyright notice MUST APPEAR in all copies of the script!
  ***************************************************************/
 
-use Doctrine\DBAL\Driver\Statement;
 use TYPO3\CMS\Core\Utility\DebugUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
@@ -789,7 +788,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 		$preparedStatement = GeneralUtility::makeInstance('TYPO3\\CMS\\Core\\Database\\PreparedStatement', $query, $fromTable, array());
 		// Bind values to parameters
 		foreach ($inputParameters as $key => $value) {
-			$preparedStatement->bindValue($key, $value, \TYPO3\CMS\Core\Database\PreparedStatement::PARAM_AUTOTYPE);
+			$preparedStatement->bindValue($key, $value, \TYPO3\DoctrineDbal\Persistence\Legacy\PreparedStatementLegacy::PARAM_AUTOTYPE);
 		}
 
 		// Return prepared statement
@@ -935,7 +934,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 	 * @return integer Number of resulting rows
 	 * @deprecated
 	 */
-	public function sql_num_rows(Statement $stmt) {
+	public function sql_num_rows($stmt) {
 		return $this->getResultRowCount($stmt);
 	}
 

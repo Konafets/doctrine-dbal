@@ -1,5 +1,5 @@
 <?php
-namespace TYPO3\DoctrineDbal\Database;
+namespace TYPO3\DoctrineDbal\Persistence\Legacy;
 
 /***************************************************************
  *  Copyright notice
@@ -43,7 +43,7 @@ namespace TYPO3\DoctrineDbal\Database;
  *
  * @author Xavier Perseguers <typo3@perseguers.ch>
  */
-class PreparedStatement {
+class PreparedStatementLegacy {
 
 	/**
 	 * Represents the SQL NULL data type.

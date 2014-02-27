@@ -1,6 +1,6 @@
 <?php
 
-namespace TYPO3\DoctrineDbal\Tests\Unit\Persistence\Doctrine;
+namespace TYPO3\DoctrineDbal\Tests\Unit\Persistence\Legacy;
 
 /***************************************************************
  *  Copyright notice
