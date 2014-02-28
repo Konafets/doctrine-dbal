@@ -763,7 +763,7 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 *
 	 * @return void
 	 */
-	public function adminGetFieldsReturnFieldInformationsForTable() {
+	public function listFieldsReturnFieldInformationsForTable() {
 		$result = $this->subject->listFields($this->testTable);
 		$this->assertArrayHasKey('id', $result);
 		$this->assertArrayHasKey($this->testField, $result);
