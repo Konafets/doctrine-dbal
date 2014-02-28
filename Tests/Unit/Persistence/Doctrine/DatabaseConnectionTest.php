@@ -703,9 +703,9 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @return void
 	 */
 	public function adminQueryReturnsTrueForUpdateQuery() {
-		$this->markTestIncomplete('Implement sql_insert_id behavior for Doctrine');
 		$this->assertInstanceOf('Doctrine\\DBAL\\Driver\\Statement', $this->subject->adminQuery('INSERT INTO ' . $this->testTable . ' (fieldblob) VALUES (\'foo\')'));
-		$id = $this->subject->sql_insert_id();
+		$id = $this->subject->getLastInsertId();
+		$this->assertEquals(1, $id);
 		$this->assertInstanceOf('Doctrine\\DBAL\\Driver\\Statement', $this->subject->adminQuery('UPDATE ' . $this->testTable . ' SET fieldblob=\'bar\' WHERE id=' . $id));
 	}
 
@@ -715,9 +715,9 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @return void
 	 */
 	public function adminQueryReturnsTrueForDeleteQuery() {
-		$this->markTestIncomplete('Implement sql_insert_id behavior for Doctrine');
 		$this->assertInstanceOf('Doctrine\\DBAL\\Driver\\Statement', $this->subject->adminQuery('INSERT INTO ' . $this->testTable . ' (fieldblob) VALUES (\'foo\')'));
-		$id = $this->subject->sql_insert_id();
+		$id = $this->subject->getLastInsertId();
+		$this->assertEquals(1, $id);
 		$this->assertInstanceOf('Doctrine\\DBAL\\Driver\\Statement', $this->subject->adminQuery('DELETE FROM ' . $this->testTable . ' WHERE id=' . $id));
 	}
 
@@ -1069,7 +1069,7 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 			$binaryString .= chr($i);
 		}
 		$this->subject->executeInsertQuery($this->testTable, array($this->testField => $binaryString));
-		$id = $this->subject->sql_insert_id();
+		$id = $this->subject->getLastInsertId();
 		$entry = $this->subject->exec_SELECTgetRows($this->testField, $this->testTable, 'id = ' . $id);
 		$this->assertEquals($binaryString, $entry[0][$this->testField]);
 	}
@@ -1083,7 +1083,7 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 		$this->markTestIncomplete('Implemement exec_SELECTgetRows for Doctrine');
 		$testStringWithBinary = @gzcompress('sdfkljer4587');
 		$this->subject->executeInsertQuery($this->testTable, array($this->testField => $testStringWithBinary));
-		$id = $this->subject->sql_insert_id();
+		$id = $this->subject->getLastInsertId();
 		$entry = $this->subject->exec_SELECTgetRows($this->testField, $this->testTable, 'id = ' . $id);
 		$this->assertEquals($testStringWithBinary, $entry[0][$this->testField]);
 	}
