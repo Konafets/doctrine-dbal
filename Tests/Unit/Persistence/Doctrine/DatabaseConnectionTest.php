@@ -785,7 +785,7 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 *
 	 * @return void
 	 */
-	public function adminGetDbsReturnsAllDatabases() {
+	public function listDatabasesReturnsAllDatabases() {
 		$tempDatabasename = $this->subject->getDatabaseName();
 		$databases = $this->subject->adminQuery('SELECT SCHEMA_NAME FROM information_schema.SCHEMATA');
 		$result = $this->subject->listDatabases();

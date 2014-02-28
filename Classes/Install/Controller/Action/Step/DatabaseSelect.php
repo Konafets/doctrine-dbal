@@ -139,7 +139,7 @@ class DatabaseSelect extends Action\AbstractAction implements Action\Step\StepIn
 	 */
 	protected function getDatabaseList($initialInstallation) {
 		$this->initializeDatabaseConnection();
-		$databaseArray = $this->databaseConnection->adminGetDatabases();
+		$databaseArray = $this->databaseConnection->listDatabases();
 		// Remove mysql organizational tables from database list
 		$reservedDatabaseNames = array('mysql', 'information_schema', 'performance_schema');
 		$allPossibleDatabases = array_diff($databaseArray, $reservedDatabaseNames);
