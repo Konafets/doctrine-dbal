@@ -993,25 +993,10 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 	/**
 	 * This returns the count of the tables from the selected database
 	 *
-	 * @return array
+	 * @return int
 	 */
 	public function adminCountTables() {
-		if (!$this->isConnected) {
-			$this->connectDB();
-		}
-
-		$result[0] = -1;
-		$sql = 'SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = :databaseName';
-
-		$statement = $this->link->prepare($sql);
-		$statement->bindValue('databaseName', $this->getDatabaseName());
-		$isQuerySuccess = $statement->execute();
-
-		if ($isQuerySuccess !== FALSE) {
-			$result = $statement->fetchAll(\PDO::FETCH_COLUMN);
-		}
-
-		return $result[0];
+		return $this->countTables();
 	}
 
 	/**

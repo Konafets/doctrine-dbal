@@ -727,8 +727,7 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @return void
 	 */
 	public function adminCountTablesReturnsNumericValue() {
-		$this->markTestIncomplete('Implement adminCountTables behavior for Doctrine');
-		$this->assertTrue(is_numeric($this->subject->adminCountTables()));
+		$this->assertTrue(is_numeric($this->subject->countTables()));
 	}
 
 	/**

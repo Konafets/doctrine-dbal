@@ -1272,6 +1272,30 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	}
 
 	/**
+	 * This returns the count of the tables from the selected database
+	 *
+	 * @return int
+	 */
+	public function countTables() {
+		if (!$this->isConnected) {
+			$this->connectDB();
+		}
+
+		$result[0] = -1;
+		$sql = 'SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = :databaseName';
+
+		$statement = $this->link->prepare($sql);
+		$statement->bindValue('databaseName', $this->getDatabaseName());
+		$isQuerySuccess = $statement->execute();
+
+		if ($isQuerySuccess !== FALSE) {
+			$result = $statement->fetchAll(\PDO::FETCH_COLUMN);
+		}
+
+		return $result[0];
+	}
+
+	/**
 	 * Returns information about each field in the $table (quering the DBMS)
 	 * In a DBAL this should look up the right handler for the table and return compatible information
 	 * This function is important not only for the Install Tool but probably for

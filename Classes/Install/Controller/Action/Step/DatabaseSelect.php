@@ -153,7 +153,7 @@ class DatabaseSelect extends Action\AbstractAction implements Action\Step\StepIn
 			foreach ($allPossibleDatabases as $database) {
 				$this->databaseConnection->setDatabaseName($database);
 				$this->databaseConnection->selectDb();
-				$tableCount = $this->databaseConnection->adminCountTables();
+				$tableCount = $this->databaseConnection->countTables();
 				$databases[] = array(
 					'name' => $database,
 					'tables' => $tableCount,
