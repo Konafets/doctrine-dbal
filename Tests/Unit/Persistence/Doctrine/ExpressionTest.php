@@ -45,7 +45,7 @@ class ExpressionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * Set the tests up
 	 */
 	public function setUp() {
-		$GLOBALS['TYPO3_DB']->connectDB();
+		$GLOBALS['TYPO3_DB']->connectDatabase();
 		$this->subject = $GLOBALS['TYPO3_DB']->createDeleteQuery()->expr;
 	}
 

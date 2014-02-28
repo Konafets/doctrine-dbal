@@ -99,7 +99,7 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 		$this->subject->setDatabasePassword(TYPO3_db_password);
 		$this->subject->setDatabasePort($GLOBALS['TYPO3_DB']->getDatabasePort());
 		$this->subject->setDatabaseHost($GLOBALS['TYPO3_DB']->getDatabaseHost());
-		$this->subject->connectDB();
+		$this->subject->connectDatabase();
 
 		$this->testTable       = 'test_t3lib_dbtest';
 		$this->testField       = 'fieldblob';
@@ -594,17 +594,37 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 		return $mock->getMock();
 	}
 
-
 	/**
 	 * @test
 	 */
-	public function connectDBConnectsDatabase() {
+	public function connectDatabaseConnectsDatabase() {
+		$this->subject->disconnectIfConnected();
+		$this->assertFalse($this->subject->isConnected());
+		$this->subject->connectDatabase();
+		$this->assertTrue($this->subject->isConnected());
+	}
+
+
+	/**
+	 * @test
+	 *
+	 * @return void
+	 */
+	public function connectDatabaseConnectsToDatabaseWithoutErrors() {
+		$this->subject->close();
+		$this->assertFalse($this->subject->isConnected());
+		$this->subject->connectDatabase();
+		$this->assertTrue($this->subject->isConnected());
+	}
+	/**
+	 * @test
+	 */
+	public function connectDbConnectsDatabase() {
 		$this->subject->disconnectIfConnected();
 		$this->assertFalse($this->subject->isConnected());
 		$this->subject->connectDB();
 		$this->assertTrue($this->subject->isConnected());
 	}
-
 
 	/**
 	 * @test
@@ -617,11 +637,6 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 		$this->subject->connectDB();
 		$this->assertTrue($this->subject->isConnected());
 	}
-
-
-	/**
-	 * Tests for legacy methods
-	 */
 
 	/**
 	 * Data Provider for cleanIntArrayReturnsCleanedArray()

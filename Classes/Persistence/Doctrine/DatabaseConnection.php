@@ -1278,7 +1278,7 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	 */
 	public function countTables() {
 		if (!$this->isConnected) {
-			$this->connectDB();
+			$this->connectDatabase();
 		}
 
 		$result[0] = -1;
@@ -1364,7 +1364,7 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	 */
 	public function listDatabaseCharsets() {
 		if (!$this->isConnected) {
-			$this->connectDB();
+			$this->connectDatabase();
 		}
 
 		$output = array();

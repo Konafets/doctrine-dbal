@@ -737,7 +737,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 	 */
 	public function preparedSelectQuery($selectFields, $fromTable, $whereClause, $groupBy = '', $orderBy = '', $limit = ''){
 		if (!$this->isConnected) {
-			$this->connectDB();
+			$this->connectDatabase();
 		}
 
 		$sql = $this->SELECTquery($selectFields, $fromTable, $whereClause, $groupBy, $orderBy, $limit);
@@ -758,7 +758,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 	 */
 	public function exec_PREPAREDquery($query, array $queryComponents) {
 		if (!$this->isConnected) {
-			$this->connectDB();
+			$this->connectDatabase();
 		}
 		$res = $this->link->query($query);
 		if ($this->getDebugMode()) {
@@ -971,7 +971,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 	 */
 	public function sql_query($query) {
 		if (!$this->isConnected) {
-			$this->connectDB();
+			$this->connectDatabase();
 		}
 
 		$stmt = $this->link->query($query);
@@ -1207,7 +1207,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 	 */
 	public function quoteStr($str, $table) {
 		if (!$this->isConnected) {
-			$this->connectDB();
+			$this->connectDatabase();
 		}
 
 		$quotedResult = $this->quote($str);

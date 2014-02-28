@@ -62,7 +62,7 @@ class UpdateQueryTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @return void
 	 */
 	public function setUp() {
-		$GLOBALS['TYPO3_DB']->connectDB();
+		$GLOBALS['TYPO3_DB']->connectDatabase();
 		$this->subject = $GLOBALS['TYPO3_DB']->createUpdateQuery();
 		$this->testTable = 'test_t3lib_dbtest';
 		$this->testField = 'fieldblob';
