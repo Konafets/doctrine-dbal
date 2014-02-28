@@ -1023,38 +1023,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 	 * @deprecated
 	 */
 	public function admin_get_charsets() {
-		return $this->adminGetCharset();
-	}
-
-	/**
-	 * Returns information about the character sets supported by the current DBM
-	 * This function is important not only for the Install Tool but probably for
-	 * DBALs as well since they might need to look up table specific information
-	 * in order to construct correct queries. In such cases this information should
-	 * probably be cached for quick delivery.
-	 *
-	 * This is used by the Install Tool to convert tables tables with non-UTF8 charsets
-	 * Use in Install Tool only!
-	 *
-	 * @return array Array with Charset as key and an array of "Charset", "Description", "Default collation", "Maxlen" as values
-	 * @deprecated
-	 */
-	public function adminGetCharset() {
-		if (!$this->isConnected) {
-			$this->connectDB();
-		}
-
-		$output = array();
-		$stmt = $this->adminQuery('SHOW CHARACTER SET');
-
-		if ($stmt !== FALSE) {
-			while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-				$output[$row['Charset']] = $row;
-			}
-			$stmt->closeCursor();
-		}
-
-		return $output;
+		return $this->listDatabaseCharsets();
 	}
 
 	/**
