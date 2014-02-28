@@ -753,7 +753,7 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 *
 	 * @return void
 	 */
-	public function adminGetKeysReturnIndexKeysOfTable() {
+	public function listKeysReturnIndexKeysOfTable() {
 		$result = $this->subject->listKeys($this->testTable);
 		$this->assertEquals('id', $result[0]['Column_name']);
 	}
