@@ -176,6 +176,6 @@ class DatabaseSelect extends Action\AbstractAction implements Action\Step\StepIn
 		$this->databaseConnection->setDatabasePort($GLOBALS['TYPO3_CONF_VARS']['DB']['port']);
 		$this->databaseConnection->setDatabaseSocket($GLOBALS['TYPO3_CONF_VARS']['DB']['socket']);
 		$this->databaseConnection->setDatabaseName($GLOBALS['TYPO3_CONF_VARS']['DB']['database']);
-		$this->databaseConnection->sql_pconnect();
+		$this->databaseConnection->connectDatabase();
 	}
 }
