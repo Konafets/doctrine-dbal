@@ -80,7 +80,7 @@ class DatabaseSelect extends Action\AbstractAction implements Action\Step\StepIn
 			// Only store database information when it's empty
 			$this->databaseConnection->setDatabaseName($postValues['existing']);
 			$this->databaseConnection->selectDb();
-			$existingTables = $this->databaseConnection->adminGetTables();
+			$existingTables = $this->databaseConnection->listTables();
 			$isInitialInstallation = $configurationManager->getConfigurationValueByPath('SYS/isInitialInstallationInProgress');
 			if (!$isInitialInstallation || count($existingTables) === 0) {
 				$localConfigurationPathValuePairs['DB/database'] = $postValues['existing'];

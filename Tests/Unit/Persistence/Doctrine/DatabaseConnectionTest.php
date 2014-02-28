@@ -774,7 +774,7 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 *
 	 * @return void
 	 */
-	public function adminGetTablesReturnAllTablesFromDatabase() {
+	public function listTablesReturnAllTablesFromDatabase() {
 		$result = $this->subject->listTables();
 		$this->assertArrayHasKey('tt_content', $result);
 		$this->assertArrayHasKey('pages', $result);
