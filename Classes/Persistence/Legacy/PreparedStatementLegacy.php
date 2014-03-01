@@ -363,7 +363,7 @@ class PreparedStatementLegacy {
 	 * @api
 	 */
 	public function rowCount() {
-		return $GLOBALS['TYPO3_DB']->sql_num_rows($this->resource);
+		return $GLOBALS['TYPO3_DB']->getResultRowCount($this->resource);
 	}
 
 	/**
