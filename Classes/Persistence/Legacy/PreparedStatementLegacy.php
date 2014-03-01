@@ -353,7 +353,7 @@ class PreparedStatementLegacy {
 	 * @api
 	 */
 	public function free() {
-		$GLOBALS['TYPO3_DB']->sql_free_result($this->resource);
+		$GLOBALS['TYPO3_DB']->freeResult($this->resource);
 	}
 
 	/**

@@ -302,7 +302,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 				}
 				array_pop($output);
 			}
-			$this->sql_free_result($stmt);
+			$this->freeResult($stmt);
 		} else {
 			$output = NULL;
 		}
@@ -338,7 +338,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 			} else {
 				$output = $this->sql_fetch_assoc($stmt);
 			}
-			$this->sql_free_result($stmt);
+			$this->freeResult($stmt);
 		}
 
 		return $output;
@@ -360,7 +360,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 		if ($resultSet !== FALSE) {
 			list($count) = $this->sql_fetch_row($resultSet);
 			$count = intval($count);
-			$this->sql_free_result($resultSet);
+			$this->freeResult($resultSet);
 		}
 
 		return $count;
@@ -1391,7 +1391,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 				$explainOutput[] = $tempRow;
 				$explainTables[] = $tempRow['table'];
 			}
-			$this->sql_free_result($res);
+			$this->freeResult($res);
 		}
 		$indicesOutput = array();
 		// Notice: Rows are skipped if there is only one result, or if no conditions are set
@@ -1410,10 +1410,10 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 						while ($tempRow = $this->sql_fetch_assoc($res)) {
 							$indicesOutput[] = $tempRow;
 						}
-						$this->sql_free_result($res);
+						$this->freeResult($res);
 					}
 				}
-				$this->sql_free_result($tableRes);
+				$this->freeResult($tableRes);
 			}
 		} else {
 			$debug = FALSE;
