@@ -520,6 +520,52 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	/**
 	 * @test
 	 */
+	public function executeUpdateQueryUpdatesValues() {
+		$this->markTestSkipped('TBD');
+	}
+
+	/**
+	 * @test
+	 */
+	public function updateQueryReturnsCorrectSqlQuery() {
+		$this->markTestIncomplete('Not ready yet');
+		$result = $this->subject->updateQuery($this->testTable, array($this->testField => 3), array($this->testField => 'Foo', $this->testFieldSecond => 8));
+		$expectedSql = 'UPDATE ' . $this->testTable .
+				' SET ' . $this->testField . ' = ?, ' . $this->testFieldSecond . ' = ?' .
+				' WHERE ' . $this->testField . ' = ?';
+
+		$this->assertEquals($expectedSql, $result);
+	}
+
+	/**
+	 * @test
+	 */
+	public function updateQueryReturnsCorrectSqlQueryWithParameter() {
+		$this->markTestIncomplete('Not ready yet');
+		$result = $this->subject->updateQuery($this->testTable, array($this->testField => 3), array($this->testField => 'Foo', $this->testFieldSecond => 8), array(), TRUE);
+		$expectedSql = 'UPDATE ' . $this->testTable .
+				' SET ' . $this->testField . ' = ?, ' . $this->testFieldSecond . ' = ?' .
+				' WHERE ' . $this->testField . ' = ? [Foo, 8, 3]';
+
+		$this->assertEquals($expectedSql, $result);
+	}
+
+	/**
+	 * @test
+	 *
+	 * @return void
+	 */
+	public function updateQueryCreateValidQuery() {
+		$this->assertSame(1, $this->subject->getDatabaseHandle()->insert($this->testTable, array($this->testField => 'foo')));
+		$id = $this->subject->getLastInsertId();
+		$fieldsValues = array($this->testField => 'May the force be with you.');
+		$where = array('id' => $id);
+		$queryExpected =
+			'UPDATE ' . $this->testTable . ' SET ' . $this->testField . ' = May the force be with you. WHERE id=' . $id;
+		$queryGenerated = $this->subject->updateQuery($this->testTable, $where, $fieldsValues)->getSql();
+		$this->assertSame($queryExpected, $queryGenerated);
+	}
+
 	public function createInsertQueryReturnsInsertQueryObject() {
 		$this->assertInstanceOf(
 				'\TYPO3\DoctrineDbal\Persistence\Database\InsertQueryInterface',
