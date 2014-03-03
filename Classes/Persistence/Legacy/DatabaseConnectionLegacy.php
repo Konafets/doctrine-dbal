@@ -599,11 +599,10 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 				}
 			}
 			// Build query
-			$query = 'UPDATE ' . $table . ' SET ' . implode(',', $fields) . (strlen($where) > 0 ? ' WHERE ' . $where : '');
+			$query = 'UPDATE ' . $table . ' SET ' . join(',', $fields) . ((string)$where !== '' ? ' WHERE ' . $where : '');
 			if ($this->getDebugMode() || $this->store_lastBuiltQuery) {
 				$this->debug_lastBuiltQuery = $query;
 			}
-
 			return $query;
 		} else {
 			throw new \InvalidArgumentException('TYPO3 Fatal Error: "Where" clause argument for UPDATE query was not a string in $this->UPDATEquery() !', 1270853880);
