@@ -128,6 +128,12 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 		unset($this->subject, $this->table, $this->schemaManager, $this->schema);
 	}
 
+	/******************************
+	 *
+	 * Tests for setter and getter
+	 *
+	 *****************************/
+
 	/**
 	 * @test
 	 */
@@ -454,6 +460,23 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 
 	/**
 	 * @test
+	 *
+	 * @return void
+	 */
+	public function disconnectIfConnectedDisconnects() {
+		$this->assertTrue($this->subject->isConnected());
+		$this->subject->setDatabaseHost('127.0.0.1');
+		$this->assertFalse($this->subject->isConnected());
+	}
+
+	/***************************
+	 *
+	 * Tests for DELETE queries
+	 *
+	 ***************************/
+
+	/**
+	 * @test
 	 */
 	public function createDeleteQueryReturnsDeleteQueryObject() {
 		$this->assertInstanceOf(
@@ -500,12 +523,27 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 		$this->assertSame($expectedSql, $queryGenerated);
 	}
 
+	/****************************
+	 *
+	 * Tests for TRUNCATE queries
+	 *
+	 ****************************/
+
+	/**
+	 * @test
+	 */
 	public function createTruncateQueryReturnsTruncateQueryObject() {
 		$this->assertInstanceOf(
 				'\TYPO3\DoctrineDbal\Persistence\Database\TruncateQueryInterface',
 				$this->subject->createTruncateQuery()
 		);
 	}
+
+	/***************************
+	 *
+	 * Tests for UPDATE queries
+	 *
+	 ***************************/
 
 	/**
 	 * @test
@@ -566,12 +604,66 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 		$this->assertSame($queryExpected, $queryGenerated);
 	}
 
+	/***************************
+	 *
+	 * Tests for INSERT queries
+	 *
+	 ***************************/
+
+	/**
+	 * @test
+	 */
 	public function createInsertQueryReturnsInsertQueryObject() {
 		$this->assertInstanceOf(
 				'\TYPO3\DoctrineDbal\Persistence\Database\InsertQueryInterface',
 				$this->subject->createInsertQuery()
 		);
 	}
+
+	/**
+	 * @test
+	 */
+	public function executeInsertQueryReturnsInsertRows() {
+		$fields = array(
+				$this->testField => 'Foo',
+				$this->testFieldSecond => 'Bar'
+			);
+
+		$result = $this->subject->executeInsertQuery($this->testTable, $fields);
+		$this->assertSame(1, $result);
+	}
+
+	/**
+	 * @test
+	 */
+	public function executeInsertQueryReturnsCorrectAmountOfAffectedRows() {
+		$rows = $this->subject->executeInsertQuery($this->testTable, array($this->testField => 'test'));
+		$this->assertEquals(1, $rows);
+		$this->assertEquals(1, $this->subject->getAffectedRows());
+	}
+
+	/***************************
+	 *
+	 * Tests for SELECT queries
+	 *
+	 ***************************/
+
+	/**
+	 * @test
+	 */
+	public function createSelectQueryReturnsSelectQueryObject() {
+		$this->markTestIncomplete('Implement createSelectQuery');
+		$this->assertInstanceOf(
+				'\TYPO3\DoctrineDbal\Persistence\Database\SelectQueryInterface',
+				$this->subject->createSelectQuery()
+		);
+	}
+
+	/***************************
+	 *
+	 * Tests for Expression object
+	 *
+	 ***************************/
 
 	/**
 	 * @test
@@ -586,16 +678,6 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	/**
 	 * @test
 	 *
-	 */
-	public function executeInsertQueryReturnsCorrectAmountOfAffectedRows() {
-		$rows = $this->subject->executeInsertQuery($this->testTable, array($this->testField => 'test'));
-		$this->assertEquals(1, $rows);
-		$this->assertEquals(1, $this->subject->getAffectedRows());
-	}
-
-	/**
-	 * @test
-	 *
 	 * @return void
 	 */
 	public function getAffectedRowsReturnsInteger() {
@@ -603,21 +685,14 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 		$this->assertTrue(is_integer($this->subject->getAffectedRows()));
 	}
 
-	/**
-	 * @test
-	 */
-	public function createSelectQueryReturnsSelectQueryObject() {
-		$this->markTestIncomplete('Implement createSelectQuery');
-		$this->assertInstanceOf(
-				'\TYPO3\DoctrineDbal\Persistence\Database\SelectQueryInterface',
-				$this->subject->createSelectQuery()
-		);
-	}
+	/***************************
+	 *
+	 * Tests for sqlErrorMessage
+	 *
+	 ***************************/
 
 	/**
 	 * @test
-	 *
-	 * @return void
 	 */
 	public function sqlErrorMessageNoError() {
 		$this->subject->executeInsertQuery($this->testTable, array($this->testField => 'testB'));
@@ -627,7 +702,6 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	/**
 	 * @test
 	 *
-	 * @return void
 	 * @expectedException \Doctrine\DBAL\DBALException
 	 * @expectedExceptionMessage SQLSTATE[42S22]: Column not found: 1054 Unknown column 'test' in 'field list'
 	 */
@@ -636,10 +710,14 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 		$this->assertEquals('Unknown column \'test\' in \'field list\'', $this->subject->sqlErrorMessage());
 	}
 
+	/***************************
+	 *
+	 * Tests for SqlErrorCode
+	 *
+	 ***************************/
+
 	/**
 	 * @test
-	 *
-	 * @return void
 	 */
 	public function noSqlErrorCode() {
 		$this->subject->executeInsertQuery($this->testTable, array($this->testField => 'testB'));
@@ -657,6 +735,12 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 		$this->subject->executeInsertQuery($this->testTable, array('test' => 'testB'));
 		$this->assertEquals(1054, $this->subject->sqlErrorCode());
 	}
+
+	/***************************
+	 *
+	 * Mocking objects
+	 *
+	 ***************************/
 
 	/**
 	 * Returns a Connection mock
@@ -757,17 +841,11 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 		$this->assertSame('234,-434,4,0,1', $result);
 	}
 
-
-	/**
-	 * @test
+	/**********************
 	 *
-	 * @return void
-	 */
-	public function disconnectIfConnectedDisconnects() {
-		$this->assertTrue($this->subject->isConnected());
-		$this->subject->setDatabaseHost('127.0.0.1');
-		$this->assertFalse($this->subject->isConnected());
-	}
+	 * Tests for adminQuery
+	 *
+	 **********************/
 
 	/**
 	 * @test
@@ -808,7 +886,7 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @return void
 	 */
 	public function adminQueryReturnsResultForSelectQuery() {
-		$this->markTestIncomplete('Implement sql_insert_id behavior for Doctrine');
+		$this->markTestIncomplete('What does this test?');
 		$this->assertInstanceOf('Doctrine\\DBAL\\Driver\\Statement', $this->subject->adminQuery('INSERT INTO ' . $this->testTable . ' (fieldblob) VALUES (\'foo\')'));
 		$stmt = $this->subject->adminQuery('SELECT fieldblob FROM ' . $this->testTable);
 		$this->assertInstanceOf('Doctrine\\DBAL\\Driver\\Statement', $stmt);
@@ -825,6 +903,18 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	public function adminCountTablesReturnsNumericValue() {
 		$this->assertTrue(is_numeric($this->subject->countTables()));
 	}
+
+	/**********************
+	 *
+	 * Tests for list methods
+	 *
+	 * - listDatabaseCharsets
+	 * - listKeys
+	 * - listFields
+	 * - listTables
+	 * - listDatabases
+	 *
+	 **********************/
 
 	/**
 	 * @test
@@ -894,15 +984,20 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 		$this->subject->setDatabaseName($tempDatabasename);
 	}
 
+	/************************************
+	 *
+	 * Tests concerning getResultRowCount
+	 *
+	 ************************************/
 
 	/**
-	 * Data Provider for sqlNumRowsReturnsCorrectAmountOfRows()
+	 * Data Provider for getResultRowCountReturnsCorrectAmountOfRows()
 	 *
-	 * @see sqlNumRowsReturnsCorrectAmountOfRows()
+	 * @see getResultRowCountReturnsCorrectAmountOfRows()
 	 *
 	 * @return array
 	 */
-	public function sqlNumRowsReturnsCorrectAmountOfRowsProvider() {
+	public function getResultRowCountReturnsCorrectAmountOfRowsDataProvider() {
 		$sql1 = 'SELECT * FROM test_t3lib_dbtest WHERE fieldblob=\'baz\'';
 		$sql2 = 'SELECT * FROM test_t3lib_dbtest WHERE fieldblob=\'baz\' OR fieldblob=\'bar\'';
 		$sql3 = 'SELECT * FROM test_t3lib_dbtest WHERE fieldblob=\'baz\' OR fieldblob=\'bar\' OR fieldblob=\'foo\'';
@@ -916,7 +1011,7 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 
 	/**
 	 * @test
-	 * @dataProvider sqlNumRowsReturnsCorrectAmountOfRowsProvider
+	 * @dataProvider getResultRowCountReturnsCorrectAmountOfRowsDataProvider
 	 *
 	 * @param string $sql
 	 * @param string $expectedResult
@@ -929,9 +1024,9 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 		$this->assertSame(1, $this->subject->executeInsertQuery($this->testTable, array($this->testField => 'baz')));
 
 		$res = $this->subject->adminQuery($sql);
-		$numRows = $this->subject->getResultRowCount($res);
+		$rowCount = $this->subject->getResultRowCount($res);
 
-		$this->assertSame($expectedResult, $numRows);
+		$this->assertSame($expectedResult, $rowCount);
 	}
 
 	/**
@@ -946,6 +1041,12 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 		$numRows = $this->subject->getResultRowCount($res);
 		$this->assertFalse($numRows);
 	}
+
+	/*****************************
+	 *
+	 * Tests concerning fetchAssoc
+	 *
+	 *****************************/
 
 	/**
 	 * Prepares the test table for the fetch* Tests
@@ -1090,6 +1191,12 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 		}
 	}
 
+	/*****************************
+	 *
+	 * Tests concerning fetchRow
+	 *
+	 *****************************/
+
 	/**
 	 * @test
 	 *
@@ -1110,6 +1217,12 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 			$i++;
 		}
 	}
+
+	/*****************************
+	 *
+	 * Tests concerning freeResult
+	 *
+	 *****************************/
 
 	/**
 	 * @test
@@ -1135,9 +1248,12 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 		$this->assertTrue($this->subject->freeResult($res));
 	}
 
-	//////////////////////////////////////////////////
-	// Write/Read tests for charsets and binaries
-	//////////////////////////////////////////////////
+	/********************************************
+	 *
+	 * Write/Read tests for charsets and binaries
+	 *
+	 ********************************************/
+
 	/**
 	 * @test
 	 *
@@ -1169,9 +1285,12 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 		$this->assertEquals($testStringWithBinary, $entry[0][$this->testField]);
 	}
 
-	////////////////////////////////
-	// Tests concerning listQuery
-	////////////////////////////////
+	/*****************************
+	 *
+	 * Tests concerning listQuery
+	 *
+	 *****************************/
+
 	/**
 	 * @test
 	 *
@@ -1184,9 +1303,11 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 		$this->assertEquals($this->subject->listQuery('dummy', 44, 'table'), $this->subject->listQuery('dummy', '44', 'table'));
 	}
 
-	////////////////////////////////
-	// Tests concerning searchQuery
-	////////////////////////////////
+	/*******************************
+	 *
+	 * Tests concerning searchQuery
+	 *
+	 *******************************/
 
 	/**
 	 * Data provider for searchQueryCreatesQuery
@@ -1267,9 +1388,12 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 		$this->assertSame($expectedResult, $result);
 	}
 
-	/////////////////////////////////////////////////
-	// Tests concerning escapeStringForLikeComparison
-	/////////////////////////////////////////////////
+	/*************************************************
+	 *
+	 * Tests concerning escapeStringForLikeComparison
+	 *
+	 *************************************************/
+
 	/**
 	 * @test
 	 *
@@ -1280,34 +1404,11 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 		$this->assertEquals('foo\\_bar\\%', $this->subject->escapeStrForLike('foo_bar%', 'table'));
 	}
 
-	/**
-	 * @test
-	 */
-	public function executeDeleteQueryReturnsInsertRows() {
-		$fields = array(
-				$this->testField => 'Foo',
-				$this->testFieldSecond => 'Bar'
-			);
-
-		$inserted = $this->subject->executeInsertQuery($this->testTable, $fields);
-		$this->assertSame(1, $inserted);
-
-		$deleted = $this->subject->executeDeleteQuery($this->testTable, $fields);
-		$this->assertSame(1, $deleted);
-	}
-
-	/**
-	 * @test
-	 */
-	public function executeInsertQueryReturnsInsertRows() {
-		$fields = array(
-				$this->testField => 'Foo',
-				$this->testFieldSecond => 'Bar'
-			);
-
-		$result = $this->subject->executeInsertQuery($this->testTable, $fields);
-		$this->assertSame(1, $result);
-	}
+	/******************************
+	 *
+	 * Tests concerning quoteColumn
+	 *
+	 ******************************/
 
 	/**
 	 * @test
@@ -1323,12 +1424,24 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 		$this->assertEquals('`pages`.`column`', $this->subject->quoteColumn('column', 'pages'));
 	}
 
+	/******************************
+	 *
+	 * Tests concerning quoteTable
+	 *
+	 ******************************/
+
 	/**
 	 * @test
 	 */
 	public function quoteTable() {
 		$this->assertEquals('`pages`', $this->subject->quoteTable('pages'));
 	}
+
+	/***********************************
+	 *
+	 * Tests concerning quoteIdentifier
+	 *
+	 ***********************************/
 
 	/**
 	 * @test
