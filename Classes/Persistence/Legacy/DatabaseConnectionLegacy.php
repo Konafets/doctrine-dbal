@@ -148,7 +148,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 	 * @return \Doctrine\DBAL\Driver\Statement A PDOStatement object
 	 * @deprecated
 	 */
-	public function exec_INSERTquery($table, $fieldsValues, $noQuoteFields = FALSE) {
+	public function exec_INSERTquery($table, array $fieldsValues, $noQuoteFields = FALSE) {
 		$stmt = $this->query($this->INSERTquery($table, $fieldsValues, $noQuoteFields));
 
 		if ($this->getDebugMode()) {
@@ -265,7 +265,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 	 * @see exec_SELECTquery()
 	 * @deprecated
 	 */
-	public function exec_SELECT_queryArray($queryParts) {
+	public function exec_SELECT_queryArray(array $queryParts) {
 		return $this->exec_SELECTquery($queryParts['SELECT'], $queryParts['FROM'], $queryParts['WHERE'], $queryParts['GROUPBY'], $queryParts['ORDERBY'], $queryParts['LIMIT']);
 	}
 
@@ -378,7 +378,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 	 * @return \Doctrine\DBAL\Driver\Statement A PDOStatement object
 	 * @deprecated
 	 */
-	public function exec_UPDATEquery($table, $where, $fieldsValues, $noQuoteFields = FALSE) {
+	public function exec_UPDATEquery($table, $where, array $fieldsValues, $noQuoteFields = FALSE) {
 		$stmt = $this->query($this->UPDATEquery($table, $where, $fieldsValues, $noQuoteFields));
 
 		if ($this->getDebugMode()) {
@@ -453,7 +453,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 	 * @return string Full SQL query for INSERT (unless $fieldsValues does not contain any elements in which case it will be FALSE)
 	 * @deprecated
 	 */
-	public function INSERTquery($table, $fieldsValues, $noQuoteFields = FALSE) {
+	public function INSERTquery($table, array $fieldsValues, $noQuoteFields = FALSE) {
 		// Table and fieldnames should be "SQL-injection-safe" when supplied to this
 		// function (contrary to values in the arrays which may be insecure).
 		if (is_array($fieldsValues) && count($fieldsValues)) {
@@ -582,7 +582,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 	 * @throws \InvalidArgumentException
 	 * @deprecated
 	 */
-	public function UPDATEquery($table, $where, $fieldsValues, $noQuoteFields = FALSE) {
+	public function UPDATEquery($table, $where, array $fieldsValues, $noQuoteFields = FALSE) {
 		// Table and fieldnames should be "SQL-injection-safe" when supplied to this
 		// function (contrary to values in the arrays which may be insecure).
 		if (is_string($where)) {
@@ -591,7 +591,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 				$hookObject->UPDATEquery_preProcessAction($table, $where, $fieldsValues, $noQuoteFields, $this);
 			}
 			$fields = array();
-			if (is_array($fieldsValues) && count($fieldsValues)) {
+			if (count($fieldsValues)) {
 				// Quote and escape values
 				$nArr = $this->fullQuoteArray($fieldsValues, $table, $noQuoteFields, TRUE);
 				foreach ($nArr as $k => $v) {
@@ -700,7 +700,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 	 *
 	 * @return string WHERE clause for search
 	 */
-	public function searchQuery($searchWords, $fields, $table, $constraint = self::AND_Constraint) {
+	public function searchQuery(array $searchWords, array $fields, $table, $constraint = self::AND_Constraint) {
 		switch ($constraint) {
 			case self::OR_Constraint:
 				$constraint = 'OR';
@@ -1179,7 +1179,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 	 * @see cleanIntArray()
 	 * @deprecated
 	 */
-	public function fullQuoteArray($arr, $table, $noQuote = FALSE, $allowNull = FALSE) {
+	public function fullQuoteArray(array $arr, $table, $noQuote = FALSE, $allowNull = FALSE) {
 		if (is_string($noQuote)) {
 			$noQuote = explode(',', $noQuote);
 		} elseif (!is_array($noQuote)) {
