@@ -466,7 +466,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 			$query = 'INSERT INTO ' . $table . ' (' . implode(',', array_keys($fieldsValues)) . ') VALUES ' . '(' . implode(',', $fieldsValues) . ')';
 
 			// Return query
-			if ($this->getDebugMode() || $this->store_lastBuiltQuery) {
+			if ($this->getDebugMode() || $this->getStoreLastBuildQuery()) {
 				$this->debug_lastBuiltQuery = $query;
 			}
 
@@ -503,7 +503,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 			}
 			$query .= implode(', ', $rowSQL);
 			// Return query
-			if ($this->getDebugMode() || $this->store_lastBuiltQuery) {
+			if ($this->getDebugMode() || $this->getStoreLastBuildQuery()) {
 				$this->debug_lastBuiltQuery = $query;
 			}
 
@@ -539,7 +539,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 		// Group by
 		$query .= strlen($limit) > 0 ? ' LIMIT ' . $limit : '';
 		// Return query
-		if ($this->getDebugMode() || $this->store_lastBuiltQuery) {
+		if ($this->getDebugMode() || $this->getStoreLastBuildQuery()) {
 			$this->debug_lastBuiltQuery = $query;
 		}
 
@@ -562,7 +562,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 		// Build basic query:
 		$query = 'SELECT ' . $selectFields . ' FROM ' . $fromTable . (strlen($whereClause) > 0 ? ' WHERE ' . $whereClause : '');
 		// Return query
-		if ($this->getDebugMode() || $this->store_lastBuiltQuery) {
+		if ($this->getDebugMode() || $this->getStoreLastBuildQuery()) {
 			$this->debug_lastBuiltQuery = $query;
 		}
 
@@ -600,7 +600,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 			}
 			// Build query
 			$query = 'UPDATE ' . $table . ' SET ' . join(',', $fields) . ((string)$where !== '' ? ' WHERE ' . $where : '');
-			if ($this->getDebugMode() || $this->store_lastBuiltQuery) {
+			if ($this->getDebugMode() || $this->getStoreLastBuildQuery()) {
 				$this->debug_lastBuiltQuery = $query;
 			}
 			return $query;
@@ -626,7 +626,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 		// Build basic query:
 		$query = 'TRUNCATE TABLE ' . $table;
 		// Return query:
-		if ($this->getDebugMode() || $this->store_lastBuiltQuery) {
+		if ($this->getDebugMode() || $this->getStoreLastBuildQuery()) {
 			$this->debug_lastBuiltQuery = $query;
 		}
 
@@ -651,7 +651,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 			}
 			// Table and fieldnames should be "SQL-injection-safe" when supplied to this function
 			$query = 'DELETE FROM ' . $table . (strlen($where) > 0 ? ' WHERE ' . $where : '');
-			if ($this->getDebugMode() || $this->store_lastBuiltQuery) {
+			if ($this->getDebugMode() || $this->getStoreLastBuildQuery()) {
 				$this->debug_lastBuiltQuery = $query;
 			}
 

@@ -207,7 +207,7 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	 *
 	 * @var bool $store_lastBuiltQuery
 	 */
-	protected $store_lastBuiltQuery = FALSE;
+	public $store_lastBuiltQuery = FALSE;
 
 	/**
 	 * @var int $affectedRows The affected rows from the last UPDATE, INSERT or DELETE query
@@ -491,6 +491,30 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	 */
 	public function getDatabaseHandle() {
 		return $this->link;
+	}
+
+	/**
+	 * Enables/Disables the storage of the last statement
+	 *
+	 * @param $value
+	 *
+	 * @return $this
+	 * @api
+	 */
+	public function setStoreLastBuildQuery($value) {
+		$this->store_lastBuiltQuery = (bool)$value;
+
+		return $this;
+	}
+
+	/**
+	 * Returns the settings if the last build query should be stored
+	 *
+	 * @return bool
+	 * @api
+	 */
+	public function getStoreLastBuildQuery() {
+		return (bool)$this->store_lastBuiltQuery;
 	}
 
 	/**
@@ -1086,7 +1110,7 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 			$dbPlatform = $this->link->getDatabasePlatform();
 			$query = $dbPlatform->getTruncateTableSQL($table);
 
-			if ($this->getDebugMode() || $this->store_lastBuiltQuery) {
+			if ($this->getDebugMode() || $this->getStoreLastBuildQuery()) {
 				$this->debug_lastBuiltQuery = $query;
 			}
 
