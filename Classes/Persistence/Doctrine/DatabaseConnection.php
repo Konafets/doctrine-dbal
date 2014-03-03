@@ -1138,6 +1138,39 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	}
 
 	/**
+	 * Creates and returns a SQL UPDATE statement on a table without executes it
+	 *
+	 * @param string $tableName The name of the table to update.
+	 * @param array  $where     The update criteria. An associative array containing column-value pairs.
+	 * @param array  $data
+	 * @param bool   $noQuoteFields
+	 * @param array  $types     Types of the merged $data and $identifier arrays in that order.
+	 *
+	 * @throws \InvalidArgumentException
+	 * @internal param array $data An associative array containing column-value pairs.
+	 * @return \TYPO3\DoctrineDbal\Persistence\Doctrine\DeleteQuery
+	 */
+	public function updateQuery($tableName, array $where, array $data, $noQuoteFields = FALSE, array $types = array()) {
+		$query = $this->createUpdateQuery();
+		$query->update($tableName);
+
+		foreach ($data as $columnName => $column) {
+			$query->set($columnName, $column);
+		}
+		$whereArray = array();
+
+		if (count($where)) {
+			foreach ($where as $columnName => $value) {
+				$whereArray[] = $columnName . '=' . $value;
+			}
+		}
+
+		call_user_func_array(array($query, 'where'), $whereArray);
+
+		return $query;
+	}
+
+	/**
 	 * Creates an INSERT query object
 	 *
 	 * @return \TYPO3\DoctrineDbal\Persistence\Database\InsertQueryInterface
