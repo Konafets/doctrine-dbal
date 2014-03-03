@@ -465,6 +465,41 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	/**
 	 * @test
 	 */
+	public function executeDeleteQueryReturnsInsertRows() {
+		$fields = array(
+				$this->testField => 'Foo',
+				$this->testFieldSecond => 'Bar'
+			);
+
+		$inserted = $this->subject->executeInsertQuery($this->testTable, $fields);
+		$this->assertSame(1, $inserted);
+
+		$deleted = $this->subject->executeDeleteQuery($this->testTable, $fields);
+		$this->assertSame(1, $deleted);
+	}
+
+	/**
+	 * @test
+	 *
+	 * @return void
+	 */
+	public function deleteQueryWithoutWhereClauseCreateValidQuery() {
+		$expectedSql = 'DELETE FROM ' . $this->testTable;
+		$queryGenerated = $this->subject->deleteQuery($this->testTable)->getSql();
+		$this->assertSame($expectedSql, $queryGenerated);
+	}
+
+	/**
+	 * @test
+	 *
+	 * @return void
+	 */
+	public function deleteQueryCreateValidQuery() {
+		$expectedSql = 'DELETE FROM ' . $this->testTable . ' WHERE ' . $this->testField . '=Foo';
+		$queryGenerated = $this->subject->deleteQuery($this->testTable, array($this->testField => 'Foo'))->getSql();
+		$this->assertSame($expectedSql, $queryGenerated);
+	}
+
 	public function createTruncateQueryReturnsTruncateQueryObject() {
 		$this->assertInstanceOf(
 				'\TYPO3\DoctrineDbal\Persistence\Database\TruncateQueryInterface',

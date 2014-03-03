@@ -1041,6 +1041,32 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	}
 
 	/**
+	 * Creates and returns a SQL DELETE statement on a table without executes it
+	 *
+	 * @param string $tableName Database table name
+	 * @param array  $where The deletion criteria. An associative array containing column-value pairs eg. array('uid' => 1).
+	 * @param array  $types The types of identifiers.
+	 *
+	 * @return \TYPO3\DoctrineDbal\Persistence\Doctrine\DeleteQuery
+	 */
+	public function deleteQuery($tableName, array $where = array(), array $types = array()) {
+		$query = $this->createDeleteQuery();
+		$query->delete($tableName);
+
+		$whereArray = array();
+
+		if (count($where)) {
+			foreach ($where as $columnName => $value) {
+				$whereArray[] = $columnName . '=' . $value;
+			}
+
+			call_user_func_array(array($query, 'where'), $whereArray);
+		}
+
+		return $query;
+	}
+
+	/**
 	 * Creates a TRUNCATE TABLE SQL-statement
 	 *
 	 * @param string $table See exec_TRUNCATEquery()
