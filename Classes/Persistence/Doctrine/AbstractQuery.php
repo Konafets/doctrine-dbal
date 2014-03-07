@@ -29,9 +29,11 @@ namespace TYPO3\DoctrineDbal\Persistence\Doctrine;
  ***************************************************************/
 
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Statement;
-use Doctrine\DBAL\Query\QueryException;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\DoctrineDbal\Persistence\Exception\InvalidArgumentException;
+use TYPO3\DoctrineDbal\Persistence\Exception\InvalidQueryException;
 
 /**
  * Class AbstractQuery
@@ -280,8 +282,8 @@ abstract class AbstractQuery {
 	 *
 	 * @param array $constraints
 	 *
+	 * @throws \TYPO3\DoctrineDbal\Persistence\Exception\InvalidArgumentException
 	 * @return array
-	 * @throws \Doctrine\DBAL\Query\QueryException
 	 */
 	protected function validateConstraints(array $constraints) {
 		if (count($constraints) === 1 && is_array($constraints[0])) {
@@ -289,7 +291,7 @@ abstract class AbstractQuery {
 		}
 
 		if (count($constraints) === 0) {
-			throw new QueryException('No constraints given!');
+			throw new InvalidArgumentException('No constraints given!');
 		}
 
 		return $constraints;
