@@ -1051,6 +1051,7 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 		}
 
 		$this->affectedRows = $this->link->delete($table, $where, $types);
+		$this->table = $table;
 
 		if ($this->getDebugMode()) {
 			$this->debug('executeDeleteQuery');
