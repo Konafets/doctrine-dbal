@@ -874,7 +874,6 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 			$result = $resource->fetchAll();
 			if (isset($result[0]) && $result[0] && strpos($result[0]['@@SESSION.sql_mode'], 'NO_BACKSLASH_ESCAPES') !== FALSE) {
 				$modes = array_diff(GeneralUtility::trimExplode(',', $result[0]['@@SESSION.sql_mode']), array('NO_BACKSLASH_ESCAPES'));
-				// TODO: Make the prepared Statements working
 				$stmt = $this->link->prepare('SET sql_mode = :modes');
 				$stmt->bindValue('modes', implode(',', $modes));
 				$stmt->execute();

@@ -113,7 +113,7 @@ class UpdateQuery extends AbstractQuery implements UpdateQueryInterface {
 	public function where() {
 		$arguments = $this->validateConstraints(func_get_args());
 
-		foreach($arguments as $constraint) {
+		foreach ($arguments as $constraint) {
 			if ($constraint !== '') {
 				$this->where[] = $constraint;
 			}

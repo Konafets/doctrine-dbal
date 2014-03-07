@@ -403,14 +403,15 @@ interface QueryInterface {
 	 * @param string $table The table to delete from
 	 * @param string $alias The alias of the table
 	 *
-	 * @return \TYPO3\DoctrineDbal\Database\Query
+	 * @return object
 	 * @api
 	 */
 	public function delete($table, $alias = NULL);
 
 	/**
-	 * Returns the query as a string
+	 * Returns the SQL statement of this query as a string
 	 *
+	 * @throws \Doctrine\DBAL\Query\QueryException
 	 * @return string
 	 * @api
 	 */
