@@ -1108,18 +1108,6 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 	}
 
 	/**
-	 * Returns the list of tables from the default database, TYPO3_db (quering the DBMS)
-	 * In a DBAL this method should 1) look up all tables from the DBMS  of
-	 * the _DEFAULT handler and then 2) add all tables *configured* to be managed by other handlers
-	 *
-	 * @return array Array with table names as key and arrays with status information as value
-	 * @deprecated
-	 */
-	public function adminGetTables() {
-		return $this->listTables();
-	}
-
-	/**
 	 * This is the old version of the method. It make usage of the new one which follows the naming convention for method names
 	 * Please use the new one instead of this one.
 	 *
