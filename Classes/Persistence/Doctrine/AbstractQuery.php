@@ -241,6 +241,8 @@ abstract class AbstractQuery {
 	 * @api
 	 */
 	public function execute() {
+		$result = FALSE;
+
 		if ((!empty($this->boundParameters)) || (!empty($this->boundValues))) {
 			$stmt = $this->prepare();
 
@@ -248,21 +250,27 @@ abstract class AbstractQuery {
 				$this->lastStatement = $this->getSql();
 				$this->affectedRows = $stmt->rowCount();
 
-				return $this->affectedRows;
+				$result = $this->affectedRows;
 			} else {
-				return FALSE;
+				$result = FALSE;
 			}
 		} else {
 			if ($this->getType() == self::SELECT) {
-				$this->lastStatement = $this->getSql();
-
-				return $this->connection->executeQuery($this->getSQL());
+				$doctrineExecuteFunctionName = 'executeQuery';
 			} else {
-				$this->lastStatement = $this->getSql();
+				$doctrineExecuteFunctionName = 'executeUpdate';
+			}
 
-				return $this->connection->executeUpdate($this->getSQL());
+			$this->lastStatement = $this->getSql();
+
+			try {
+				$result = $this->connection->$doctrineExecuteFunctionName($this->getSQL());
+			} catch (DBALException $e) {
+				$result = FALSE;
 			}
 		}
+
+		return $result;
 	}
 
 	/**
