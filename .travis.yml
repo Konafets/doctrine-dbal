@@ -84,7 +84,6 @@ before_script:
   - if [[ "$DB" == "pgsql" ]]; then psql -uroot typo3_test < build-environment/dbimport/cache_tables.sql; fi
 
 script:
-#  - php -l
   - export TYPO3_PATH_WEB=$PWD
   - if [[ "$COVERAGE" == "1" ]]; then phpunit --coverage-clover coverage.clover --bootstrap $PWD/typo3/sysext/core/Build/UnitTestsBootstrap.php $PWD/typo3conf/ext/doctrine_dbal/Tests; fi 
     #- if [[ "$COVERAGE" == "0" ]]; then phpunit --bootstrap $PWD/typo3/sysext/core/Build/UnitTestsBootstrap.php $PWD/typo3conf/ext/doctrine_dbal/Tests; fi
