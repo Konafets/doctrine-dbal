@@ -27,11 +27,8 @@ before_script:
   #  - wget https://scrutinizer-ci.com/ocular.phar
 
   # Install build dependencies
-  - ls -lah
   - composer install
-  - ls -lah
   - cd ..
-  - ls -lah
     
   # Cloning the test helper repository
   - git clone --single-branch --branch $INTEGRATION --depth 1 git://github.com/Konafets/TYPO3-Travis-Integration.git build-environment
@@ -48,6 +45,11 @@ before_script:
   - mv build-environment/typo3conf .
   - git clone --single-branch --branch master --depth 1 https://git.typo3.org/TYPO3CMS/Extensions/phpunit.git typo3conf/ext/phpunit/
   - ls -lah
+  - ls -lah doctrine-dbal/vendor
+  - mkdir Packages
+  - cp -r doctrine-dbal/vendor Packages
+  - mv Packages/vendor Packages/Libraries
+  - ls -lah Packages/Libraries/
   - mv doctrine-dbal typo3conf/ext/doctrine_dbal
   - mkdir fileadmin
   - mkdir uploads
