@@ -87,5 +87,5 @@ script:
 #  - php -l
   - export TYPO3_PATH_WEB=$PWD
   - if [[ "$COVERAGE" == "1" ]]; then phpunit --coverage-clover coverage.clover --bootstrap $PWD/typo3/sysext/core/Build/UnitTestsBootstrap.php $PWD/typo3conf/ext/doctrine_dbal/Tests; fi 
-  - if [[ "$COVERAGE" == "0" ]]; then phpunit --bootstrap typo3/sysext/core/Build/UnitTestsBootstrap.php -c typo3/sysext/core/Build/UnitTests.xml typo3conf/ext/doctrine_dbal/Tests; fi
+    #- if [[ "$COVERAGE" == "0" ]]; then phpunit --bootstrap $PWD/typo3/sysext/core/Build/UnitTestsBootstrap.php $PWD/typo3conf/ext/doctrine_dbal/Tests; fi
 #  - if [[ "$COVERAGE" == "1" ]]; then php ocular.phar code-coverage:upload --format=php-clover coverage.clover; fi
