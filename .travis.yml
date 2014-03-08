@@ -48,7 +48,7 @@ before_script:
   - mv build-environment/typo3conf .
   - git clone --single-branch --branch master --depth 1 https://git.typo3.org/TYPO3CMS/Extensions/phpunit.git typo3conf/ext/phpunit/
   - ls -lah
-  - mv doctrine-dbal typo3conf/ext
+  - mv doctrine-dbal typo3conf/ext/doctrine_dbal
   - mkdir fileadmin
   - mkdir uploads
 
