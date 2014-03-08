@@ -28,6 +28,8 @@ before_script:
 
   # Install build dependencies
   - ls -lah
+  - composer install
+  - ls -lah
   - cd ..
   - ls -lah
     
