@@ -6,10 +6,10 @@ php:
   - 5.5
 
 env:
-   - DB=mysql TYPO3=thesis-develop INTRODUCTION=master INTEGRATION=master COVERAGE=1
+  - DB=mysql TYPO3=thesis-develop INTRODUCTION=master INTEGRATION=master COVERAGE=1
 #   - DB=mysqli TYPO3=thesis-develop INTEGRATION=master COVERAGE=0
 #  - DB=sqlite TYPO3=master INTEGRATION=master COVERAGE=1
-#  - DB=pgsql TYPO3=master INTEGRATION=master COVERAGE=1
+  - DB=pgsql TYPO3=thesis-develop INTRODUCTION=master INTEGRATION=master COVERAGE=1
  
 services:
   - memcached
@@ -57,6 +57,7 @@ before_script:
   # Testing with mysql
   - >
     if [[ "$DB" == "mysql" ]]; then
+        cp typo3conf/LocalConfiguration.$DB.php typo3conf/LocalConfiguration.php
         mysql -e "DROP DATABASE IF EXISTS typo3_test;" -uroot
         mysql -e "CREATE DATABASE IF NOT EXISTS typo3_test;" -uroot
         mysql -uroot typo3_test < build-environment/Introduction/typo3conf/ext/introduction/Resources/Private/Subpackages/Introduction/Database/introduction.sql
@@ -77,11 +78,15 @@ before_script:
   - if [[ "$DB" == "sqlite" ]]; then mysql -uroot typo3_test < build-environment/dbimport/cache_tables.sql; fi
 
   # Testing with pgsql
-  - if [[ "$DB" == "pgsql" ]]; then psql -c "DROP DATABASE IF EXISTS typo3_test;" -upostgres; fi
-  - if [[ "$DB" == "pgsql" ]]; then psql -c "CREATE DATABASE IF EXISTS typo3_test;" -upostgres; fi
-  - if [[ "$DB" == "pgsql" ]]; then psql -c "CREATE DATABASE IF NOT EXISTS typo3_test;" -upostgres; fi
-  - if [[ "$DB" == "pgsql" ]]; then psql -uroot typo3_test < build-environment/Introduction/typo3conf/ext/introduction/Resources/Subpackages/Introduction/Database/introduction.sql; fi
-  - if [[ "$DB" == "pgsql" ]]; then psql -uroot typo3_test < build-environment/dbimport/cache_tables.sql; fi
+  - > 
+    if [[ "$DB" == "pgsql" ]]; then
+        cp typo3conf/LocalConfiguration.$DB.php typo3conf/LocalConfiguration.php
+        psql -c "DROP DATABASE IF EXISTS typo3_test;" -upostgres
+        psql -c "CREATE DATABASE IF NOT EXISTS typo3_test;" -upostgres
+        psql -upostgres typo3_test < build-environment/Introduction/typo3conf/ext/introduction/Resources/Private/Subpackages/Introduction/Database/introduction.sql
+        psql -upostgres typo3_test < build-environment/dbimport/cli_users.sql
+        psql -upostgres typo3_test < build-environment/dbimport/cache_tables.sql
+    fi 
 
 script:
   - export TYPO3_PATH_WEB=$PWD
