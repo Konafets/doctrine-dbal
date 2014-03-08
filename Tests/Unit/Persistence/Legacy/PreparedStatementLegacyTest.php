@@ -1,5 +1,5 @@
 <?php
-namespace TYPO3\DoctrineDbal\Tests\Unit\Database;
+namespace TYPO3\DoctrineDbal\Tests\Unit\Persistence\Legacy;
 
 /***************************************************************
  *  Copyright notice
@@ -29,12 +29,12 @@ namespace TYPO3\DoctrineDbal\Tests\Unit\Database;
  *
  * @author Helmut Hummel <helmut@typo3.org>
  */
-class PreparedStatementTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
+class PreparedStatementLegacyTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 
 	/**
 	 * @var \PHPUnit_Framework_MockObject_MockObject|\TYPO3\CMS\Core\Database\DatabaseConnection
 	 */
-	private $databaseStub;
+	public $databaseStub;
 
 	/**
 	 * Create a new database mock object for every test
@@ -58,7 +58,7 @@ class PreparedStatementTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 		$GLOBALS['TYPO3_DB']->connectDB();
 		$databaseLink = $GLOBALS['TYPO3_DB']->getDatabaseHandle();
 		$GLOBALS['TYPO3_DB'] = $this->getAccessibleMock(
-			'TYPO3\\DoctrineDbal\\Database\\DatabaseConnection',
+			'TYPO3\\DoctrineDbal\\Persistence\\Legacy\\DatabaseConnectionLegacy',
 			array('exec_PREPAREDquery'),
 			array(),
 			'',
@@ -74,10 +74,10 @@ class PreparedStatementTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * Create a object fo the subject to be tested.
 	 *
 	 * @param string $query
-	 * @return \TYPO3\CMS\Core\Database\PreparedStatement
+	 * @return \TYPO3\DoctrineDbal\Persistence\Legacy\PreparedStatementLegacy
 	 */
 	private function createPreparedStatement($query) {
-		return new \TYPO3\CMS\Core\Database\PreparedStatement($query, 'pages');
+		return new \TYPO3\DoctrineDbal\Persistence\Legacy\PreparedStatementLegacy($query, 'pages');
 	}
 
 	////////////////////////////////////
@@ -89,7 +89,7 @@ class PreparedStatementTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @return void
 	 */
 	public function setUpAndReturnDatabaseStubReturnsMockObjectOfDatabaseConnection() {
-		$this->assertTrue($this->setUpAndReturnDatabaseStub() instanceof \TYPO3\CMS\Core\Database\DatabaseConnection);
+		$this->assertTrue($this->setUpAndReturnDatabaseStub() instanceof \TYPO3\DoctrineDbal\Persistence\Legacy\DatabaseConnectionLegacy);
 	}
 
 	/**
@@ -97,11 +97,11 @@ class PreparedStatementTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @return void
 	 */
 	public function createPreparedStatementReturnsInstanceOfPreparedStatementClass() {
-		$this->assertTrue($this->createPreparedStatement('dummy') instanceof \TYPO3\CMS\Core\Database\PreparedStatement);
+		$this->assertTrue($this->createPreparedStatement('dummy') instanceof \TYPO3\DoctrineDbal\Persistence\Legacy\PreparedStatementLegacy);
 	}
 
 	///////////////////////////////////////
-	// Tests for \TYPO3\CMS\Core\Database\PreparedStatement
+	// Tests for \TYPO3\DoctrineDbal\Persistence\Legacy\PreparedStatementLegacy
 	///////////////////////////////////////
 	/**
 	 * Data Provider for two tests, providing sample queries, parameters and expected result queries.
@@ -174,15 +174,15 @@ class PreparedStatementTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 */
 	public function invalidParameterTypesPassedToBindValueThrowsExceptionDataProvider() {
 		return array(
-			'integer passed with param type NULL' => array(1, \TYPO3\CMS\Core\Database\PreparedStatement::PARAM_NULL),
-			'string passed with param type NULL' => array('1', \TYPO3\CMS\Core\Database\PreparedStatement::PARAM_NULL),
-			'bool passed with param type NULL' => array(TRUE, \TYPO3\CMS\Core\Database\PreparedStatement::PARAM_NULL),
-			'NULL passed with param type INT' => array(NULL, \TYPO3\CMS\Core\Database\PreparedStatement::PARAM_INT),
-			'string passed with param type INT' => array('1', \TYPO3\CMS\Core\Database\PreparedStatement::PARAM_INT),
-			'bool passed with param type INT' => array(TRUE, \TYPO3\CMS\Core\Database\PreparedStatement::PARAM_INT),
-			'NULL passed with param type BOOL' => array(NULL, \TYPO3\CMS\Core\Database\PreparedStatement::PARAM_BOOL),
-			'string passed with param type BOOL' => array('1', \TYPO3\CMS\Core\Database\PreparedStatement::PARAM_BOOL),
-			'integer passed with param type BOOL' => array(1, \TYPO3\CMS\Core\Database\PreparedStatement::PARAM_BOOL)
+			'integer passed with param type NULL' => array(1, \TYPO3\DoctrineDbal\Persistence\Legacy\PreparedStatementLegacy::PARAM_NULL),
+			'string passed with param type NULL' => array('1', \TYPO3\DoctrineDbal\Persistence\Legacy\PreparedStatementLegacy::PARAM_NULL),
+			'bool passed with param type NULL' => array(TRUE, \TYPO3\DoctrineDbal\Persistence\Legacy\PreparedStatementLegacy::PARAM_NULL),
+			'NULL passed with param type INT' => array(NULL, \TYPO3\DoctrineDbal\Persistence\Legacy\PreparedStatementLegacy::PARAM_INT),
+			'string passed with param type INT' => array('1', \TYPO3\DoctrineDbal\Persistence\Legacy\PreparedStatementLegacy::PARAM_INT),
+			'bool passed with param type INT' => array(TRUE, \TYPO3\DoctrineDbal\Persistence\Legacy\PreparedStatementLegacy::PARAM_INT),
+			'NULL passed with param type BOOL' => array(NULL, \TYPO3\DoctrineDbal\Persistence\Legacy\PreparedStatementLegacy::PARAM_BOOL),
+			'string passed with param type BOOL' => array('1', \TYPO3\DoctrineDbal\Persistence\Legacy\PreparedStatementLegacy::PARAM_BOOL),
+			'integer passed with param type BOOL' => array(1, \TYPO3\DoctrineDbal\Persistence\Legacy\PreparedStatementLegacy::PARAM_BOOL)
 		);
 	}
 

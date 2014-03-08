@@ -54,7 +54,7 @@ class DatabaseSelect extends Action\AbstractAction implements Action\Step\StepIn
 			$newDatabaseName = $postValues['new'];
 			if (strlen($newDatabaseName) <= 50) {
 				// TODO: Make usage of Doctrine Schemamanager here to create the database
-				$createDatabaseResult = $this->databaseConnection->admin_query('CREATE DATABASE ' . $newDatabaseName . ' CHARACTER SET utf8');
+				$createDatabaseResult = $this->databaseConnection->adminQuery('CREATE DATABASE ' . $newDatabaseName . ' CHARACTER SET utf8');
 				if ($createDatabaseResult) {
 					$localConfigurationPathValuePairs['DB/database'] = $newDatabaseName;
 				} else {
@@ -79,8 +79,8 @@ class DatabaseSelect extends Action\AbstractAction implements Action\Step\StepIn
 		} elseif ($postValues['type'] === 'existing') {
 			// Only store database information when it's empty
 			$this->databaseConnection->setDatabaseName($postValues['existing']);
-			$this->databaseConnection->sql_select_db();
-			$existingTables = $this->databaseConnection->admin_get_tables();
+			$this->databaseConnection->selectDb();
+			$existingTables = $this->databaseConnection->listTables();
 			$isInitialInstallation = $configurationManager->getConfigurationValueByPath('SYS/isInitialInstallationInProgress');
 			if (!$isInitialInstallation || count($existingTables) === 0) {
 				$localConfigurationPathValuePairs['DB/database'] = $postValues['existing'];
@@ -106,7 +106,7 @@ class DatabaseSelect extends Action\AbstractAction implements Action\Step\StepIn
 		if (strlen($GLOBALS['TYPO3_CONF_VARS']['DB']['database']) > 0) {
 			$this->databaseConnection->setDatabaseName($GLOBALS['TYPO3_CONF_VARS']['DB']['database']);
 			try {
-				$selectResult = $this->databaseConnection->sql_select_db();
+				$selectResult = $this->databaseConnection->selectDb();
 				if ($selectResult === TRUE) {
 					$result = FALSE;
 				}
@@ -139,7 +139,7 @@ class DatabaseSelect extends Action\AbstractAction implements Action\Step\StepIn
 	 */
 	protected function getDatabaseList($initialInstallation) {
 		$this->initializeDatabaseConnection();
-		$databaseArray = $this->databaseConnection->admin_get_dbs();
+		$databaseArray = $this->databaseConnection->listDatabases();
 		// Remove mysql organizational tables from database list
 		$reservedDatabaseNames = array('mysql', 'information_schema', 'performance_schema');
 		$allPossibleDatabases = array_diff($databaseArray, $reservedDatabaseNames);
@@ -152,8 +152,8 @@ class DatabaseSelect extends Action\AbstractAction implements Action\Step\StepIn
 			$databases = array();
 			foreach ($allPossibleDatabases as $database) {
 				$this->databaseConnection->setDatabaseName($database);
-				$this->databaseConnection->sql_select_db();
-				$tableCount = $this->databaseConnection->adminCountTables();
+				$this->databaseConnection->selectDb();
+				$tableCount = $this->databaseConnection->countTables();
 				$databases[] = array(
 					'name' => $database,
 					'tables' => $tableCount,
@@ -176,6 +176,6 @@ class DatabaseSelect extends Action\AbstractAction implements Action\Step\StepIn
 		$this->databaseConnection->setDatabasePort($GLOBALS['TYPO3_CONF_VARS']['DB']['port']);
 		$this->databaseConnection->setDatabaseSocket($GLOBALS['TYPO3_CONF_VARS']['DB']['socket']);
 		$this->databaseConnection->setDatabaseName($GLOBALS['TYPO3_CONF_VARS']['DB']['database']);
-		$this->databaseConnection->sql_pconnect();
+		$this->databaseConnection->connectDatabase();
 	}
 }

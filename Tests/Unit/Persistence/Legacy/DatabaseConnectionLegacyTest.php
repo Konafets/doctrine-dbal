@@ -1,45 +1,62 @@
 <?php
-namespace TYPO3\DoctrineDbal\Tests\Unit\Database;
+
+namespace TYPO3\DoctrineDbal\Tests\Unit\Persistence\Legacy;
 
 /***************************************************************
- * Copyright notice
+ *  Copyright notice
  *
- * (c) 2010-2013 Ernesto Baschny (ernst@cron-it.de)
- * All rights reserved
+ *  (c) 2014 Stefano Kowalke <blueduck@gmx.net>
+ *  All rights reserved
  *
- * This script is part of the TYPO3 project. The TYPO3 project is
- * free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ *  This script is part of the TYPO3 project. The TYPO3 project is
+ *  free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
- * The GNU General Public License can be found at
- * http://www.gnu.org/copyleft/gpl.html.
+ *  The GNU General Public License can be found at
+ *  http://www.gnu.org/copyleft/gpl.html.
+ *  A copy is found in the textfile GPL.txt and important notices to the license
+ *  from the author is found in LICENSE.txt distributed with these scripts.
  *
- * This script is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
  *
- * This copyright notice MUST APPEAR in all copies of the script!
+ *  This script is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  This copyright notice MUST APPEAR in all copies of the script!
  ***************************************************************/
 
+use TYPO3\CMS\Core\Utility\GeneralUtility;
+
 /**
- * Testcase for TYPO3\CMS\Core\Database\DatabaseConnection
- *
- * @author Ernesto Baschny <ernst@cron-it.de>
+ * Class DatabaseConnectionTest
+ * 
+ * @package TYPO3\DoctrineDbal\Persistence\Doctrine
+ * @author  Stefano Kowalke <blueduck@gmx.net>
  */
-class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
+class DatabaseConnectionLegacyTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 
 	/**
-	 * @var \TYPO3\DoctrineDbal\Database\DatabaseConnection
+	 * @var \TYPO3\DoctrineDbal\Persistence\Legacy\DatabaseConnectionLegacy
 	 */
-	protected $subject = NULL;
+	private $subject = NULL;
 
 	/**
 	 * @var string
 	 */
 	protected $testTable;
+
+	/**
+	 * @var string
+	 */
+	protected $testTableMm;
+
+	/**
+	 * @var string
+	 */
+	protected $testTableForeign;
 
 	/**
 	 * @var string
@@ -52,23 +69,93 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	protected $testFieldSecond;
 
 	/**
+	 * @var \Doctrine\DBAL\Schema\Schema
+	 */
+	protected $schema;
+
+	/**
+	 * @var \Doctrine\DBAL\Schema\Table
+	 */
+	protected $table;
+
+	/**
+	 * @var \Doctrine\DBAL\Schema\Table
+	 */
+	protected $mmTable;
+
+	/**
+	 * @var \Doctrine\DBAL\Schema\Table
+	 */
+	protected $foreignTable;
+
+	/**
+	 * @var \Doctrine\DBAL\Schema\AbstractSchemaManager
+	 */
+	protected $schemaManager;
+
+	/**
+	 * @var array The connection settings for Doctrine
+	 */
+	protected $connectionParams = array(
+		'dbname'   => '',
+		'user'     => '',
+		'password' => '',
+		'host'     => 'localhost',
+		'driver'   => 'pdo_mysql',
+		'port'     => 3306,
+		'charset'  => 'utf8',
+	);
+
+	/**
 	 * Set the test up
 	 *
 	 * @return void
 	 */
 	public function setUp() {
-		$GLOBALS['TYPO3_DB']->connectDB();
-		$this->subject = $GLOBALS['TYPO3_DB'];
-		$this->testTable = 'test_t3lib_dbtest';
-		$this->testField = 'fieldblob';
-		$this->testFieldSecond = 'fieldblub';
-		$this->subject->sql_query('CREATE TABLE ' . $this->testTable . ' (
-			id int(11) unsigned NOT NULL auto_increment,' .
-			$this->testField . ' mediumblob,' .
-			$this->testFieldSecond . ' mediumblob,
-			PRIMARY KEY (id)
-		) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-		');
+		$this->subject = GeneralUtility::makeInstance('TYPO3\\DoctrineDbal\\Persistence\\Legacy\\DatabaseConnectionLegacy');
+		$this->subject->setDatabaseName(TYPO3_db);
+		$this->subject->setDatabaseUsername(TYPO3_db_username);
+		$this->subject->setDatabasePassword(TYPO3_db_password);
+		$this->subject->setDatabasePort($GLOBALS['TYPO3_DB']->getDatabasePort());
+		$this->subject->setDatabaseHost($GLOBALS['TYPO3_DB']->getDatabaseHost());
+		$this->subject->connectDB();
+
+		$this->testTable        = 'test_t3lib_dbtest';
+		$this->testTableMm      = 'test_t3lib_dbtest_mm';
+		$this->testTableForeign = 'test_t3lib_dbtest_foreign';
+		$this->testField        = 'fieldblob';
+		$this->testFieldSecond  = 'fieldblub';
+
+		$this->schema = $this->subject->getSchema();
+		$this->schemaManager = $this->subject->getSchemaManager();
+
+
+		$this->table = $this->schema->createTable($this->testTable);
+		$this->table->addColumn('id', 'integer', array('unsigned' => TRUE, 'autoincrement' => TRUE));
+		$this->table->addColumn('uid', 'integer', array('unsigned' => TRUE));
+		$this->table->addColumn($this->testField, 'blob', array('default' => NULL, 'notnull' => FALSE, 'collate'=>'utf8_general_ci'));
+		$this->table->addColumn($this->testFieldSecond, 'integer', array('default' => NULL, 'notnull' => FALSE, 'collate'=>'utf8_general_ci'));
+		$this->table->setPrimaryKey(array('id'));
+		$this->schemaManager->dropAndCreateTable($this->table);
+
+		$this->mmTable = $this->schema->createTable($this->testTableMm);
+		$this->mmTable->addColumn('id', 'integer', array('unsigned' => TRUE, 'autoincrement' => TRUE));
+		$this->mmTable->addColumn('uid_local', 'integer', array('unsigned' => TRUE));
+		$this->mmTable->addColumn('uid_foreign', 'integer', array('unsigned' => TRUE));
+		$this->mmTable->addColumn($this->testField, 'blob', array('default' => NULL, 'notnull' => FALSE, 'collate'=>'utf8_general_ci'));
+		$this->mmTable->addColumn($this->testFieldSecond, 'integer', array('default' => NULL, 'notnull' => FALSE, 'collate'=>'utf8_general_ci'));
+		$this->mmTable->setPrimaryKey(array('id'));
+
+		$this->schemaManager->dropAndCreateTable($this->mmTable);
+
+		$this->foreignTable = $this->schema->createTable($this->testTableForeign);
+		$this->foreignTable->addColumn('id', 'integer', array('unsigned' => TRUE, 'autoincrement' => TRUE));
+		$this->foreignTable->addColumn('uid', 'integer', array('unsigned' => TRUE));
+		$this->foreignTable->addColumn($this->testField, 'blob', array('default' => NULL, 'notnull' => FALSE, 'collate'=>'utf8_general_ci'));
+		$this->foreignTable->addColumn($this->testFieldSecond, 'integer', array('default' => NULL, 'notnull' => FALSE, 'collate'=>'utf8_general_ci'));
+		$this->foreignTable->setPrimaryKey(array('id'));
+
+		$this->schemaManager->dropAndCreateTable($this->foreignTable);
 	}
 
 	/**
@@ -77,9 +164,20 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @return void
 	 */
 	public function tearDown() {
-		$this->subject->sql_query('DROP TABLE ' . $this->testTable . ';');
-		$this->subject->getDatabaseHandle()->close();
-		unset($this->subject);
+		$this->schemaManager->dropTable($this->table);
+		$this->schemaManager->dropTable($this->mmTable);
+		$this->schemaManager->dropTable($this->foreignTable);
+		$this->subject->close();
+		unset($this->subject, $this->table, $this->mmTable, $this->foreignTable, $this->schemaManager, $this->schema);
+	}
+
+	/**
+	 * @test
+	 */
+	public function getNameReturnsTheNameOfTheCurrentDatabaseSystem() {
+		$driver = $this->subject->getDatabaseDriver();
+		$driver = substr($driver, 4);
+		$this->assertEquals($driver, $this->subject->getName());
 	}
 
 	/**
@@ -88,7 +186,7 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @return void
 	 */
 	public function selectDbReturnsTrue() {
-		$this->assertTrue($this->subject->sql_select_db());
+		$this->assertTrue($this->subject->selectDb());
 	}
 
 	/**
@@ -97,9 +195,8 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @return void
 	 */
 	public function selectDbReturnsFalse() {
-		$this->markTestSkipped('PHPUnit does\'t reconize the excpected Exception.');
 		$this->subject->setDatabaseName('Foo');
-		$this->subject->sql_select_db();
+		$this->subject->selectDb();
 	}
 
 	/**
@@ -107,7 +204,38 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 *
 	 * @return void
 	 */
-	public function sqlAffectedRowsReturnsCorrectAmountOfRows() {
+	public function sql_select_dbReturnsTrue() {
+		$this->assertTrue($this->subject->sql_select_db());
+	}
+
+	/**
+	 * @test
+	 * @expectedException \RuntimeException
+	 * @return void
+	 */
+	public function sql_select_dbReturnsFalse() {
+		$database = $this->subject->getDatabaseName();
+		$this->subject->setDatabaseName('Foo');
+		$this->subject->sql_select_db();
+		$this->subject->setDatabaseName($database);
+	}
+
+	/**
+	 * @test
+	 */
+	public function connectDBConnectsDatabase() {
+		$this->subject->disconnectIfConnected();
+		$this->assertFalse($this->subject->isConnected());
+		$this->subject->connectDB();
+		$this->assertTrue($this->subject->isConnected());
+	}
+
+	/**
+	 * @test
+	 *
+	 * @return void
+	 */
+	public function sql_affected_rowsReturnsCorrectAmountOfRows() {
 		$this->subject->exec_INSERTquery($this->testTable, array($this->testField => 'test'));
 		$this->assertEquals(1, $this->subject->sql_affected_rows());
 	}
@@ -117,7 +245,7 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 *
 	 * @return void
 	 */
-	public function sqlInsertIdReturnsCorrectId() {
+	public function sql_insert_idReturnsCorrectId() {
 		$this->subject->exec_INSERTquery($this->testTable, array($this->testField => 'test'));
 		$this->assertEquals(1, $this->subject->sql_insert_id());
 	}
@@ -127,8 +255,18 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 *
 	 * @return void
 	 */
-	public function noSqlError() {
+	public function sql_insert_idReturnsInteger() {
 		$this->subject->exec_INSERTquery($this->testTable, array($this->testField => 'test'));
+		$this->assertTrue(is_numeric($this->subject->sql_insert_id()));
+	}
+
+	/**
+	 * @test
+	 *
+	 * @return void
+	 */
+	public function sql_errorNoError() {
+		$this->subject->exec_INSERTquery($this->testTable, array($this->testField => 'testA'));
 		$this->assertEquals('', $this->subject->sql_error());
 	}
 
@@ -139,7 +277,7 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @expectedException \Doctrine\DBAL\DBALException
 	 * @expectedExceptionMessage SQLSTATE[42S22]: Column not found: 1054 Unknown column 'test' in 'field list'
 	 */
-	public function sqlErrorWhenInsertIntoInexistentField() {
+	public function sql_errorWhenInsertIntoInexistentField() {
 		$this->subject->exec_INSERTquery($this->testTable, array('test' => 'test'));
 		$this->assertEquals('Unknown column \'test\' in \'field list\'', $this->subject->sql_error());
 	}
@@ -149,8 +287,8 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 *
 	 * @return void
 	 */
-	public function noSqlErrorCode() {
-		$this->subject->exec_INSERTquery($this->testTable, array($this->testField => 'test'));
+	public function sql_errnoNoSqlErrorCode() {
+		$this->subject->exec_INSERTquery($this->testTable, array($this->testField => 'testA'));
 		$this->assertEquals(0, $this->subject->sql_errno());
 	}
 
@@ -161,8 +299,8 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @expectedException \Doctrine\DBAL\DBALException
 	 * @expectedExceptionMessage SQLSTATE[42S22]: Column not found: 1054 Unknown column 'test' in 'field list'
 	 */
-	public function sqlErrorNoWhenInsertIntoInexistentField() {
-		$this->subject->exec_INSERTquery($this->testTable, array('test' => 'test'));
+	public function sql_errnoSqlErrorNoWhenInsertIntoInexistentField() {
+		$this->subject->exec_INSERTquery($this->testTable, array('test' => 'testA'));
 		$this->assertEquals(1054, $this->subject->sql_errno());
 	}
 
@@ -171,8 +309,7 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 *
 	 * @return void
 	 */
-	public function sqlPconnectReturnsInstanceOfMySqli() {
-		$result = $this->subject->sql_pconnect();
+	public function sqlPconnectReturnsInstanceOfConnection() {
 		$this->assertInstanceOf('Doctrine\\DBAL\\Connection', $this->subject->sql_pconnect());
 	}
 
@@ -182,6 +319,8 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 * @return void
 	 */
 	public function connectDbConnectsToDatabaseWithoutErrors() {
+		$this->subject->close();
+		$this->assertFalse($this->subject->isConnected());
 		$this->subject->connectDB();
 		$this->assertTrue($this->subject->isConnected());
 	}
@@ -411,6 +550,7 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 		$this->assertSame('234,-434,4,0,1', $result);
 	}
 
+
 	/**
 	 * @test
 	 *
@@ -465,6 +605,15 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 		$result = $stmt->fetch(\PDO::FETCH_ASSOC);
 		$this->assertEquals('foo', $result[$this->testField]);
 		$stmt->closeCursor();
+	}
+
+	/**
+	 * @test
+	 *
+	 * @return void
+	 */
+	public function adminCountTablesReturnsNumericValue() {
+		$this->assertTrue(is_numeric($this->subject->adminCountTables()));
 	}
 
 	/**
@@ -634,7 +783,6 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 */
 	public function selectQueryCreateValidQueryWithEmptyWhereClause() {
 		$this->assertSame(1, $this->subject->getDatabaseHandle()->insert($this->testTable, array($this->testField => 'foo')));
-		$id = $this->subject->sql_insert_id();
 		$where = '';
 		$queryExpected =
 			'SELECT ' . $this->testField . ' FROM ' . $this->testTable;
@@ -721,6 +869,19 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 *
 	 * @return void
 	 */
+	public function createTruncateQueryCreateValidQuery() {
+		$this->assertSame(1, $this->subject->getDatabaseHandle()->insert($this->testTable, array($this->testField => 'foo')));
+		$queryExpected =
+			'TRUNCATE ' . $this->testTable;
+		$queryGenerated = $this->subject->createTruncateQuery($this->testTable);
+		$this->assertSame($queryExpected, $queryGenerated);
+	}
+
+	/**
+	 * @test
+	 *
+	 * @return void
+	 */
 	public function prepareSelectQueryCreateValidQuery() {
 		$this->assertSame(1, $this->subject->getDatabaseHandle()->insert($this->testTable, array($this->testField => 'foo')));
 		$preparedQuery = $this->subject->prepare_SELECTquery('fieldblob,fieldblub', $this->testTable, 'id=:id', '', '', '', array(':id' => 1));
@@ -751,6 +912,27 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 			'Two results' => array($sql2, 2),
 			'Three results' => array($sql3, 3),
 		);
+	}
+
+
+	/**
+	 * @test
+	 */
+	public function getLastInsertIdReturnsCorrectId() {
+		$this->subject->executeInsertQuery($this->testTable, array($this->testField => 'testA'));
+		$this->subject->executeInsertQuery($this->testTable, array($this->testField => 'testB'));
+		$this->subject->executeInsertQuery($this->testTable, array($this->testField => 'testC'));
+
+		$this->assertEquals(3, $this->subject->sql_insert_id());
+	}
+
+	/**
+	 * @test
+	 */
+	public function getLastInsertIdReturnsInteger() {
+		$this->subject->executeInsertQuery($this->testTable, array($this->testField => 'testA'));
+
+		$this->assertTrue(is_integer($this->subject->sql_insert_id()));
 	}
 
 	/**
@@ -938,10 +1120,10 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 		$this->prepareTableForFetchTests();
 		$res = $this->subject->admin_query('SELECT * FROM ' . $this->testTable);
 		$expectedResult = array(
-					array('1', null, null, 'Mr. Smith', '0', 'Oakland Road', 'Los Angeles', 'USA'),
-					array('2', null, null, 'Ms. Smith', '0', 'Oakland Road', 'Los Angeles', 'USA'),
-					array('3', null, null, 'Alice im Wunderland', '0', 'Große Straße', 'Königreich der Herzen', 'Wunderland'),
-					array('4', null, null, 'Agent Smith', '1', 'Unknown', 'Unknown', 'Matrix')
+					array('1', '0', null, null, 'Mr. Smith', '0', 'Oakland Road', 'Los Angeles', 'USA'),
+					array('2', '0', null, null, 'Ms. Smith', '0', 'Oakland Road', 'Los Angeles', 'USA'),
+					array('3', '0', null, null, 'Alice im Wunderland', '0', 'Große Straße', 'Königreich der Herzen', 'Wunderland'),
+					array('4', '0', null, null, 'Agent Smith', '1', 'Unknown', 'Unknown', 'Matrix')
 				);
 		$i = 0;
 		while ($row = $this->subject->sql_fetch_row($res)) {
@@ -1266,5 +1448,197 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	public function splitGroupOrderLimitStripsLastPartOfQueryIntoArray($whereClause, $expectedResult) {
 		$generatedResult = $this->subject->splitGroupOrderLimit($whereClause);
 		$this->assertSame($expectedResult, $generatedResult);
+	}
+
+	/**
+	 * @test
+	 */
+	public function executeDeleteQueryReturnsInsertRows() {
+		$fields = array(
+				$this->testField => 'Foo',
+				$this->testFieldSecond => 'Bar'
+			);
+
+		$inserted = $this->subject->executeInsertQuery($this->testTable, $fields);
+		$this->assertSame(1, $inserted);
+
+		$deleted = $this->subject->executeDeleteQuery($this->testTable, $fields);
+		$this->assertSame(1, $deleted);
+	}
+
+	/**
+	 * @test
+	 */
+	public function executeInsertQueryReturnsInsertRows() {
+		$fields = array(
+				$this->testField => 'Foo',
+				$this->testFieldSecond => 'Bar'
+			);
+
+		$result = $this->subject->executeInsertQuery($this->testTable, $fields);
+		$this->assertSame(1, $result);
+	}
+
+	/**
+	 * @test
+	 */
+	public function quoteColumnWithoutTableName() {
+		$this->assertEquals('`column`', $this->subject->quoteColumn('column'));
+	}
+
+	/**
+	 * @test
+	 */
+	public function quoteColumnWithTableName() {
+		$this->assertEquals('`pages`.`column`', $this->subject->quoteColumn('column', 'pages'));
+	}
+
+	/**
+	 * @test
+	 */
+	public function quoteTable() {
+		$this->assertEquals('`pages`', $this->subject->quoteTable('pages'));
+	}
+
+	/**
+	 * @test
+	 */
+	public function quoteIdentifier(){
+		$this->assertEquals('`pages`', $this->subject->quoteIdentifier('pages'));
+	}
+
+	/**
+	 * @test
+	 */
+	public function getLastStatementReturnsLastStatementForCreateTestTable() {
+		$expectedSql = 'CREATE TABLE test_t3lib_dbtest_foreign (id INT UNSIGNED AUTO_INCREMENT NOT NULL, uid INT UNSIGNED NOT NULL, fieldblob LONGBLOB DEFAULT NULL, fieldblub INT DEFAULT NULL, PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci ENGINE = InnoDB';
+		$this->assertEquals($expectedSql, $this->subject->getLastStatement());
+	}
+
+	/**
+	 * @test
+	 */
+	public function getLastStatementReturnsLastStatementForExec_TRUNCATEquery() {
+		$this->subject->exec_TRUNCATEquery($this->testTable);
+		$this->assertEquals('TRUNCATE TABLE ' . $this->testTable, $this->subject->getLastStatement());
+	}
+
+	/**
+	 * @test
+	 */
+	public function getLastStatementReturnsLastStatementForExec_DELETEquery() {
+		$this->subject->executeInsertQuery($this->testTable, array($this->testField => 'testA'));
+		$this->subject->exec_DELETEquery($this->testTable, $this->testField . '=\'testA\'');
+		$this->assertEquals('DELETE FROM ' . $this->testTable . ' WHERE ' . $this->testField . '=\'testA\'', $this->subject->getLastStatement());
+	}
+
+	/**
+	 * @test
+	 */
+	public function getLastStatementReturnsLastStatementForExec_INSERTquery() {
+		$this->subject->exec_INSERTquery($this->testTable, array($this->testField => 'testA'));
+		$this->assertEquals('INSERT INTO ' . $this->testTable . ' (fieldblob) VALUES (\'testA\')', $this->subject->getLastStatement());
+	}
+
+	/**
+	 * @test
+	 */
+	public function getLastStatementReturnsLastStatementForExec_INSERTmultipleRows() {
+		$columns = array();
+		$columns[] = $this->testField;
+		$columns[] = $this->testFieldSecond;
+		$tags = array('A', 'B', 'C', 'D');
+		$tagsRows = array();
+		foreach ($tags as $tag) {
+			$tagsRow = array();
+			$tagsRow[] = 'Identifier';
+			$tagsRow[] = $tag;
+			$tagsRows[] = $tagsRow;
+		}
+
+		$this->subject->exec_INSERTmultipleRows($this->testTable, $columns, $tagsRows);
+		$expectingSql = 'INSERT INTO ' . $this->testTable . ' (' . $this->testField . ', ' . $this->testFieldSecond . ') VALUES (\'Identifier\', \'A\'), (\'Identifier\', \'B\'), (\'Identifier\', \'C\'), (\'Identifier\', \'D\')';
+		$this->assertEquals($expectingSql, $this->subject->getLastStatement());
+	}
+
+	/**
+	 * @test
+	 */
+	public function getLastStatementReturnsLastStatementForExec_UPDATEquery() {
+		$this->subject->executeInsertQuery($this->testTable, array($this->testField => 'testA'));
+		$this->subject->exec_UPDATEquery($this->testTable, $this->testField . '=\'testA\'', array($this->testFieldSecond => 3));
+		$expectingSql = 'UPDATE ' . $this->testTable . ' SET ' . $this->testFieldSecond . '=\'3\' WHERE ' . $this->testField . '=\'testA\'';
+		$this->assertEquals($expectingSql, $this->subject->getLastStatement());
+	}
+
+	/**
+	 * @test
+	 */
+	public function getLastStatementReturnsLastStatementForExec_SELECTquery() {
+		$this->subject->exec_SELECTquery($this->testField . ',' . $this->testFieldSecond, $this->testTable, $this->testField . '= 98');
+		$expectingSql = 'SELECT ' . $this->testField . ',' . $this->testFieldSecond . ' FROM ' . $this->testTable . ' WHERE ' . $this->testField . '= 98';
+		$this->assertEquals($expectingSql, $this->subject->getLastStatement());
+	}
+
+	/**
+	 * @test
+	 */
+	public function getLastStatementReturnsLastStatementForExec_SELECT_mm_query() {
+		$this->subject->exec_SELECT_mm_query($this->testTable . '.*', $this->testTable, $this->testTableMm, $this->testTableForeign, 'AND 1 = 1');
+		$expectingSql = 'SELECT ' . $this->testTable .
+				'.* FROM ' . $this->testTable . ',' . $this->testTableMm . ',' . $this->testTableForeign .
+				' WHERE ' . $this->testTable . '.uid=' . $this->testTableMm . '.uid_local AND ' .
+				$this->testTableForeign  . '.uid=' . $this->testTableMm . '.uid_foreign AND 1 = 1';
+		$this->assertEquals($expectingSql, $this->subject->getLastStatement());
+	}
+
+	/**
+	 * @test
+	 */
+	public function getLastStatementReturnsLastStatementForExec_SELECTcountRows() {
+		$this->subject->executeInsertQuery($this->testTable, array($this->testField => 'testA'));
+		$this->subject->executeInsertQuery($this->testTable, array($this->testField => 'testA'));
+		$this->subject->executeInsertQuery($this->testTable, array($this->testField => 'testB'));
+
+		$result = $this->subject->exec_SELECTcountRows($this->testField, $this->testTable, $this->testField . '= \'testA\'');
+		$expectingSql = 'SELECT COUNT(' . $this->testField . ') FROM ' . $this->testTable . ' WHERE ' . $this->testField . '= \'testA\'';
+		$this->assertEquals($expectingSql, $this->subject->getLastStatement());
+		$this->assertEquals(2, $result);
+	}
+
+	/**
+	 * @test
+	 */
+	public function getLastStatementReturnsLastStatementForExec_SELECT_queryArray() {
+		$selectFields = array();
+		$selectFields[] = $this->testField;
+		$selectFields[] = $this->testFieldSecond;
+
+		$sqlQueryParts = array(
+			'SELECT' => join(',', $selectFields),
+			'FROM'   => $this->testTable,
+			'WHERE'  => '1 = 1'
+		);
+		$this->subject->exec_SELECT_queryArray($sqlQueryParts);
+		$expectingSql = 'SELECT ' . $this->testField . ',' . $this->testFieldSecond . ' FROM ' . $this->testTable . ' WHERE 1 = 1';
+		$this->assertEquals($expectingSql, $this->subject->getLastStatement());
+	}
+
+	/**
+	 * @test
+	 */
+	public function getLastStatementReturnsLastStatementForExec_SELECTgetRows() {
+		$this->subject->exec_SELECTgetRows($this->testField . ',' . $this->testFieldSecond, $this->testTable, $this->testField . '= 98');
+		$expectingSql = 'SELECT ' . $this->testField . ',' . $this->testFieldSecond . ' FROM ' . $this->testTable . ' WHERE ' . $this->testField . '= 98';
+		$this->assertEquals($expectingSql, $this->subject->getLastStatement());
+	}
+
+	/**
+	 * @test
+	 */
+	public function getLastStatementReturnsLastStatementForExec_SELECTgetSingleRow() {
+		$this->subject->exec_SELECTgetSingleRow($this->testField . ',' . $this->testFieldSecond, $this->testTable, $this->testField . '= 98');
+		$expectingSql = 'SELECT ' . $this->testField . ',' . $this->testFieldSecond . ' FROM ' . $this->testTable . ' WHERE ' . $this->testField . '= 98 LIMIT 1';
+		$this->assertEquals($expectingSql, $this->subject->getLastStatement());
 	}
 }

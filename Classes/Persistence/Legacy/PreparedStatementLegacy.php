@@ -1,5 +1,5 @@
 <?php
-namespace TYPO3\DoctrineDbal\Database;
+namespace TYPO3\DoctrineDbal\Persistence\Legacy;
 
 /***************************************************************
  *  Copyright notice
@@ -43,7 +43,7 @@ namespace TYPO3\DoctrineDbal\Database;
  *
  * @author Xavier Perseguers <typo3@perseguers.ch>
  */
-class PreparedStatement {
+class PreparedStatementLegacy {
 
 	/**
 	 * Represents the SQL NULL data type.
@@ -353,7 +353,7 @@ class PreparedStatement {
 	 * @api
 	 */
 	public function free() {
-		$GLOBALS['TYPO3_DB']->sql_free_result($this->resource);
+		$GLOBALS['TYPO3_DB']->freeResult($this->resource);
 	}
 
 	/**
@@ -363,7 +363,7 @@ class PreparedStatement {
 	 * @api
 	 */
 	public function rowCount() {
-		return $GLOBALS['TYPO3_DB']->sql_num_rows($this->resource);
+		return $GLOBALS['TYPO3_DB']->getResultRowCount($this->resource);
 	}
 
 	/**
