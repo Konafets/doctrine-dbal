@@ -6,8 +6,8 @@ php:
   - 5.5
 
 env:
-#  - DB=mysql TYPO3=master INTEGRATION=master COVERAGE=1
-  - DB=mysqli TYPO3=master INTEGRATION=master COVERAGE=0
+   - DB=mysql TYPO3=thesis-develop INTRODUCTION=master INTEGRATION=master COVERAGE=1
+#   - DB=mysqli TYPO3=thesis-develop INTEGRATION=master COVERAGE=0
 #  - DB=sqlite TYPO3=master INTEGRATION=master COVERAGE=1
 #  - DB=pgsql TYPO3=master INTEGRATION=master COVERAGE=1
  
@@ -24,21 +24,23 @@ before_script:
   - sudo apt-get install parallel 
 
   # Get the latest version of scrutinizer
-  - wget https://scrutinizer-ci.com/ocular.phar
+  #  - wget https://scrutinizer-ci.com/ocular.phar
 
   # Install build dependencies
   - ls -lah
   - cd ..
   - ls -lah
-  - git clone --single-branch --branch $INTEGRATION --depth 1 git://github.com/typo3-ci/TYPO3-Travis-Integration.git build-environment
-  - git clone --single-branch --branch $TYPO3 --depth 1 git://github.com/TYPO3/TYPO3.CMS.git core
+    
+  # Cloning the test helper repository
+  - git clone --single-branch --branch $INTEGRATION --depth 1 git://github.com/Konafets/TYPO3-Travis-Integration.git build-environment
   - source build-environment/install-helper.sh
   - if [[ "$TRAVIS_PHP_VERSION" != "5.5" ]]; then installPhpModule igbinary; fi
   - installPhpModule -y memcache
   - installPhpModule redis
-  - if [[ "$TRAVIS_PHP_VERSION" == "t5.3" ]]; then installPhpModule -y apc; fi
+  - if [[ "$TRAVIS_PHP_VERSION" == "5.3" ]]; then installPhpModule -y apc; fi
 
   # Install rudimentary TYPO3 
+  - git clone --single-branch --branch $INTRODUCTION --depth 1 git://github.com/Konafets/TYPO3CMS-DoctrineDBAL core
   - git clone --single-branch --branch $TYPO3 --depth 1 git://typo3.org/TYPO3CMS/Distributions/Introduction.git build-environemnt/Introduction
   - mv core/typo3 .
   - mv build-environment/typo3conf .
