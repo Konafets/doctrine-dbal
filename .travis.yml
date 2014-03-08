@@ -40,8 +40,8 @@ before_script:
   - if [[ "$TRAVIS_PHP_VERSION" == "5.3" ]]; then installPhpModule -y apc; fi
 
   # Install rudimentary TYPO3 
-  - git clone --single-branch --branch $INTRODUCTION --depth 1 git://github.com/Konafets/TYPO3CMS-DoctrineDBAL core
-  - git clone --single-branch --branch $TYPO3 --depth 1 git://typo3.org/TYPO3CMS/Distributions/Introduction.git build-environemnt/Introduction
+  - git clone --single-branch --branch $TYPO3 --depth 1 git://github.com/Konafets/TYPO3CMS-DoctrineDBAL core
+  - git clone --single-branch --branch $INTRODUCTION --depth 1 git://typo3.org/TYPO3CMS/Distributions/Introduction.git build-environemnt/Introduction
   - mv core/typo3 .
   - mv build-environment/typo3conf .
   - git clone --single-branch --branch master --depth 1 git://typo3.org/Extensions/phpunit.git typo3conf/ext/phpunit/
