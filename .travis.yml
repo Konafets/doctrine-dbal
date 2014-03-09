@@ -6,11 +6,11 @@ php:
   - 5.5
 
 env:
-  - DB=mysql TYPO3=thesis-develop INTRODUCTION=master INTEGRATION=master COVERAGE=1
+  - DB=mysql TYPO3=thesis-develop INTRODUCTION=master INTEGRATION=master COVERAGE=0
 #   - DB=mysqli TYPO3=thesis-develop INTEGRATION=master COVERAGE=0
 #  - DB=sqlite TYPO3=master INTEGRATION=master COVERAGE=1
-  - DB=pgsql TYPO3=thesis-develop INTRODUCTION=master INTEGRATION=master COVERAGE=1
- 
+  - DB=pgsql TYPO3=thesis-develop INTRODUCTION=master INTEGRATION=master COVERAGE=0
+
 services:
   - memcached
 
@@ -90,6 +90,6 @@ before_script:
 
 script:
   - export TYPO3_PATH_WEB=$PWD
-  - if [[ "$COVERAGE" == "1" ]]; then phpunit --coverage-clover coverage.clover --bootstrap $PWD/typo3/sysext/core/Build/UnitTestsBootstrap.php $PWD/typo3conf/ext/doctrine_dbal/Tests; fi 
-    #- if [[ "$COVERAGE" == "0" ]]; then phpunit --bootstrap $PWD/typo3/sysext/core/Build/UnitTestsBootstrap.php $PWD/typo3conf/ext/doctrine_dbal/Tests; fi
+  - if [[ "$COVERAGE" == "1" ]]; then phpunit --coverage-clover coverage.clover --bootstrap $PWD/typo3/sysext/core/Build/UnitTestsBootstrap.php $PWD/typo3conf/ext/doctrine_dbal/Tests; fi
+  - if [[ "$COVERAGE" == "0" ]]; then phpunit --bootstrap $PWD/typo3/sysext/core/Build/UnitTestsBootstrap.php $PWD/typo3conf/ext/doctrine_dbal/Tests; fi
 #  - if [[ "$COVERAGE" == "1" ]]; then php ocular.phar code-coverage:upload --format=php-clover coverage.clover; fi
