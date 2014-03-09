@@ -85,16 +85,14 @@ before_script:
         mysql -uroot typo3_test < build-environment/Introduction/typo3conf/ext/introduction/Resources/Private/Subpackages/Introduction/Database/introduction.sql
 
         touch build-environment/dbimport/postgres.sql
-        echo 'SET standard_conforming_strings = \'off\';' >> build-environment/dbimport/postgres.sql
-        echo 'SET backslash_quote = \'on\';' >> build-environment/dbimport/postgres.sql
+        echo "SET standard_conforming_strings = 'off';" >> build-environment/dbimport/postgres.sql
+        echo "SET backslash_quote = 'on';" >> build-environment/dbimport/postgres.sql
         mysqldump -uroot --compatible=postgresql typo3_test >> build-environment/dbimport/postgres.sql
 
         cp typo3conf/LocalConfiguration.$DB.php typo3conf/LocalConfiguration.php
         psql -U postgres -c "DROP DATABASE IF EXISTS typo3_test;"
         psql -U postgres -c "CREATE DATABASE typo3_test;"
         psql -U postgres typo3_test < build-environment/dbimport/postgres.sql
-# psql -U postgres typo3_test < build-environment/dbimport/cli_users.sql
-#psql -U postgres typo3_test < build-environment/dbimport/cache_tables.sql
     fi
 
 script:
