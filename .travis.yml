@@ -21,7 +21,7 @@ notifications:
 before_script:
   # Get latest version of git cause of travis issues (https://github.com/travis-ci/travis-ci/issues/1710)
   - sudo apt-get update && sudo apt-get install git
-  - sudo apt-get install parallel 
+  - sudo apt-get install parallel
 
   # Get the latest version of scrutinizer
   #  - wget https://scrutinizer-ci.com/ocular.phar
@@ -29,7 +29,7 @@ before_script:
   # Install build dependencies
   - composer install
   - cd ..
-    
+
   # Cloning the test helper repository
   - git clone --single-branch --branch $INTEGRATION --depth 1 git://github.com/Konafets/TYPO3-Travis-Integration.git build-environment
   - source build-environment/install-helper.sh
@@ -38,7 +38,7 @@ before_script:
   - installPhpModule redis
   - if [[ "$TRAVIS_PHP_VERSION" == "5.3" ]]; then installPhpModule -y apc; fi
 
-  # Install rudimentary TYPO3 
+  # Install rudimentary TYPO3
   - git clone --single-branch --branch $TYPO3 --depth 1 git://github.com/Konafets/TYPO3CMS-DoctrineDBAL core
   - git clone --single-branch --branch $INTRODUCTION --depth 1 https://git.typo3.org/TYPO3CMS/Distributions/Introduction.git build-environment/Introduction
   - mv core/typo3 .
