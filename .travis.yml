@@ -78,15 +78,15 @@ before_script:
   - if [[ "$DB" == "sqlite" ]]; then mysql -uroot typo3_test < build-environment/dbimport/cache_tables.sql; fi
 
   # Testing with pgsql
-  - > 
+  - >
     if [[ "$DB" == "pgsql" ]]; then
         cp typo3conf/LocalConfiguration.$DB.php typo3conf/LocalConfiguration.php
-        psql -c "DROP DATABASE IF EXISTS typo3_test;" -upostgres
-        psql -c "CREATE DATABASE IF NOT EXISTS typo3_test;" -upostgres
-        psql -upostgres typo3_test < build-environment/Introduction/typo3conf/ext/introduction/Resources/Private/Subpackages/Introduction/Database/introduction.sql
-        psql -upostgres typo3_test < build-environment/dbimport/cli_users.sql
-        psql -upostgres typo3_test < build-environment/dbimport/cache_tables.sql
-    fi 
+        psql -U postgres -c "DROP DATABASE IF EXISTS typo3_test;"
+        psql -U postgres -c "CREATE DATABASE IF NOT EXISTS typo3_test;"
+        psql -U postgres typo3_test < build-environment/Introduction/typo3conf/ext/introduction/Resources/Private/Subpackages/Introduction/Database/introduction.sql
+        psql -U postgres typo3_test < build-environment/dbimport/cli_users.sql
+        psql -U postgres typo3_test < build-environment/dbimport/cache_tables.sql
+    fi
 
 script:
   - export TYPO3_PATH_WEB=$PWD
