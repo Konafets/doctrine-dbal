@@ -73,6 +73,15 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 	 */
 	const OR_Constraint = 'OR';
 
+	/**
+	 * Initialize the database connection
+	 *
+	 * @return void
+	 */
+	public function initialize() {
+		// Intentionally blank as this will be overloaded by DBAL
+	}
+
 	/******************************
 	 *
 	 * Connect handling
