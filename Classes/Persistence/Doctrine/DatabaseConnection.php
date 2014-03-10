@@ -893,7 +893,12 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	 * @api
 	 */
 	public function isConnected() {
-		return $this->link->isConnected();
+		// We think we're still connected
+		if ($this->isConnected) {
+			$this->isConnected = $this->link->isConnected();
+		}
+
+		return $this->isConnected;
 	}
 
 	/**
