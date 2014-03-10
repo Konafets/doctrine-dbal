@@ -295,13 +295,6 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	/**
 	 * @test
 	 */
-	public function getDatabaseReturnsDefaultValueLocalHost() {
-		$this->assertEquals('127.0.0.1', $this->subject->getDatabaseHost());
-	}
-
-	/**
-	 * @test
-	 */
 	public function setAndGetDatabaseCharset() {
 		// Keep the old charset in mind
 		$charset = $this->subject->getDatabaseCharset();
