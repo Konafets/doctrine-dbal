@@ -369,7 +369,7 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	public function setDatabaseSocket($socket = NULL) {
 		$this->disconnectIfConnected();
 		$this->databaseSocket = $socket;
-		//$this->connectionParams['unix_socket'] = $socket;
+		$this->connectionParams['unix_socket'] = $socket;
 
 		return $this;
 	}
@@ -381,8 +381,7 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	 * @api
 	 */
 	public function getDatabaseSocket() {
-		//return $this->connectionParams['unix_socket'];
-		return $this->databaseSocket;
+		return $this->connectionParams['unix_socket'];
 	}
 
 	/**
