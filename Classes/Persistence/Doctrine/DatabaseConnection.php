@@ -91,7 +91,7 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	 * @var array $connectionParams The connection settings for Doctrine
 	 */
 	protected $connectionParams = array(
-		'dbname'   => '',
+		'dbname'   => 'mysql',
 		'user'     => '',
 		'password' => '',
 		'host'     => 'localhost',
