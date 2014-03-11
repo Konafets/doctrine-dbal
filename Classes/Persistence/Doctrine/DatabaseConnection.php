@@ -989,6 +989,24 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	}
 
 	/**
+	 * Returns an array that corresponds to the fetched row, or FALSE if there are no more rows.
+	 * The array contains only a single requested column from the next row in the result set
+	 * Wrapper function for Doctrine / PDO fetch(\PDO::FETCH_COLUMN)
+	 *
+	 * @param \Doctrine\DBAL\Driver\Statement $stmt A PDOStatement object
+	 *
+	 * @return boolean|array Array with result rows.
+	 * @api
+	 */
+	public function fetchColumn($stmt) {
+		if ($this->debug_check_recordset($stmt)) {
+			return $stmt->fetch(\PDO::FETCH_COLUMN);
+		} else {
+			return FALSE;
+		}
+	}
+
+	/**
 	 * Free result memory
 	 * Wrapper function for Doctrine/PDO closeCursor()
 	 *
@@ -1376,7 +1394,7 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 		$isQuerySuccess = $statement->execute();
 
 		if ($isQuerySuccess !== FALSE) {
-			$result = $statement->fetchAll(\PDO::FETCH_COLUMN);
+			$result = $this->fetchColumn($statement);
 		}
 
 		return $result[0];
