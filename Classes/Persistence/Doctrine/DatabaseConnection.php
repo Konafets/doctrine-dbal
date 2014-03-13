@@ -1356,8 +1356,7 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 		$tables = array();
 		$stmt = $this->adminQuery('SHOW TABLE STATUS FROM `' . $this->getDatabaseName() . '`');
 		if ($stmt !== FALSE) {
-			// Abstract fetch here aswell
-			while ($theTable = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+			while ($theTable = $this->fetchAssoc($stmt)) {
 				$tables[$theTable['Name']] = $theTable;
 			}
 		}
@@ -1411,7 +1410,7 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 		$stmt = $this->adminQuery('SHOW COLUMNS FROM `' . $tableName . '`');
 
 		if ($stmt !== FALSE) {
-			while ($fieldRow = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+			while ($fieldRow = $this->fetchAssoc($stmt)) {
 				$fields[$fieldRow['Field']] = $fieldRow;
 			}
 			$stmt->closeCursor();
@@ -1437,7 +1436,7 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 
 		$stmt = $this->adminQuery('SHOW KEYS FROM `' . $tableName . '`');
 		if ($stmt !== FALSE) {
-			while ($keyRow = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+			while ($keyRow = $this->fetchAssoc($stmt)) {
 				$keys[] = $keyRow;
 			}
 			$stmt->closeCursor();
