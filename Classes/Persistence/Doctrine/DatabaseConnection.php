@@ -327,6 +327,16 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	}
 
 	/**
+	 * Returns the database driver
+	 *
+	 * @return string
+	 * @api
+	 */
+	public function getDatabaseDriver() {
+		return $this->connectionParams['driver'];
+	}
+
+	/**
 	 * Set a flag if the SQLLite should live in memory
 	 *
 	 * @param bool $value
@@ -346,16 +356,6 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	 */
 	public function setConnectionParams(array $connectionParams) {
 		$this->connectionParams = $connectionParams;
-	}
-
-	/**
-	 * Returns the database driver
-	 *
-	 * @return string
-	 * @api
-	 */
-	public function getDatabaseDriver() {
-		return $this->connectionParams['driver'];
 	}
 
 	/**

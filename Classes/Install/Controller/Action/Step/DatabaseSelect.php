@@ -24,6 +24,7 @@ namespace TYPO3\DoctrineDbal\Install\Controller\Action\Step;
  *  This copyright notice MUST APPEAR in all copies of the script!
  ***************************************************************/
 
+use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 use TYPO3\CMS\Install\Controller\Action;;
 
 /**
@@ -177,5 +178,10 @@ class DatabaseSelect extends Action\AbstractAction implements Action\Step\StepIn
 		$this->databaseConnection->setDatabaseSocket($GLOBALS['TYPO3_CONF_VARS']['DB']['socket']);
 		$this->databaseConnection->setDatabaseName($GLOBALS['TYPO3_CONF_VARS']['DB']['database']);
 		$this->databaseConnection->connectDatabase();
+		if (ExtensionManagementUtility::isLoaded('doctrine_dbal')) {
+			if (!empty($GLOBALS['TYPO3_CONF_VARS']['DB']['driver'])) {
+				$this->databaseConnection->setDatabaseDriver($GLOBALS['TYPO3_CONF_VARS']['DB']['driver']);
+			}
+		}
 	}
 }
