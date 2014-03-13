@@ -1388,18 +1388,7 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 			$this->connectDatabase();
 		}
 
-		$result[0] = -1;
-		$sql = 'SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = :databaseName';
-
-		$statement = $this->link->prepare($sql);
-		$statement->bindValue('databaseName', $this->getDatabaseName());
-		$isQuerySuccess = $statement->execute();
-
-		if ($isQuerySuccess !== FALSE) {
-			$result = $this->fetchColumn($statement);
-		}
-
-		return $result[0];
+		return count($this->schemaManager->listTables());
 	}
 
 	/**
