@@ -956,7 +956,7 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 
 	/**
 	 * Returns an associative array that corresponds to the fetched row, or FALSE if there are no more rows.
-	 * Wrapper function for Doctrine/PDO fetch(\PDO::FETCH_ASSOC)
+	 * Wrapper function for Statement::fetch(\PDO::FETCH_ASSOC)
 	 *
 	 * @param \Doctrine\DBAL\Driver\Statement $stmt A PDOStatement object
 	 *
@@ -974,7 +974,7 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	/**
 	 * Returns an array that corresponds to the fetched row, or FALSE if there are no more rows.
 	 * The array contains the values in numerical indices.
-	 * Wrapper function for Doctrine/PDO fetch(\PDO::FETCH_NUM)
+	 * Wrapper function for Statement::fetch(\PDO::FETCH_NUM)
 	 *
 	 * @param \Doctrine\DBAL\Driver\Statement $stmt A PDOStatement object
 	 *
@@ -992,7 +992,7 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	/**
 	 * Returns an array that corresponds to the fetched row, or FALSE if there are no more rows.
 	 * The array contains only a single requested column from the next row in the result set
-	 * Wrapper function for Doctrine / PDO fetch(\PDO::FETCH_COLUMN)
+	 * Wrapper function for Statement::fetch(\PDO::FETCH_COLUMN)
 	 *
 	 * @param \Doctrine\DBAL\Driver\Statement $stmt A PDOStatement object
 	 *
@@ -1361,6 +1361,7 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 				$tables[$theTable['Name']] = $theTable;
 			}
 		}
+
 
 		// TODO: Figure out how to use this
 //		$testTables = array();
