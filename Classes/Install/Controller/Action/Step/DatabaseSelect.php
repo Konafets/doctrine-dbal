@@ -196,5 +196,18 @@ class DatabaseSelect extends Action\AbstractAction implements Action\Step\StepIn
 				$this->databaseConnection->setDatabaseDriver($GLOBALS['TYPO3_CONF_VARS']['DB']['driver']);
 			}
 		}
+
+	/**
+	 * Executes the action
+	 *
+	 * @return string|array Rendered content
+	 */
+	protected function executeAction() {
+		/** @var $configurationManager \TYPO3\CMS\Core\Configuration\ConfigurationManager */
+		$configurationManager = $this->objectManager->get('TYPO3\\CMS\\Core\\Configuration\\ConfigurationManager');
+		$isInitialInstallationInProgress = $configurationManager->getConfigurationValueByPath('SYS/isInitialInstallationInProgress');
+		$this->view->assign('databaseList', $this->getDatabaseList($isInitialInstallationInProgress));
+		$this->view->assign('isInitialInstallationInProgress', $isInitialInstallationInProgress);
+		return $this->view->render();
 	}
 }
