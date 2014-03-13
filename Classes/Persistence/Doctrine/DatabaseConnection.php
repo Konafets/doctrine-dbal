@@ -870,8 +870,7 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	protected function setSqlMode() {
 		$resource = $this->adminQuery('SELECT @@SESSION.sql_mode;');
 		if ($resource) {
-			// TODO: Abstract the direct fetchAll() call
-			$result = $resource->fetchAll();
+			$result = $this->fetchAll($resource);
 			if (isset($result[0]) && $result[0] && strpos($result[0]['@@SESSION.sql_mode'], 'NO_BACKSLASH_ESCAPES') !== FALSE) {
 				$modes = array_diff(GeneralUtility::trimExplode(',', $result[0]['@@SESSION.sql_mode']), array('NO_BACKSLASH_ESCAPES'));
 				$stmt = $this->link->prepare('SET sql_mode = :modes');
@@ -952,6 +951,22 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 		$this->affectedRows = $stmt->rowCount();
 
 		return $stmt;
+	}
+
+	/**
+	 * Wrapper function for Statement::fetchAll()
+	 *
+	 * @param \Doctrine\DBAL\Driver\Statement $stmt A PDOStatement object
+	 *
+	 * @return boolean|array
+	 * @api
+	 */
+	public function fetchAll($stmt) {
+		if ($this->debug_check_recordset($stmt)) {
+			return $stmt->fetchAll();
+		} else {
+			return FALSE;
+		}
 	}
 
 	/**
