@@ -651,18 +651,19 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	/**
 	 * Connects to database for TYPO3 sites
 	 *
+	 * @param bool $isInitialInstallationInProgress
+	 *
 	 * @return void
-	 * @throws \RuntimeException
-	 * @throws \UnexpectedValueException
 	 */
-	public function connectDatabase() {
+	public function connectDatabase($isInitialInstallationInProgress = FALSE) {
 		// Early return if connected already
 		if ($this->isConnected) {
 			return;
 		}
 
-		$this->checkDatabasePreConditions();
-		$this->initDoctrine();
+		if (!$isInitialInstallationInProgress) {
+			$this->checkDatabasePreConditions();
+		}
 
 		try {
 			$this->link = $this->getConnection();
@@ -672,12 +673,29 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 
 		$this->isConnected = $this->checkConnectivity();
 
-		if ($this->isConnected) {
-			$this->initCommandsAfterConnect();
-			$this->selectDb();
-		}
+		if (!$isInitialInstallationInProgress) {
+			if ($this->isConnected) {
+				$this->initCommandsAfterConnect();
+				$this->selectDb();
+			}
 
-		$this->prepareHooks();
+			$this->prepareHooks();
+		}
+	}
+
+	/**
+	 * Checks if the PDO database extension is loaded
+	 *
+	 * @throws \RuntimeException
+	 */
+	private function checkForDatabaseExtensionLoaded(){
+		if (!extension_loaded('pdo')) {
+			throw new \RuntimeException(
+				'Database Error: PHP PDO extension not loaded. This is a must to use this extension (ext:doctrine_dbal)!',
+				// TODO: Replace with current date for Thesis
+				1388496499
+			);
+		}
 	}
 
 	/**
@@ -689,14 +707,6 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 			throw new \RuntimeException(
 				'TYPO3 Fatal Error: No database specified!',
 				1270853882
-			);
-		}
-
-		if (!extension_loaded('pdo')) {
-			throw new \RuntimeException(
-				'Database Error: PHP PDO extension not loaded. This is a must to use this extension (ext:doctrine_dbal)!',
-				// TODO: Replace with current date for Thesis
-				1388496499
 			);
 		}
 	}
@@ -715,9 +725,19 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	/**
 	 * Returns the database connection
 	 *
+	 * @throws \RuntimeException
 	 * @return \Doctrine\DBAL\Connection
 	 */
 	private function getConnection() {
+		// Early return if connected already
+		if ($this->isConnected) {
+			return;
+		}
+
+		$this->checkForDatabaseExtensionLoaded();
+
+		$this->initDoctrine();
+
 		// If the user want a persistent connection we have to create the PDO instance by ourself and pass it to Doctrine.
 		// See http://stackoverflow.com/questions/16217426/is-it-possible-to-use-doctrine-with-persistent-pdo-connections
 		// http://www.mysqlperformanceblog.com/2006/11/12/are-php-persistent-connections-evil/
@@ -892,8 +912,7 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	 * @api
 	 */
 	public function isConnected() {
-		// We think we're still connected
-		if ($this->isConnected) {
+		if (is_object($this->link)) {
 			$this->isConnected = $this->link->isConnected();
 		}
 
@@ -1351,13 +1370,19 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 			$this->connectDatabase();
 		}
 
-		$databases = $this->schemaManager->listDatabases();
-		if (empty($databases)) {
-			throw new \RuntimeException(
-				'MySQL Error: Cannot get databases: "' . $this->sqlErrorMessage() . '"!',
-				1378457171
-			);
+		try {
+			// SQLite doesn't support this command
+			$databases = $this->schemaManager->listDatabases();
+			if (empty($databases)) {
+				throw new \RuntimeException(
+					'MySQL Error: Cannot get databases: "' . $this->sqlErrorMessage() . '"!',
+					1378457171
+				);
+			}
+		} catch (\Doctrine\DBAL\DBALException $e) {
+			$databases[] = '';
 		}
+
 
 		return $databases;
 	}

@@ -171,7 +171,6 @@ class DatabaseSelect extends Action\AbstractAction implements Action\Step\StepIn
 	 */
 	protected function initializeDatabaseConnection() {
 		$this->databaseConnection = $this->objectManager->get('TYPO3\\CMS\\Core\\Database\\DatabaseConnection');
-		$this->databaseConnection->connectDatabase();
 		if (!empty($GLOBALS['TYPO3_CONF_VARS']['DB']['username'])) {
 			$this->databaseConnection->setDatabaseUsername($GLOBALS['TYPO3_CONF_VARS']['DB']['username']);
 		}
@@ -196,6 +195,13 @@ class DatabaseSelect extends Action\AbstractAction implements Action\Step\StepIn
 				$this->databaseConnection->setDatabaseDriver($GLOBALS['TYPO3_CONF_VARS']['DB']['driver']);
 			}
 		}
+
+		/** @var $configurationManager \TYPO3\CMS\Core\Configuration\ConfigurationManager */
+		$configurationManager = $this->objectManager->get('TYPO3\\CMS\\Core\\Configuration\\ConfigurationManager');
+		$isInitialInstallationInProgress = $configurationManager->getConfigurationValueByPath('SYS/isInitialInstallationInProgress');
+
+		$this->databaseConnection->connectDatabase($isInitialInstallationInProgress);
+	}
 
 	/**
 	 * Executes the action

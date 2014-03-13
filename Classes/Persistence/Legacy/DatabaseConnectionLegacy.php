@@ -105,7 +105,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 			$this->handleDeprecatedConnectArguments($host, $username, $password, $db);
 		}
 
-		$this->connectDatabase();
+		$this->connectDatabase($host);
 	}
 
 	/**
