@@ -211,10 +211,11 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 	 * @deprecated
 	 */
 	public function exec_SELECTquery($selectFields, $fromTable, $whereClause, $groupBy = '', $orderBy = '', $limit = '') {
-		$query = $this->SELECTquery($selectFields, $fromTable, $whereClause, $groupBy, $orderBy, $limit);
-		$stmt = $this->query($query);
-
-		$this->table = $fromTable;
+		if ($isConnected) {
+			$this->connectDb();
+		}
+		$query = $this->selectQueryDoctrine($selectFields, $fromTable, $whereClause, $groupBy, $orderBy, $limit);
+		$stmt = $query->execute();
 
 		if ($this->getDebugMode()) {
 			$this->debug('exec_SELECTquery');
@@ -294,7 +295,6 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 	 */
 	public function exec_SELECTgetRows($selectFields, $fromTable, $whereClause, $groupBy = '', $orderBy = '', $limit = '', $uidIndexField = '') {
 		$stmt = $this->exec_SELECTquery($selectFields, $fromTable, $whereClause, $groupBy, $orderBy, $limit);
-		$this->table = $fromTable;
 
 		if ($this->getDebugMode()) {
 			$this->debug('exec_SELECTquery');
@@ -302,11 +302,11 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 		if (!$this->sqlErrorMessage()) {
 			$output = array();
 			if ($uidIndexField) {
-				while ($tempRow = $this->sql_fetch_assoc($stmt)) {
+				while ($tempRow = $this->fetchAssoc($stmt)) {
 					$output[$tempRow[$uidIndexField]] = $tempRow;
 				}
 			} else {
-				while ($output[] = $this->sql_fetch_assoc($stmt)) {
+				while ($output[] = $this->fetchAssoc($stmt)) {
 
 				}
 				array_pop($output);
@@ -335,7 +335,6 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 	 */
 	public function exec_SELECTgetSingleRow($selectFields, $fromTable, $whereClause, $groupBy = '', $orderBy = '', $numIndex = FALSE) {
 		$stmt = $this->exec_SELECTquery($selectFields, $fromTable, $whereClause, $groupBy, $orderBy, '1');
-		$this->table = $fromTable;
 
 		if ($this->getDebugMode()) {
 			$this->debug('exec_SELECTquery');
@@ -343,9 +342,9 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 		$output = NULL;
 		if ($stmt !== FALSE) {
 			if ($numIndex) {
-				$output = $this->sql_fetch_row($stmt);
+				$output = $this->fetchAssoc($stmt);
 			} else {
-				$output = $this->sql_fetch_assoc($stmt);
+				$output = $this->fetchAssoc($stmt);
 			}
 			$this->freeResult($stmt);
 		}
@@ -411,7 +410,6 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 	 */
 	public function exec_TRUNCATEquery($table) {
 		$stmt = $this->query($this->TRUNCATEquery($table));
-		$this->table = $table;
 
 		if ($this->getDebugMode()) {
 			$this->debug('exec_TRUNCATEquery');
@@ -538,21 +536,16 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 			/** @var $hookObject PreProcessQueryHookInterface */
 			$hookObject->SELECTquery_preProcessAction($selectFields, $fromTable, $whereClause, $groupBy, $orderBy, $limit, $this);
 		}
-		// Table and fieldnames should be "SQL-injection-safe" when supplied to this function
-		// Build basic query
-		$query = 'SELECT ' . $selectFields . ' FROM ' . $fromTable . (strlen($whereClause) > 0 ? ' WHERE ' . $whereClause : '');
-		// Group by
-		$query .= strlen($groupBy) > 0 ? ' GROUP BY ' . $groupBy : '';
-		// Order by
-		$query .= strlen($orderBy) > 0 ? ' ORDER BY ' . $orderBy : '';
-		// Group by
-		$query .= strlen($limit) > 0 ? ' LIMIT ' . $limit : '';
+
+		$query = $this->selectQueryDoctrine($selectFields, $fromTable, $whereClause, $groupBy, $orderBy, $limit);
+		$sql = $query->getSql();
+
 		// Return query
 		if ($this->getDebugMode() || $this->getStoreLastBuildQuery()) {
-			$this->debug_lastBuiltQuery = $query;
+			$this->debug_lastBuiltQuery = $sql;
 		}
 
-		return $query;
+		return $sql;
 	}
 
 	/**
@@ -884,6 +877,19 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 	}
 
 	/**
+	 * Returns an associative array that corresponds to the fetched row, or FALSE if there are no more rows.
+	 * Wrapper function for Statement::fetch(\PDO::FETCH_ASSOC)
+	 *
+	 * @param \Doctrine\DBAL\Driver\Statement $stmt A PDOStatement object
+	 *
+	 * @return boolean|array Associative array of result row.
+	 * @api
+	 */
+	public function fetchAssoc($stmt) {
+		return parent::fetchAssoc($stmt);
+	}
+
+	/**
 	 * Returns an array that corresponds to the fetched row, or FALSE if there are no more rows.
 	 * The array contains the values in numerical indices.
 	 * Wrapper function for Doctrine/PDO fetch(\PDO::FETCH_NUM)
@@ -895,20 +901,6 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 	 */
 	public function sql_fetch_row($stmt) {
 		return $this->fetchRow($stmt);
-	}
-
-	/**
-	 * Get the type of the specified field in a result
-	 * mysql_field_type() wrapper function
-	 *
-	 * @param boolean|\Doctrine\DBAL\Driver\Statement $stmt    A PDOStatement object
-	 * @param integer                          $pointer Field index.
-	 *
-	 * @return string Returns the name of the specified field index, or FALSE on error
-	 * @deprecated
-	 */
-	public function sql_field_type($stmt, $pointer) {
-		return $this->getSqlFieldType($stmt, $pointer);
 	}
 
 	/**

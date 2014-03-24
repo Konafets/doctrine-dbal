@@ -36,6 +36,7 @@ use Doctrine\DBAL\Logging\DebugStack;
 use TYPO3\CMS\Core\Utility\DebugUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\DoctrineDbal\Persistence\Database\DatabaseConnectionInterface;
+use TYPO3\DoctrineDbal\Persistence\Database\SelectQueryInterface;
 use TYPO3\DoctrineDbal\Persistence\Exception\InvalidArgumentException;
 
 /**
@@ -91,7 +92,7 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	 * @var array $connectionParams The connection settings for Doctrine
 	 */
 	protected $connectionParams = array(
-		'dbname'      => '',
+		'dbname'      => NULL,
 		'user'        => '',
 		'password'    => '',
 		'host'        => '',
@@ -152,13 +153,6 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	 * @var \Doctrine\DBAL\Platforms\AbstractPlatform
 	 */
 	protected $platform = NULL;
-
-	/**
-	 * The table form last query
-	 *
-	 * @var string $table
-	 */
-	protected $table = '';
 
 	/**
 	 * Set "TRUE" or "1" if you want database errors outputted. Set to "2" if you also want successful database actions outputted.
@@ -463,6 +457,30 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	 */
 	public function getDatabaseCharset() {
 		return $this->connectionParams['charset'];
+	}
+
+	/**
+	 * Sets the ssl for Postgres databases
+	 *
+	 * @param string $ssl
+	 *
+	 * @return $this
+	 * @api
+	 */
+	public function setSslMode($ssl) {
+		$this->connectionParams['sslmode'] = $ssl;
+
+		return $this;
+	}
+
+	/**
+	 * Return the ssl settings
+	 *
+	 * @return mixed
+	 * @api
+	 */
+	public function getSslMode() {
+		return $this->connectionParams['sslmode'];
 	}
 
 	/**
@@ -867,7 +885,9 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 			}
 		}
 
-		$this->setSqlMode();
+		if ($this->getDatabaseDriver() === 'pdo_mysql') {
+			$this->setSqlMode();
+		}
 	}
 
 	/**
@@ -1108,7 +1128,6 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 		}
 
 		$this->affectedRows = $this->link->delete($table, $where, $types);
-		$this->table = $table;
 
 		if ($this->getDebugMode()) {
 			$this->debug('executeDeleteQuery');
@@ -1188,7 +1207,6 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 		}
 
 		$this->affectedRows = $this->link->executeUpdate($this->createTruncateQuery($table));
-		$this->table = $table;
 
 		if ($this->getDebugMode()) {
 			$this->debug('executeTruncateQuery');
@@ -1343,6 +1361,56 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	}
 
 	/**
+	 * Creates a SELECT SQL-statement
+	 *
+	 * @param string $selectFields See exec_SELECTquery()
+	 * @param string $fromTable    See exec_SELECTquery()
+	 * @param string $whereClause  See exec_SELECTquery()
+	 * @param string $groupBy      See exec_SELECTquery()
+	 * @param string $orderBy      See exec_SELECTquery()
+	 * @param string $limit        See exec_SELECTquery()
+	 *
+	 * @return \TYPO3\DoctrineDbal\Persistence\Doctrine\SelectQuery A select query object
+	 */
+	public function selectQueryDoctrine($selectFields, $fromTable, $whereClause, $groupBy = '', $orderBy = '', $limit = '') {
+		if ($this->isConnected) {
+			$this->connectDB();
+		}
+
+		$query = $this->createSelectQuery();
+		$query->select($selectFields)->from($fromTable)->where($whereClause);
+		if (!empty($groupBy)) {
+			$query->groupBy($groupBy);
+		}
+
+		$direction = SelectQueryInterface::ASC;
+
+		if (!empty($orderBy)) {
+			$orderBy = explode(' ', $orderBy);
+			if (count($orderBy) > 1) {
+				switch ($orderBy[1]) {
+					case 'ASC':
+						$direction = SelectQueryInterface::ASC;
+						break;
+					case 'DESC':
+						$direction = SelectQueryInterface::DESC;
+						break;
+					default:
+						$direction = SelectQueryInterface::ASC;
+				}
+			}
+
+			$query->orderBy($orderBy[0], $direction);
+		}
+
+		if (!empty($limit)) {
+			$query->limit($limit);
+		}
+
+		return $query;
+	}
+
+	/**
 	 * Returns the expressions instance
 	 *
 	 * @return \TYPO3\DoctrineDbal\Persistence\Database\ExpressionInterface
@@ -1394,10 +1462,14 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	 */
 	public function listTables() {
 		$tables = array();
-		$stmt = $this->adminQuery('SHOW TABLE STATUS FROM `' . $this->getDatabaseName() . '`');
-		if ($stmt !== FALSE) {
-			while ($theTable = $this->fetchAssoc($stmt)) {
-				$tables[$theTable['Name']] = $theTable;
+		if ($this->getDatabaseDriver() === 'pdo_pgsql') {
+			$tables = $this->schemaManager->listTables();
+		} else {
+			$stmt = $this->adminQuery('SHOW TABLE STATUS FROM `' . $this->getDatabaseName() . '`');
+			if ($stmt !== FALSE) {
+				while ($theTable = $this->fetchAssoc($stmt)) {
+					$tables[$theTable['Name']] = $theTable;
+				}
 			}
 		}
 
@@ -1503,7 +1575,13 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 		}
 
 		$output = array();
-		$stmt = $this->adminQuery('SHOW CHARACTER SET');
+
+		if ($this->getDatabaseDriver() === 'pdo_pgsql') {
+			$stmt = $this->adminQuery('SHOW SERVER_ENCODING');
+		} else {
+			$stmt = $this->adminQuery('SHOW CHARACTER SET');
+		}
+
 
 		if ($stmt !== FALSE) {
 			while ($row = $this->fetchAssoc($stmt)) {
@@ -1695,12 +1773,13 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	 * Get the type of the specified field in a result
 	 * mysql_field_type() wrapper function
 	 *
-	 * @param boolean|\Doctrine\DBAL\Driver\Statement $stmt    A PDOStatement object
-	 * @param integer                          $pointer Field index.
+	 * @param boolean|\Doctrine\DBAL\Driver\Statement $stmt   A PDOStatement object
+	 * @param                                         $table
+	 * @param integer                                 $column Field index.
 	 *
 	 * @return string Returns the name of the specified field index, or FALSE on error
 	 */
-	public function getSqlFieldType($stmt, $pointer) {
+	public function getSqlFieldType($stmt, $table, $column) {
 		// mysql_field_type compatibility map
 		// taken from: http://www.php.net/manual/en/mysqli-result.fetch-field-direct.php#89117
 		// Constant numbers see http://php.net/manual/en/mysqli.constants.php
@@ -1730,19 +1809,16 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 		);
 
 		if ($this->debug_check_recordset($stmt)) {
-			$columns = $this->schema->listTableColumns($this->table);
-
-			$i = 0;
-			$metaInfo = FALSE;
-			foreach ($columns as $column) {
-				if ($i === $pointer) {
-					// TODO: Figure out if this is ok like it is and clean up the rest of this mess
-					//$pdoTypeId = $column->getType()->getBindingType();
-					//$typeArray = $column->toArray();
-					$metaInfo = $column->getType()->getName();
-				}
-				$i++;
+			if (count($this->schema->getTables()) === 0) {
+				$this->schema = $this->link->getSchemaManager()->createSchema();
 			}
+
+			$metaInfo = $this->schema
+				->getTable($table)
+				->getColumn($column)
+				->getType()
+				->getName();
+
 			if ($metaInfo === FALSE) {
 				return FALSE;
 			}

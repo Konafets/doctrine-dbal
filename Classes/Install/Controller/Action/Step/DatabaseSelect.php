@@ -35,7 +35,7 @@ use TYPO3\CMS\Install\Controller\Action;;
 class DatabaseSelect extends Action\AbstractAction implements Action\Step\StepInterface {
 
 	/**
-	 * @var \TYPO3\DoctrineDBAL\Database\DatabaseConnection
+	 * @var \TYPO3\DoctrineDBAL\Persistence\Legacy\DatabaseConnectionLegacy
 	 */
 	protected $databaseConnection = NULL;
 
@@ -142,7 +142,7 @@ class DatabaseSelect extends Action\AbstractAction implements Action\Step\StepIn
 		$this->initializeDatabaseConnection();
 		$databaseArray = $this->databaseConnection->listDatabases();
 		// Remove mysql organizational tables from database list
-		$reservedDatabaseNames = array('mysql', 'information_schema', 'performance_schema');
+		$reservedDatabaseNames = array('mysql', 'information_schema', 'performance_schema', 'template1', 'template0');
 		$allPossibleDatabases = array_diff($databaseArray, $reservedDatabaseNames);
 
 		// If we are upgrading we show *all* databases the user has access to
