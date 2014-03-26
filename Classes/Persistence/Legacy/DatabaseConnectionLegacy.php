@@ -1391,7 +1391,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 			$debug = TRUE;
 			foreach ($explainTables as $table) {
 				$tableRes = $this->sql_query('SHOW TABLE STATUS LIKE \'' . $table . '\'');
-				$isTable = $this->sql_num_rows($tableRes);
+				$isTable = $this->getResultRowCount($tableRes);
 				if ($isTable) {
 					$res = $this->sql_query('SHOW INDEX FROM ' . $table, $this->link);
 					if (is_a($res, '\\mysqli_result')) {
