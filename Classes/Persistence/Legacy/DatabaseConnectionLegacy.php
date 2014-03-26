@@ -211,7 +211,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 	 * @deprecated
 	 */
 	public function exec_SELECTquery($selectFields, $fromTable, $whereClause, $groupBy = '', $orderBy = '', $limit = '') {
-		if ($isConnected) {
+		if ($this->isConnected) {
 			$this->connectDb();
 		}
 		$query = $this->selectQueryDoctrine($selectFields, $fromTable, $whereClause, $groupBy, $orderBy, $limit);

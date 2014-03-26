@@ -231,6 +231,9 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	 * @api
 	 */
 	public function getName() {
+		if (!$this->isConnected) {
+			$this->connectDB();
+		}
 		return $this->link->getDatabasePlatform()->getName();
 	}
 
