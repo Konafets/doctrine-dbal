@@ -83,7 +83,7 @@ class InsertQuery extends AbstractQuery implements InsertQueryInterface{
 	/**
 	 * Set the columns
 	 *
-	 * The method string or arrays. Your are responsible for quoting by yourself if you
+	 * The method take a string or arrays. Your are responsible for quoting by yourself if you
 	 * not using Prepared Statements. In most cases it is sufficient to use $GLOBALS['TYPO3_DB']->executeInsertQuery() instead of
 	 * this method. Use this in case you want to return the created SQL string.
 	 *

@@ -1327,7 +1327,7 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	 * Executes a INSERT SQL-statement for $table where $where-clause
 	 *
 	 * @param string $table Database table name
-	 * @param array  $where The deletion criteria. An associative array containing column-value pairs eg. array('uid' => 1).
+	 * @param array  $where The insertion criteria. An associative array containing column-value pairs eg. array('uid' => 1).
 	 * @param array  $types The types of identifiers.
 	 *
 	 * @return integer The affected rows
