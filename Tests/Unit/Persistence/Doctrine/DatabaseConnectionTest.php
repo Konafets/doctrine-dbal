@@ -402,7 +402,7 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 		$this->subject->executeInsertQuery($this->testTable, array($this->testField => 'testB'));
 		$this->subject->executeInsertQuery($this->testTable, array($this->testField => 'testC'));
 
-		$this->assertEquals(3, $this->subject->getLastInsertId());
+		$this->assertEquals(3, $this->subject->getLastInsertId($this->testTable));
 	}
 
 	/**
@@ -411,7 +411,7 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	public function getLastInsertIdReturnsInteger() {
 		$this->subject->executeInsertQuery($this->testTable, array($this->testField => 'testA'));
 
-		$this->assertTrue(is_integer($this->subject->getLastInsertId()));
+		$this->assertTrue(is_integer($this->subject->getLastInsertId($this->testTable)));
 	}
 
 	/**
@@ -588,7 +588,7 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 */
 	public function updateQueryCreateValidQuery() {
 		$this->assertSame(1, $this->subject->getDatabaseHandle()->insert($this->testTable, array($this->testField => 'foo')));
-		$id = $this->subject->getLastInsertId();
+		$id = $this->subject->getLastInsertId($this->testTable);
 		$fieldsValues = array($this->testField => 'May the force be with you.');
 		$where = array('id' => $id);
 		$queryExpected =
@@ -856,7 +856,7 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 */
 	public function adminQueryReturnsTrueForUpdateQuery() {
 		$this->assertInstanceOf('Doctrine\\DBAL\\Driver\\Statement', $this->subject->adminQuery('INSERT INTO ' . $this->testTable . ' (fieldblob) VALUES (\'foo\')'));
-		$id = $this->subject->getLastInsertId();
+		$id = $this->subject->getLastInsertId($this->testTable);
 		$this->assertEquals(1, $id);
 		$this->assertInstanceOf('Doctrine\\DBAL\\Driver\\Statement', $this->subject->adminQuery('UPDATE ' . $this->testTable . ' SET fieldblob=\'bar\' WHERE id=' . $id));
 	}
@@ -868,7 +868,7 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 	 */
 	public function adminQueryReturnsTrueForDeleteQuery() {
 		$this->assertInstanceOf('Doctrine\\DBAL\\Driver\\Statement', $this->subject->adminQuery('INSERT INTO ' . $this->testTable . ' (fieldblob) VALUES (\'foo\')'));
-		$id = $this->subject->getLastInsertId();
+		$id = $this->subject->getLastInsertId($this->testTable);
 		$this->assertEquals(1, $id);
 		$this->assertInstanceOf('Doctrine\\DBAL\\Driver\\Statement', $this->subject->adminQuery('DELETE FROM ' . $this->testTable . ' WHERE id=' . $id));
 	}
@@ -1259,7 +1259,7 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 			$binaryString .= chr($i);
 		}
 		$this->subject->executeInsertQuery($this->testTable, array($this->testField => $binaryString));
-		$id = $this->subject->getLastInsertId();
+		$id = $this->subject->getLastInsertId($this->testTable);
 		$entry = $this->subject->exec_SELECTgetRows($this->testField, $this->testTable, 'id = ' . $id);
 		$this->assertEquals($binaryString, $entry[0][$this->testField]);
 	}
@@ -1273,7 +1273,7 @@ class DatabaseConnectionTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 		$this->markTestIncomplete('Implemement exec_SELECTgetRows for Doctrine');
 		$testStringWithBinary = @gzcompress('sdfkljer4587');
 		$this->subject->executeInsertQuery($this->testTable, array($this->testField => $testStringWithBinary));
-		$id = $this->subject->getLastInsertId();
+		$id = $this->subject->getLastInsertId($this->testTable);
 		$entry = $this->subject->exec_SELECTgetRows($this->testField, $this->testTable, 'id = ' . $id);
 		$this->assertEquals($testStringWithBinary, $entry[0][$this->testField]);
 	}

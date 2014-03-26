@@ -210,6 +210,11 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	protected $affectedRows = -1;
 
 	/**
+	 * @var int $lastInsertId The last id which is inserted
+	 */
+	protected $lastInsertId = -1;
+
+	/**
 	 * @var array<PostProcessQueryHookInterface> $preProcessHookObjects
 	 */
 	protected $preProcessHookObjects = array();
@@ -1081,11 +1086,17 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	/**
 	 * Get the ID generated from the previous INSERT operation
 	 *
+	 * @param null $tableName
+	 *
 	 * @return integer The uid of the last inserted record.
 	 * @api
 	 */
-	public function getLastInsertId() {
-		return (int)$this->link->lastInsertId();
+	public function getLastInsertId($tableName = NULL) {
+		if ($this->getDatabaseDriver() === 'pdo_pgsql') {
+			return (int)$this->link->lastInsertId($tableName . '_uid_seq');
+		} else {
+			return (int)$this->link->lastInsertId();
+		}
 	}
 
 	/**
