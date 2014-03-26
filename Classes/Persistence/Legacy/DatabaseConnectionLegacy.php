@@ -366,7 +366,7 @@ class DatabaseConnectionLegacy extends \TYPO3\DoctrineDbal\Persistence\Doctrine\
 		$count = FALSE;
 		$resultSet = $this->exec_SELECTquery('COUNT(' . $field . ')', $table, $where);
 		if ($resultSet !== FALSE) {
-			list($count) = $this->sql_fetch_row($resultSet);
+			list($count) = $this->fetchRow($resultSet);
 			$count = intval($count);
 			$this->freeResult($resultSet);
 		}

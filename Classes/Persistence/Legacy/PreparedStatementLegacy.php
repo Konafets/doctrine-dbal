@@ -311,7 +311,7 @@ class PreparedStatementLegacy {
 				break;
 			case self::FETCH_NUM:
 				// TODO: Fix the fetch_row function
-				$row = $GLOBALS['TYPO3_DB']->sql_fetch_row($this->resource);
+				$row = $GLOBALS['TYPO3_DB']->fetchRow($this->resource);
 				break;
 			default:
 				throw new \InvalidArgumentException('$fetch_style must be either TYPO3\\CMS\\Core\\Database\\PreparedStatement::FETCH_ASSOC or TYPO3\\CMS\\Core\\Database\\PreparedStatement::FETCH_NUM', 1281646455);

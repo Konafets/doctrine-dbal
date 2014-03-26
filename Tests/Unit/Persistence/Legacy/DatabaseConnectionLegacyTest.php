@@ -1126,7 +1126,7 @@ class DatabaseConnectionLegacyTest extends \TYPO3\CMS\Core\Tests\UnitTestCase {
 					array('4', '0', null, null, 'Agent Smith', '1', 'Unknown', 'Unknown', 'Matrix')
 				);
 		$i = 0;
-		while ($row = $this->subject->sql_fetch_row($res)) {
+		while ($row = $this->subject->fetchRow($res)) {
 			$this->assertSame($expectedResult[$i], $row);
 			$i++;
 		}
