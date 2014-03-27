@@ -28,6 +28,7 @@ namespace TYPO3\DoctrineDbal\Persistence\Doctrine;
  *  This copyright notice MUST APPEAR in all copies of the script!
  ***************************************************************/
 
+use TYPO3\DoctrineDbal\Persistence\Exception\ConnectionException;
 use Doctrine\DBAL\Driver\Statement;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Logging\DebugStack;
@@ -677,6 +678,7 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 	 *
 	 * @param bool $isInitialInstallationInProgress
 	 *
+	 * @throws \TYPO3\DoctrineDbal\Persistence\Exception\ConnectionException
 	 * @return void
 	 */
 	public function connectDatabase($isInitialInstallationInProgress = FALSE) {
@@ -692,7 +694,7 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 		try {
 			$this->link = $this->getConnection();
 		} catch (\Exception $e) {
-			echo $e->getMessage();
+			throw new ConnectionException($e->getMessage());
 		}
 
 		$this->isConnected = $this->checkConnectivity();
