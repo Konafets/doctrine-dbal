@@ -777,8 +777,7 @@ class DatabaseConnection implements DatabaseConnectionInterface {
 		$connection = DriverManager::getConnection($this->connectionParams, $this->databaseConfiguration);
 		$this->platform = $connection->getDatabasePlatform();
 
-		// Send a query to create a connection
-		$connection->query($this->platform->getDummySelectSQL());
+		$connection->connect();
 
 		$this->logger = $connection->getConfiguration()->getSQLLogger();
 
