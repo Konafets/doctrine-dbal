@@ -33,7 +33,6 @@ use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Statement;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\DoctrineDbal\Persistence\Exception\InvalidArgumentException;
-use TYPO3\DoctrineDbal\Persistence\Exception\InvalidQueryException;
 
 /**
  * Class AbstractQuery
